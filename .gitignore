@@ -43,3 +43,24 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android local configuration
+android/local.properties
+
+# Project-specific documentation and context
+context/
+
+# IDE and editor specific files
+.obsidian/
+*.code-workspace
+.metadata
+
+# Flutter generated files
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/macos/Flutter/ephemeral/
+**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/windows/flutter/ephemeral/
+**/linux/flutter/ephemeral/
