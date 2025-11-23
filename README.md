@@ -200,8 +200,6 @@ flutter format .
 3. **Presentation Layer**: Create Bloc/Cubit → Build UI widgets → Connect to use cases
 4. **DI Registration**: Create feature module and register dependencies
 
-See `AGENTS.md` for detailed development guidelines and conventions.
-
 ## Future Roadmap
 
 - **Offline Capability**: Local database integration for offline issue creation
@@ -214,13 +212,10 @@ See `AGENTS.md` for detailed development guidelines and conventions.
 1. Follow Clean Architecture principles strictly
 2. Write tests for new use cases and critical business logic
 3. Run `flutter analyze` before committing
-4. Follow the code conventions documented in `AGENTS.md`
-5. Use GitHub CLI (`gh`) for repository operations
+4. Use GitHub CLI (`gh`) for repository operations
 
 ## Documentation
 
-- **Development Guide**: `AGENTS.md` - Complete project context and guidelines
-- **Code Conventions**: See `AGENTS.md` for detailed coding standards
 - **API Integration**: OpenProject REST API v3 documentation
 
 ## Success Criteria
@@ -236,7 +231,3 @@ See `AGENTS.md` for detailed development guidelines and conventions.
 ## Author
 
 **Daniel Benitez** - danibeni.dev@gmail.com
-
----
-
-For detailed technical specifications, architecture decisions, and development procedures, see `AGENTS.md`.

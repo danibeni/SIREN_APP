@@ -49,6 +49,7 @@ android/local.properties
 
 # Project-specific documentation and context
 context/
+AGENTS.md
 
 # IDE and editor specific files
 .obsidian/
