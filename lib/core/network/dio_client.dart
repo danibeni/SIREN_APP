@@ -1,19 +1,18 @@
 import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
 import '../auth/auth_interceptor.dart';
 import '../auth/auth_service.dart';
 
-/// Dio client factory for OpenProject API
-/// 
-/// Creates and configures Dio instance with authentication and error handling
+@lazySingleton
 class DioClient {
   final AuthService authService;
   final Logger logger;
 
   DioClient({
     required this.authService,
-    required Logger? logger,
-  }) : logger = logger ?? Logger('DioClient');
+    required this.logger,
+  });
 
   /// Create configured Dio instance for OpenProject API v3
   /// 
@@ -44,7 +43,6 @@ class DioClient {
       ),
     );
 
-    // Add authentication interceptor
     dio.interceptors.add(
       AuthInterceptor(
         authService: authService,
