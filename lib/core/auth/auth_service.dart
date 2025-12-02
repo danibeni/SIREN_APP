@@ -1,139 +1,130 @@
-import 'dart:convert';
-
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:async';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
+import 'package:siren_app/core/auth/oauth2_service.dart';
+import 'package:siren_app/core/auth/pkce_helper.dart';
 
-/// Authentication service for OpenProject API
-/// 
-/// Handles secure storage and retrieval of API credentials.
-/// Supports API Key authentication (MVP) with future OAuth 2.0 support.
+@lazySingleton
 class AuthService {
-  final FlutterSecureStorage _secureStorage;
+  final OAuth2Service _oauth2Service;
   final Logger logger;
 
-  static const String _apiKeyKey = 'openproject_api_key';
-  static const String _baseUrlKey = 'openproject_base_url';
+  static const String _redirectUri = 'siren://oauth/callback';
+  static const String _scope = 'api_v3';
+
+  String? _codeVerifier;
+  Completer<String?>? _authCompleter;
+  ChromeSafariBrowser? _browser;
 
   AuthService({
-    required FlutterSecureStorage secureStorage,
+    required OAuth2Service oauth2Service,
     required this.logger,
-  }) : _secureStorage = secureStorage;
+  }) : _oauth2Service = oauth2Service;
 
-  /// Store API key securely
-  /// 
-  /// The API key is used with Basic Auth:
-  /// - Username: "apikey" (literal string)
-  /// - Password: The API key
-  Future<void> storeApiKey(String apiKey) async {
-    try {
-      await _secureStorage.write(key: _apiKeyKey, value: apiKey);
-      logger.info('API key stored successfully');
-    } catch (e) {
-      logger.severe('Error storing API key: $e');
-      rethrow;
-    }
-  }
-
-  /// Retrieve stored API key
-  /// 
-  /// Returns null if no API key is stored
-  Future<String?> getApiKey() async {
-    try {
-      return await _secureStorage.read(key: _apiKeyKey);
-    } catch (e) {
-      logger.severe('Error retrieving API key: $e');
-      return null;
-    }
-  }
-
-  /// Check if user is authenticated
-  /// 
-  /// Returns true if an API key is stored
   Future<bool> isAuthenticated() async {
-    final apiKey = await getApiKey();
-    return apiKey != null && apiKey.isNotEmpty;
+    return await _oauth2Service.hasValidToken();
   }
 
-  /// Clear stored credentials
-  /// 
-  /// Used for logout functionality
   Future<void> clearCredentials() async {
+    await _oauth2Service.clearTokens();
+    logger.info('Credentials cleared');
+  }
+
+  Future<bool> login({
+    required String serverUrl,
+    required String clientId,
+  }) async {
     try {
-      await _secureStorage.delete(key: _apiKeyKey);
-      await _secureStorage.delete(key: _baseUrlKey);
-      logger.info('Credentials cleared');
+      _codeVerifier = PkceHelper.generateCodeVerifier();
+      final codeChallenge = PkceHelper.generateCodeChallenge(_codeVerifier!);
+
+      final authorizationUrl = Uri.parse('$serverUrl/oauth/authorize').replace(
+        queryParameters: {
+          'response_type': 'code',
+          'client_id': clientId,
+          'redirect_uri': _redirectUri,
+          'code_challenge': codeChallenge,
+          'code_challenge_method': 'S256',
+          'scope': _scope,
+        },
+      );
+
+      logger.info('Starting OAuth2 login flow');
+
+      _authCompleter = Completer<String?>();
+      _browser = ChromeSafariBrowser();
+
+      await _browser!.open(
+        url: WebUri(authorizationUrl.toString()),
+        settings: ChromeSafariBrowserSettings(
+          shareState: CustomTabsShareState.SHARE_STATE_OFF,
+          showTitle: true,
+        ),
+      );
+
+      final authorizationCode = await _authCompleter!.future.timeout(
+        const Duration(minutes: 5),
+        onTimeout: () {
+          logger.warning('OAuth2 authentication timeout');
+          return null;
+        },
+      );
+
+      if (authorizationCode == null) {
+        logger.warning('Authorization cancelled or failed');
+        return false;
+      }
+
+      logger.info('Authorization code received, exchanging for tokens');
+
+      final tokenData = await _oauth2Service.exchangeCodeForTokens(
+        authorizationCode: authorizationCode,
+        codeVerifier: _codeVerifier!,
+        clientId: clientId,
+        redirectUri: _redirectUri,
+        serverUrl: serverUrl,
+      );
+
+      if (tokenData == null) {
+        logger.warning('Token exchange failed');
+        return false;
+      }
+
+      await _oauth2Service.storeTokens(
+        accessToken: tokenData['access_token'] as String,
+        refreshToken: tokenData['refresh_token'] as String,
+        expiresIn: tokenData['expires_in'] as int,
+        clientId: clientId,
+      );
+
+      logger.info('OAuth2 login successful');
+      return true;
     } catch (e) {
-      logger.severe('Error clearing credentials: $e');
-      rethrow;
+      logger.severe('Error during OAuth2 login: $e');
+      if (_authCompleter != null && !_authCompleter!.isCompleted) {
+        _authCompleter!.complete(null);
+      }
+      return false;
+    } finally {
+      _codeVerifier = null;
+      _authCompleter = null;
+      _browser = null;
     }
   }
 
-  /// Store OpenProject base URL
-  /// 
-  /// Base URL should be the server URL without the API path.
-  /// Format: https://your-openproject-instance.com
-  /// The API path `/api/v3/` will be appended automatically by DioClient.
-  /// 
-  /// Example: If your OpenProject instance is at https://openproject.example.com,
-  /// store "https://openproject.example.com" (without trailing slash or /api/v3/)
-  Future<void> storeBaseUrl(String baseUrl) async {
-    try {
-      // Normalize URL: remove trailing slash
-      final normalizedUrl = baseUrl.endsWith('/')
-          ? baseUrl.substring(0, baseUrl.length - 1)
-          : baseUrl;
-      
-      await _secureStorage.write(key: _baseUrlKey, value: normalizedUrl);
-      logger.info('Base URL stored successfully: $normalizedUrl');
-    } catch (e) {
-      logger.severe('Error storing base URL: $e');
-      rethrow;
+  void handleAuthCallback(String? authorizationCode, {String? error, String? errorDescription}) {
+    if (_authCompleter != null && !_authCompleter!.isCompleted) {
+      if (error != null) {
+        logger.warning('OAuth2 error: $error - $errorDescription');
+        _authCompleter!.complete(null);
+      } else {
+        _authCompleter!.complete(authorizationCode);
+      }
     }
   }
 
-  /// Retrieve stored base URL
-  /// 
-  /// Returns the server base URL (without /api/v3/ path).
-  /// Returns null if no base URL is stored.
-  /// 
-  /// To get the full API base URL, use getApiBaseUrl() instead.
-  Future<String?> getBaseUrl() async {
-    try {
-      return await _secureStorage.read(key: _baseUrlKey);
-    } catch (e) {
-      logger.severe('Error retrieving base URL: $e');
-      return null;
-    }
-  }
-
-  /// Get the full API base URL with /api/v3/ path
-  /// 
-  /// Returns the complete base URL for OpenProject API v3 requests.
-  /// Format: https://your-instance.com/api/v3
-  /// Returns null if base URL is not stored.
-  Future<String?> getApiBaseUrl() async {
-    final baseUrl = await getBaseUrl();
-    if (baseUrl == null) {
-      return null;
-    }
-    
-    // Ensure /api/v3 is appended correctly
-    return '$baseUrl/api/v3';
-  }
-
-  /// Generate Basic Auth header value
-  /// 
-  /// Returns Base64 encoded "apikey:{API_KEY}" for Basic Auth
-  Future<String?> getBasicAuthHeader() async {
-    final apiKey = await getApiKey();
-    if (apiKey == null || apiKey.isEmpty) {
-      return null;
-    }
-
-    // Basic Auth: Username is "apikey", Password is the API key
-    final credentials = 'apikey:$apiKey';
-    final bytes = utf8.encode(credentials);
-    final base64Str = base64.encode(bytes);
-    return 'Basic $base64Str';
+  Future<String?> getAccessToken() async {
+    return await _oauth2Service.getAccessToken();
   }
 }
