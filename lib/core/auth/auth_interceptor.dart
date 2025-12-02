@@ -1,10 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:logging/logging.dart';
-import 'auth_service.dart';
+import 'package:siren_app/core/auth/auth_service.dart';
 
-/// Dio interceptor for OpenProject API authentication
-/// 
-/// Automatically adds Basic Auth header to all API requests
 class AuthInterceptor extends Interceptor {
   final AuthService authService;
   final Logger logger;
@@ -20,12 +17,11 @@ class AuthInterceptor extends Interceptor {
     RequestInterceptorHandler handler,
   ) async {
     try {
-      final authHeader = await authService.getBasicAuthHeader();
-      if (authHeader != null) {
-        options.headers['Authorization'] = authHeader;
+      final accessToken = await authService.getAccessToken();
+      if (accessToken != null) {
+        options.headers['Authorization'] = 'Bearer $accessToken';
       }
 
-      // Set required headers for OpenProject API v3
       options.headers['Content-Type'] = 'application/hal+json';
       options.headers['Accept'] = 'application/hal+json';
 
