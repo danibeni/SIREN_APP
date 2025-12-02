@@ -23,7 +23,7 @@ SIREN enables field technicians to quickly register, manage, and track technical
 - **Issue Lifecycle Management**: View, update, and manage issues from authorized groups/departments
 - **Smart Filtering**: Filter issues by Status, Equipment, Priority Level, and Group
 - **Attachment Support**: Add photos and documents to issues
-- **Secure Authentication**: OpenProject API key authentication with secure token storage
+- **Secure Authentication**: Secure OAuth2 authentication with PKCE and token storage
 - **Configurable Server**: Flexible server URL configuration for different environments
 
 ### Key Capabilities
@@ -34,12 +34,41 @@ SIREN enables field technicians to quickly register, manage, and track technical
 - **Input Validation**: Prevents saving incomplete issues while preserving user input
 - **Audit Trail**: All modifications generate permanent audit records
 
-## Requirements
+## Backend Server: OpenProject OAuth2 Configuration
+
+The SIREN mobile application requires an OpenProject server instance to function. Authentication is handled via **OAuth2 with PKCE**, not a static API key.
+
+For a complete technical specification of the authentication flow, refer to the `context/OAUTH2_OPENPROJECT_SIREN.md` document.
+
+### What is OAuth2 with PKCE?
+
+**Authorization Code + PKCE** (Proof Key for Code Exchange) is a secure authorization flow designed for public clients like mobile applications, which cannot securely store a `client_secret`. It ensures that the client application that starts the login process is the same one that receives the `access_token`, preventing authorization code interception attacks.
+
+### How to Configure OpenProject
+
+An administrator must create an OAuth2 application within your OpenProject instance. Follow these steps:
+
+1.  **Log in to OpenProject** with an administrator account.
+2.  Navigate to **Administration** → **API and webhooks** → **OAuth applications**.
+3.  Click on the **+ New application** button.
+4.  Fill in the application details:
+    *   **Name**: `SIREN Mobile App` (or another descriptive name).
+    *   **Redirect URI**: This is the most critical step. You must enter the following custom URI exactly:
+        ```
+        siren://oauth/callback
+        ```
+        This is a "deep link" that redirects the user back to the SIREN application after they authorize the login on the OpenProject web page.
+    *   **Confidential**: **No**. This must be set to "No" because a mobile app is a public client.
+    *   **Scopes**: Set the scope to `api_v3`. This grants the application the necessary permissions to manage work packages (issues) via the REST API.
+5.  Click **Save**.
+6.  The next screen will display the **Client ID** and **Client Secret**. The SIREN application only needs the **Client ID**. Make a note of it for the app configuration.
+
+After completing these steps, your OpenProject server is ready to handle authentication requests from the SIREN mobile application.
+
+## Client Application Requirements
 
 - **Flutter SDK**: Latest stable version
 - **Dart**: 3.0 or higher
-- **OpenProject Server**: Access to an OpenProject instance with REST API v3
-- **API Key**: OpenProject API key for authentication
 
 ## Installation
 
@@ -78,22 +107,45 @@ SIREN enables field technicians to quickly register, manage, and track technical
 
 ### Initial Setup
 
-1. **Configure OpenProject Server URL**:
-   - Open the app settings
-   - Enter your OpenProject server URL (e.g., `https://openproject.example.com`)
-   - The app automatically appends `/api/v3` to the base URL
+The only initial configuration required is to set the OpenProject server URL.
 
-2. **Add API Key**:
-   - Generate an API key from your OpenProject account
-   - Enter the API key in the app settings
-   - The key is stored securely using `flutter_secure_storage`
+1.  **Launch the application**: On first launch, you will be prompted to enter the server URL.
+2.  **Enter Server URL**: Input the base URL for your OpenProject instance (e.g., `https://openproject.example.com`).
+3.  **Enter Client ID**: Input the Client ID obtained from your OpenProject OAuth2 application configuration. This ID is used by the app to identify itself to OpenProject.
+4.  **Authenticate**: After setting the URL and Client ID, the app will initiate the OAuth2 authentication flow. Follow the on-screen instructions to log in and authorize the application.
 
-### API Key Entry Features
+This process is detailed in the **Backend Server: OpenProject OAuth2 Configuration** section above.
 
-- Full clipboard paste support
-- Show/hide toggle for visibility verification
-- Real-time format validation
-- Mobile-optimized input fields
+### Logout Behavior
+
+The application includes a **Logout** feature accessible from the Settings page. Understanding its behavior is important:
+
+#### What Logout Does
+
+- **Clears local authentication tokens**: Removes the `access_token` and `refresh_token` stored on the device
+- **Invalidates the app session**: You will need to authenticate again to use the app
+- **Allows switching users**: Enables logging in with a different OpenProject account
+
+#### Important Limitations
+
+**Browser Credential Caching**: The OAuth2 authentication flow uses an in-app browser (Chrome Custom Tabs on Android, Safari View Controller on iOS) that may cache credentials. This means:
+
+- If your browser has saved your OpenProject username and password, the next time you authenticate, you may be **automatically logged in** without re-entering credentials
+- This is **expected OAuth2 behavior** and not a security issue with the SIREN application
+- The logout function correctly clears all app-stored tokens from the device's secure storage
+
+#### How to Fully Clear Browser Credentials
+
+If you want to completely clear cached credentials and force manual login:
+
+**Android:**
+1. Go to your device's **Settings** → **Apps** → **Chrome**
+2. Select **Storage** → **Clear Data** or **Clear Cache**
+
+**iOS:**
+1. Go to **Settings** → **Safari**
+2. Tap **Clear History and Website Data**
+
 
 ## Architecture
 
@@ -141,7 +193,7 @@ Data Layer (Repositories/Data Sources/Models)
 ### OpenProject REST API v3
 
 - **Base URL**: Configurable server URL + `/api/v3`
-- **Authentication**: OpenProject API Key (Basic Auth)
+- **Authentication**: OAuth2 Bearer Token (obtained via the OAuth2 + PKCE flow)
 - **Content Format**: `application/hal+json` (HATEOAS)
 - **Content-Type**: `application/json` for request bodies
 
