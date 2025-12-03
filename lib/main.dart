@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:app_links/app_links.dart';
+import 'package:flutter/material.dart';
+import 'package:siren_app/core/theme/app_colors.dart';
+import 'core/auth/auth_service.dart';
 import 'core/di/di_container.dart';
 import 'core/di/injection.dart';
-import 'core/auth/auth_service.dart';
 import 'features/config/presentation/pages/app_initialization_page.dart';
 import 'features/config/presentation/pages/server_config_page.dart';
 import 'features/config/presentation/pages/settings_page.dart';
@@ -66,25 +67,34 @@ class _SirenAppState extends State<SirenApp> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: AppColors.primaryBlue,
+      brightness: Brightness.light,
+    );
+
     return MaterialApp(
       title: 'SIREN',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepOrange,
-          brightness: Brightness.light,
-        ),
+        colorScheme: colorScheme,
+        scaffoldBackgroundColor: AppColors.background,
         useMaterial3: true,
         appBarTheme: const AppBarTheme(
           centerTitle: true,
           elevation: 0,
+          backgroundColor: AppColors.primaryBlue,
+          foregroundColor: Colors.white,
         ),
         inputDecorationTheme: const InputDecorationTheme(
           border: OutlineInputBorder(),
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          filled: true,
+          fillColor: AppColors.surface,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primaryButton,
+            foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -126,7 +136,7 @@ class HomePage extends StatelessWidget {
             const Icon(
               Icons.check_circle,
               size: 80,
-              color: Colors.green,
+              color: AppColors.primaryBlue,
             ),
             const SizedBox(height: 24),
             Text(
@@ -137,7 +147,7 @@ class HomePage extends StatelessWidget {
             Text(
               'The app is configured and ready to use.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
+                    color: AppColors.lightBlue,
                   ),
             ),
             const SizedBox(height: 32),

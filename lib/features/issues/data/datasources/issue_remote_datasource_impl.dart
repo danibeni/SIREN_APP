@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:logging/logging.dart';
-import '../../../../core/error/failures.dart';
-import '../../domain/entities/issue_entity.dart';
+import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'issue_remote_datasource.dart';
 
 /// Implementation of IssueRemoteDataSource for OpenProject API v3
