@@ -1,4 +1,4 @@
-import '../../domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 
 /// Remote data source interface for OpenProject API communication
 /// 

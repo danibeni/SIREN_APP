@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
+import 'package:siren_app/core/theme/app_colors.dart';
 import '../cubit/server_config_cubit.dart';
 import '../cubit/server_config_state.dart';
 
@@ -66,14 +67,14 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Configuration saved: ${state.serverUrl}'),
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.primaryBlue,
               ),
             );
           } else if (state is ServerConfigAuthenticationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Authentication successful!'),
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.primaryPurple,
               ),
             );
             // Clear navigation stack and go to home
@@ -85,7 +86,7 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: Colors.red,
+                backgroundColor: AppColors.error,
               ),
             );
           }
@@ -108,7 +109,7 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                   const Icon(
                     Icons.settings_remote,
                     size: 80,
-                    color: Colors.deepOrange,
+                    color: AppColors.primaryBlue,
                   ),
                   const SizedBox(height: 24),
                   Text(
@@ -132,7 +133,7 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                       hintText: 'https://openproject.example.com',
                       prefixIcon: const Icon(Icons.cloud),
                       suffixIcon: validationState?.isServerUrlValid == true
-                          ? const Icon(Icons.check_circle, color: Colors.green)
+                          ? const Icon(Icons.check_circle, color: AppColors.primaryBlue)
                           : null,
                       helperText: 'Enter your OpenProject server base URL',
                       errorText: validationState?.serverUrlError,
@@ -191,7 +192,7 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                             },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.deepOrange,
+                        backgroundColor: AppColors.primaryPurple,
                         foregroundColor: Colors.white,
                       ),
                       child: isLoading
@@ -228,7 +229,7 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.green,
+                        backgroundColor: AppColors.primaryBlue,
                         foregroundColor: Colors.white,
                       ),
                     ),

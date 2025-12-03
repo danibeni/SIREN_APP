@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
+import 'package:siren_app/core/theme/app_colors.dart';
 import '../cubit/server_config_cubit.dart';
 import '../cubit/server_config_state.dart';
 
@@ -60,7 +61,7 @@ class _SettingsViewState extends State<_SettingsView> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Configuration saved successfully'),
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.success,
               ),
             );
             setState(() => _isEditMode = false);
@@ -72,7 +73,7 @@ class _SettingsViewState extends State<_SettingsView> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(state.message),
-                backgroundColor: Colors.red,
+                backgroundColor: AppColors.error,
               ),
             );
           } else if (state is ServerConfigInitial) {
@@ -84,7 +85,7 @@ class _SettingsViewState extends State<_SettingsView> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Logged out successfully'),
-                backgroundColor: Colors.green,
+                backgroundColor: AppColors.success,
               ),
             );
             Navigator.of(context).pushNamedAndRemoveUntil(
@@ -126,7 +127,7 @@ class _SettingsViewState extends State<_SettingsView> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.cloud, color: Colors.deepOrange),
+                      const Icon(Icons.cloud, color: AppColors.iconPrimary),
                       const SizedBox(width: 8),
                       Text(
                         'Server Configuration',
@@ -152,38 +153,44 @@ class _SettingsViewState extends State<_SettingsView> {
             label: const Text('Edit Configuration'),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              backgroundColor: Colors.deepOrange,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primaryButton,
+              foregroundColor: AppColors.buttonText,
             ),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => _showLogoutConfirmation(context),
-            icon: const Icon(Icons.logout),
-            label: const Text('Logout'),
+            icon: const Icon(Icons.logout, color: AppColors.textSecondary),
+            label: const Text(
+              'Logout',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              foregroundColor: Colors.orange,
+              foregroundColor: AppColors.warning,
             ),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => _showClearConfirmation(context),
-            icon: const Icon(Icons.delete_outline),
-            label: const Text('Clear Configuration'),
+            icon: const Icon(Icons.delete_outline, color: AppColors.textSecondary),
+            label: const Text(
+              'Clear Configuration',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
-              foregroundColor: Colors.red,
+              foregroundColor: AppColors.error,
             ),
           ),
           const SizedBox(height: 24),
           Card(
-            color: Colors.amber[50],
+            color: AppColors.info.withOpacity(0.1),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: Colors.amber),
+                  const Icon(Icons.info_outline, color: AppColors.info),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -209,7 +216,7 @@ class _SettingsViewState extends State<_SettingsView> {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey[600]),
+        Icon(icon, size: 20, color: AppColors.iconSecondary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -218,7 +225,7 @@ class _SettingsViewState extends State<_SettingsView> {
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey[600],
+                      color: AppColors.textSecondary,
                     ),
               ),
               const SizedBox(height: 4),
@@ -256,7 +263,7 @@ class _SettingsViewState extends State<_SettingsView> {
                 hintText: 'https://openproject.example.com',
                 prefixIcon: const Icon(Icons.cloud),
                 suffixIcon: validationState?.isServerUrlValid == true
-                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    ? const Icon(Icons.check_circle, color: AppColors.success)
                     : null,
                 errorText: validationState?.serverUrlError,
                 border: const OutlineInputBorder(),
@@ -294,8 +301,8 @@ class _SettingsViewState extends State<_SettingsView> {
                     onPressed: isLoading ? null : _saveConfiguration,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.deepOrange,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.primaryButton,
+                      foregroundColor: AppColors.buttonText,
                     ),
                     child: isLoading
                         ? const SizedBox(
@@ -303,7 +310,7 @@ class _SettingsViewState extends State<_SettingsView> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.buttonText),
                             ),
                           )
                         : const Text('Save'),
@@ -345,7 +352,7 @@ class _SettingsViewState extends State<_SettingsView> {
               Navigator.of(dialogContext).pop();
               context.read<ServerConfigCubit>().logout();
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            style: TextButton.styleFrom(foregroundColor: AppColors.warning),
             child: const Text('Logout'),
           ),
         ],
@@ -372,7 +379,7 @@ class _SettingsViewState extends State<_SettingsView> {
               Navigator.of(dialogContext).pop();
               context.read<ServerConfigCubit>().clearConfiguration();
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Clear'),
           ),
         ],
