@@ -8,6 +8,7 @@ import 'core/di/injection.dart';
 import 'features/config/presentation/pages/app_initialization_page.dart';
 import 'features/config/presentation/pages/server_config_page.dart';
 import 'features/config/presentation/pages/settings_page.dart';
+import 'features/issues/presentation/pages/issue_form_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -106,13 +107,14 @@ class _SirenAppState extends State<SirenApp> {
         '/config': (context) => const ServerConfigPage(),
         '/settings': (context) => const SettingsPage(),
         '/home': (context) => const HomePage(),
+        '/create-issue': (context) => const IssueFormPage(),
       },
     );
   }
 }
 
 
-/// Placeholder home page - will be replaced with IssueListPage
+/// Placeholder home page - will be replaced with IssueListPage in Story 4
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -134,36 +136,48 @@ class HomePage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
-              Icons.check_circle,
+              Icons.assignment,
               size: 80,
               color: AppColors.primaryBlue,
             ),
             const SizedBox(height: 24),
             Text(
-              'Configuration Complete!',
+              'Issue Management',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'The app is configured and ready to use.',
+              'Create and manage technical issues',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.lightBlue,
+                    color: AppColors.textSecondary,
                   ),
             ),
             const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.of(context).pushNamed('/settings'),
-              icon: const Icon(Icons.settings),
-              label: const Text('Open Settings'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
+            Text(
+              'Tap + to create a new issue',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.of(context).pushNamed('/create-issue');
+          if (result == true && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Issue created successfully!'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          }
+        },
+        backgroundColor: AppColors.primaryPurple,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text('New Issue'),
       ),
     );
   }

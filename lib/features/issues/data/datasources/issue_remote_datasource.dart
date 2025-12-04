@@ -1,15 +1,15 @@
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 
 /// Remote data source interface for OpenProject API communication
-/// 
+///
 /// This interface defines the contract for remote API operations.
 /// The implementation handles HTTP requests to OpenProject API v3.
 abstract class IssueRemoteDataSource {
   /// Retrieve all work packages (issues) from OpenProject API
-  /// 
+  ///
   /// Returns only issues accessible to the authenticated user
   /// (enforced by OpenProject API group-based access control)
-  /// 
+  ///
   /// [status] - Optional filter by status ID
   /// [equipmentId] - Optional filter by project/equipment ID
   /// [priorityLevel] - Optional filter by priority
@@ -26,16 +26,16 @@ abstract class IssueRemoteDataSource {
   });
 
   /// Retrieve a single work package by ID
-  /// 
+  ///
   /// Must capture lockVersion for subsequent updates
   Future<Map<String, dynamic>> getIssueById(int id);
 
   /// Create a new work package (issue)
-  /// 
+  ///
   /// Uses two-step flow:
   /// 1. Validation: POST /api/v3/projects/{id}/work_packages/form
   /// 2. Execution: POST /api/v3/work_packages
-  /// 
+  ///
   /// Returns the created work package with all fields including ID and lockVersion
   Future<Map<String, dynamic>> createIssue({
     required String subject,
@@ -46,7 +46,7 @@ abstract class IssueRemoteDataSource {
   });
 
   /// Update an existing work package
-  /// 
+  ///
   /// Requires lockVersion for optimistic locking
   /// Updates: Subject, Description, Priority Level, Status
   /// Note: Group and Equipment are read-only and must not be included
@@ -60,7 +60,7 @@ abstract class IssueRemoteDataSource {
   });
 
   /// Add attachment to a work package
-  /// 
+  ///
   /// Uploads photo/document for issue resolution
   Future<void> addAttachment({
     required int issueId,
@@ -70,23 +70,27 @@ abstract class IssueRemoteDataSource {
   });
 
   /// Retrieve all groups accessible to the authenticated user
-  /// 
+  ///
   /// Used for Group selection in issue creation
   Future<List<Map<String, dynamic>>> getGroups();
 
   /// Retrieve projects (equipment) available for a specific group
-  /// 
+  ///
   /// Filters projects by group membership
   Future<List<Map<String, dynamic>>> getProjectsByGroup(int groupId);
 
   /// Retrieve all statuses (global)
-  /// 
+  ///
   /// Used for Status dropdown
   Future<List<Map<String, dynamic>>> getStatuses();
 
   /// Retrieve types for a specific project
-  /// 
+  ///
   /// Types are project-specific and required for issue creation
   Future<List<Map<String, dynamic>>> getTypesByProject(int projectId);
-}
 
+  /// Retrieve all priorities from OpenProject
+  ///
+  /// Used for mapping PriorityLevel to actual OpenProject priority IDs
+  Future<List<Map<String, dynamic>>> getPriorities();
+}
