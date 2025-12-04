@@ -1,4 +1,4 @@
-import '../../domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 
 /// Data Transfer Object for Issue/Work Package
 ///
@@ -35,7 +35,9 @@ class IssueModel {
 
   /// Create IssueModel from OpenProject API JSON response
   ///
-  /// Parses HATEOAS _links structure to extract related resource IDs
+  /// Parses HATEOAS _links structure to extract related resource data.
+  /// IMPORTANT: Maps priority and status by NAME (title), not by ID,
+  /// because OpenProject IDs vary between installations.
   factory IssueModel.fromJson(Map<String, dynamic> json) {
     // Extract description from nested structure
     final descriptionObj = json['description'] as Map<String, dynamic>?;
@@ -47,17 +49,15 @@ class IssueModel {
     final projectHref = projectLink?['href'] as String?;
     final equipment = _extractIdFromHref(projectHref) ?? 0;
 
-    // Extract priority from _links and map to enum
+    // Extract priority from _links and map by NAME (title), not ID
     final priorityLink = links?['priority'] as Map<String, dynamic>?;
-    final priorityHref = priorityLink?['href'] as String?;
-    final priorityId = _extractIdFromHref(priorityHref);
-    final priorityLevel = _mapIdToPriority(priorityId);
+    final priorityTitle = priorityLink?['title'] as String?;
+    final priorityLevel = _mapNameToPriority(priorityTitle);
 
-    // Extract status from _links and map to enum
+    // Extract status from _links and map by NAME (title), not ID
     final statusLink = links?['status'] as Map<String, dynamic>?;
-    final statusHref = statusLink?['href'] as String?;
-    final statusId = _extractIdFromHref(statusHref);
-    final status = _mapIdToStatus(statusId);
+    final statusTitle = statusLink?['title'] as String?;
+    final status = _mapNameToStatus(statusTitle);
 
     // Extract creator/author from _links
     final authorLink = links?['author'] as Map<String, dynamic>?;
@@ -176,23 +176,47 @@ class IssueModel {
     return DateTime.tryParse(dateStr);
   }
 
-  /// Map OpenProject priority ID to PriorityLevel enum
-  static PriorityLevel _mapIdToPriority(int? id) {
-    switch (id) {
-      case 1:
-        return PriorityLevel.low;
-      case 2:
-        return PriorityLevel.normal;
-      case 3:
-        return PriorityLevel.high;
-      case 4:
-        return PriorityLevel.immediate;
-      default:
-        return PriorityLevel.normal;
+  /// Map OpenProject priority name (title) to PriorityLevel enum.
+  /// Uses case-insensitive matching as names are consistent across installations.
+  static PriorityLevel _mapNameToPriority(String? name) {
+    if (name == null || name.isEmpty) return PriorityLevel.normal;
+
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('low')) {
+      return PriorityLevel.low;
+    } else if (lowerName.contains('immediate')) {
+      return PriorityLevel.immediate;
+    } else if (lowerName.contains('high')) {
+      return PriorityLevel.high;
+    } else if (lowerName.contains('normal')) {
+      return PriorityLevel.normal;
     }
+    return PriorityLevel.normal;
   }
 
-  /// Map PriorityLevel enum to OpenProject priority ID
+  /// Map OpenProject status name (title) to IssueStatus enum.
+  /// Uses case-insensitive matching as names are consistent across installations.
+  /// Supports 5 status values: New, In Progress, On Hold, Closed, Rejected.
+  static IssueStatus _mapNameToStatus(String? name) {
+    if (name == null || name.isEmpty) return IssueStatus.newStatus;
+
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('rejected') || lowerName.contains('rechazad')) {
+      return IssueStatus.rejected;
+    } else if (lowerName.contains('closed') || lowerName.contains('cerrad')) {
+      return IssueStatus.closed;
+    } else if (lowerName.contains('hold') || lowerName.contains('esper')) {
+      return IssueStatus.onHold;
+    } else if (lowerName.contains('progress') || lowerName.contains('curso')) {
+      return IssueStatus.inProgress;
+    } else if (lowerName.contains('new') || lowerName.contains('nuev')) {
+      return IssueStatus.newStatus;
+    }
+    return IssueStatus.newStatus;
+  }
+
+  /// Map PriorityLevel enum to OpenProject priority ID (fallback only).
+  /// IMPORTANT: Use _getPriorityHref in data source for dynamic ID resolution.
   static int _mapPriorityToId(PriorityLevel priority) {
     switch (priority) {
       case PriorityLevel.low:
@@ -206,29 +230,20 @@ class IssueModel {
     }
   }
 
-  /// Map OpenProject status ID to IssueStatus enum
-  static IssueStatus _mapIdToStatus(int? id) {
-    switch (id) {
-      case 1:
-        return IssueStatus.newStatus;
-      case 2:
-        return IssueStatus.inProgress;
-      case 3:
-        return IssueStatus.closed;
-      default:
-        return IssueStatus.newStatus;
-    }
-  }
-
-  /// Map IssueStatus enum to OpenProject status ID
+  /// Map IssueStatus enum to OpenProject status ID (fallback only).
+  /// IMPORTANT: Status IDs should be fetched dynamically from /api/v3/statuses.
   static int _mapStatusToId(IssueStatus status) {
     switch (status) {
       case IssueStatus.newStatus:
         return 1;
       case IssueStatus.inProgress:
         return 2;
-      case IssueStatus.closed:
+      case IssueStatus.onHold:
         return 3;
+      case IssueStatus.closed:
+        return 4;
+      case IssueStatus.rejected:
+        return 5;
     }
   }
 }

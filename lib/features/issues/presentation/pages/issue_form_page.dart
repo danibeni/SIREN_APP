@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../../core/di/injection.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../domain/entities/issue_entity.dart';
+import 'package:siren_app/core/di/injection.dart' as injection;
+import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import '../bloc/create_issue_cubit.dart';
 import '../bloc/create_issue_state.dart';
 
@@ -22,7 +21,7 @@ class IssueFormPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => getIt<CreateIssueCubit>()..initializeForm(),
+      create: (_) => injection.getIt<CreateIssueCubit>()..initializeForm(),
       child: const _IssueFormView(),
     );
   }

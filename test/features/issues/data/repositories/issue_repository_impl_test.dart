@@ -41,8 +41,10 @@ void main() {
             subject: subject,
             description: description,
             projectId: equipment,
-            priorityId: 3, // High
-            statusId: 1, // New
+            priorityId: 9,
+            priorityTitle: 'High',
+            statusId: 1,
+            statusTitle: 'New',
             lockVersion: 0,
           );
 

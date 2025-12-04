@@ -493,8 +493,12 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         return 1;
       case IssueStatus.inProgress:
         return 2;
-      case IssueStatus.closed:
+      case IssueStatus.onHold:
         return 3;
+      case IssueStatus.closed:
+        return 4;
+      case IssueStatus.rejected:
+        return 5;
     }
   }
 }

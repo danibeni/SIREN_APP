@@ -1,9 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-
-import '../../../../core/error/failures.dart';
-import '../../domain/entities/issue_entity.dart';
-import '../../domain/repositories/issue_repository.dart';
+import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/repositories/issue_repository.dart';
 import '../datasources/issue_remote_datasource.dart';
 import '../models/issue_model.dart';
 
@@ -163,8 +162,12 @@ class IssueRepositoryImpl implements IssueRepository {
         return 1;
       case IssueStatus.inProgress:
         return 2;
-      case IssueStatus.closed:
+      case IssueStatus.onHold:
         return 3;
+      case IssueStatus.closed:
+        return 4;
+      case IssueStatus.rejected:
+        return 5;
     }
   }
 }

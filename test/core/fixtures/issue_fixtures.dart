@@ -52,7 +52,8 @@ class IssueFixtures {
     );
   }
 
-  /// Create a sample OpenProject API response map for a work package
+  /// Create a sample OpenProject API response map for a work package.
+  /// IMPORTANT: priorityTitle and statusTitle are used for mapping (not IDs).
   static Map<String, dynamic> createWorkPackageMap({
     int? id,
     String? subject,
@@ -60,7 +61,9 @@ class IssueFixtures {
     int? projectId,
     int? groupId,
     int? priorityId,
+    String? priorityTitle,
     int? statusId,
+    String? statusTitle,
     int? creatorId,
     String? creatorName,
     int? lockVersion,
@@ -87,12 +90,12 @@ class IssueFixtures {
           'title': 'Task',
         },
         'priority': {
-          'href': '/api/v3/priorities/${priorityId ?? 5}',
-          'title': 'Normal',
+          'href': '/api/v3/priorities/${priorityId ?? 8}',
+          'title': priorityTitle ?? 'Normal',
         },
         'status': {
           'href': '/api/v3/statuses/${statusId ?? 1}',
-          'title': 'New',
+          'title': statusTitle ?? 'New',
         },
         'author': creatorId != null
             ? {
@@ -111,6 +114,8 @@ class IssueFixtures {
   static List<Map<String, dynamic>> createWorkPackageMapList({
     int count = 3,
   }) {
+    final priorityTitles = ['Low', 'Normal', 'High', 'Immediate'];
+    final statusTitles = ['New', 'In progress', 'On hold', 'Closed', 'Rejected'];
     return List.generate(
       count,
       (index) => createWorkPackageMap(
@@ -118,8 +123,10 @@ class IssueFixtures {
         subject: 'Test Issue ${index + 1}',
         description: 'Description for issue ${index + 1}',
         projectId: 100 + index,
-        priorityId: 5 + index,
+        priorityId: 7 + index,
+        priorityTitle: priorityTitles[index % priorityTitles.length],
         statusId: 1 + index,
+        statusTitle: statusTitles[index % statusTitles.length],
         lockVersion: index,
       ),
     );
@@ -213,8 +220,10 @@ class IssueFixtures {
   static List<Map<String, dynamic>> createStatusMapList() {
     return [
       createStatusMap(id: 1, name: 'New', isDefault: true, isClosed: false),
-      createStatusMap(id: 2, name: 'In Progress', isDefault: false, isClosed: false),
-      createStatusMap(id: 3, name: 'Closed', isDefault: false, isClosed: true),
+      createStatusMap(id: 7, name: 'In progress', isDefault: false, isClosed: false),
+      createStatusMap(id: 9, name: 'On hold', isDefault: false, isClosed: false),
+      createStatusMap(id: 12, name: 'Closed', isDefault: false, isClosed: true),
+      createStatusMap(id: 13, name: 'Rejected', isDefault: false, isClosed: true),
     ];
   }
 

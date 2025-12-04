@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import 'package:siren_app/core/auth/auth_service.dart';
+import 'package:siren_app/core/di/di_container.dart';
+import 'package:siren_app/core/di/injection.dart' as injection;
 import 'package:siren_app/core/theme/app_colors.dart';
-import 'core/auth/auth_service.dart';
-import 'core/di/di_container.dart';
-import 'core/di/injection.dart';
-import 'features/config/presentation/pages/app_initialization_page.dart';
-import 'features/config/presentation/pages/server_config_page.dart';
-import 'features/config/presentation/pages/settings_page.dart';
-import 'features/issues/presentation/pages/issue_form_page.dart';
+import 'package:siren_app/features/config/presentation/pages/app_initialization_page.dart';
+import 'package:siren_app/features/config/presentation/pages/server_config_page.dart';
+import 'package:siren_app/features/config/presentation/pages/settings_page.dart';
+import 'package:siren_app/features/issues/presentation/pages/issue_form_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,7 +57,7 @@ class _SirenAppState extends State<SirenApp> {
       final code = uri.queryParameters['code'];
       final error = uri.queryParameters['error'];
       final errorDescription = uri.queryParameters['error_description'];
-      final authService = getIt<AuthService>();
+      final authService = injection.getIt<AuthService>();
       authService.handleAuthCallback(
         code,
         error: error,

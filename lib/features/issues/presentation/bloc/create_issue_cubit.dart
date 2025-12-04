@@ -1,10 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
-
-import '../../../../core/error/failures.dart';
-import '../../data/datasources/issue_remote_datasource.dart';
-import '../../domain/entities/issue_entity.dart';
-import '../../domain/usecases/create_issue_uc.dart';
+import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/features/issues/data/datasources/issue_remote_datasource.dart';
+import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/usecases/create_issue_uc.dart';
 import 'create_issue_state.dart';
 
 /// Cubit for managing Create Issue form state
