@@ -100,15 +100,12 @@ void main() {
         expect(model.creatorName, 'Jane Smith');
       });
 
-      test('should map priority ID to PriorityLevel enum', () {
-        // Given - Testing priority ID 1 (Low)
-        final jsonLow = _createJsonWithPriority(1);
-        // Given - Testing priority ID 2 (Normal)
-        final jsonNormal = _createJsonWithPriority(2);
-        // Given - Testing priority ID 3 (High)
-        final jsonHigh = _createJsonWithPriority(3);
-        // Given - Testing priority ID 4 (Immediate)
-        final jsonImmediate = _createJsonWithPriority(4);
+      test('should map priority name (title) to PriorityLevel enum', () {
+        // Given - Testing priority by name
+        final jsonLow = _createJsonWithPriority(7, 'Low');
+        final jsonNormal = _createJsonWithPriority(8, 'Normal');
+        final jsonHigh = _createJsonWithPriority(9, 'High');
+        final jsonImmediate = _createJsonWithPriority(10, 'Immediate');
 
         // When & Then
         expect(IssueModel.fromJson(jsonLow).priorityLevel, PriorityLevel.low);
@@ -123,13 +120,13 @@ void main() {
         );
       });
 
-      test('should map status ID to IssueStatus enum', () {
-        // Given - Testing status ID 1 (New)
-        final jsonNew = _createJsonWithStatus(1);
-        // Given - Testing status ID 2 (In Progress)
-        final jsonInProgress = _createJsonWithStatus(2);
-        // Given - Testing status ID 3 (Closed)
-        final jsonClosed = _createJsonWithStatus(3);
+      test('should map status name (title) to IssueStatus enum', () {
+        // Given - Testing all 5 status values by name
+        final jsonNew = _createJsonWithStatus(1, 'New');
+        final jsonInProgress = _createJsonWithStatus(7, 'In progress');
+        final jsonOnHold = _createJsonWithStatus(9, 'On hold');
+        final jsonClosed = _createJsonWithStatus(12, 'Closed');
+        final jsonRejected = _createJsonWithStatus(13, 'Rejected');
 
         // When & Then
         expect(IssueModel.fromJson(jsonNew).status, IssueStatus.newStatus);
@@ -137,12 +134,14 @@ void main() {
           IssueModel.fromJson(jsonInProgress).status,
           IssueStatus.inProgress,
         );
+        expect(IssueModel.fromJson(jsonOnHold).status, IssueStatus.onHold);
         expect(IssueModel.fromJson(jsonClosed).status, IssueStatus.closed);
+        expect(IssueModel.fromJson(jsonRejected).status, IssueStatus.rejected);
       });
 
-      test('should default to normal priority for unknown priority ID', () {
-        // Given
-        final json = _createJsonWithPriority(999);
+      test('should default to normal priority for unknown priority name', () {
+        // Given - Priority with unknown name
+        final json = _createJsonWithPriority(999, 'Unknown Priority');
 
         // When
         final model = IssueModel.fromJson(json);
@@ -151,9 +150,9 @@ void main() {
         expect(model.priorityLevel, PriorityLevel.normal);
       });
 
-      test('should default to newStatus for unknown status ID', () {
-        // Given
-        final json = _createJsonWithStatus(999);
+      test('should default to newStatus for unknown status name', () {
+        // Given - Status with unknown name
+        final json = _createJsonWithStatus(999, 'Unknown Status');
 
         // When
         final model = IssueModel.fromJson(json);
@@ -162,8 +161,42 @@ void main() {
         expect(model.status, IssueStatus.newStatus);
       });
 
+      test('should handle priority name case-insensitively', () {
+        // Given - Various case formats
+        final jsonLower = _createJsonWithPriority(1, 'low');
+        final jsonUpper = _createJsonWithPriority(2, 'HIGH');
+        final jsonMixed = _createJsonWithPriority(3, 'Immediate');
+
+        // When & Then
+        expect(IssueModel.fromJson(jsonLower).priorityLevel, PriorityLevel.low);
+        expect(IssueModel.fromJson(jsonUpper).priorityLevel, PriorityLevel.high);
+        expect(
+          IssueModel.fromJson(jsonMixed).priorityLevel,
+          PriorityLevel.immediate,
+        );
+      });
+
+      test('should handle status name case-insensitively', () {
+        // Given - Various case formats for all 5 statuses
+        final jsonLower = _createJsonWithStatus(1, 'new');
+        final jsonUpper = _createJsonWithStatus(2, 'IN PROGRESS');
+        final jsonOnHold = _createJsonWithStatus(3, 'ON HOLD');
+        final jsonClosed = _createJsonWithStatus(4, 'Closed');
+        final jsonRejected = _createJsonWithStatus(5, 'REJECTED');
+
+        // When & Then
+        expect(IssueModel.fromJson(jsonLower).status, IssueStatus.newStatus);
+        expect(
+          IssueModel.fromJson(jsonUpper).status,
+          IssueStatus.inProgress,
+        );
+        expect(IssueModel.fromJson(jsonOnHold).status, IssueStatus.onHold);
+        expect(IssueModel.fromJson(jsonClosed).status, IssueStatus.closed);
+        expect(IssueModel.fromJson(jsonRejected).status, IssueStatus.rejected);
+      });
+
       test('should handle missing optional fields gracefully', () {
-        // Given
+        // Given - minimal JSON with required title fields for mapping
         final json = {
           'id': 1,
           'subject': 'Minimal Issue',
@@ -171,8 +204,8 @@ void main() {
           '_links': {
             'project': {'href': '/api/v3/projects/1'},
             'type': {'href': '/api/v3/types/1'},
-            'priority': {'href': '/api/v3/priorities/2'},
-            'status': {'href': '/api/v3/statuses/1'},
+            'priority': {'href': '/api/v3/priorities/8', 'title': 'Normal'},
+            'status': {'href': '/api/v3/statuses/1', 'title': 'New'},
           },
         };
 
@@ -187,6 +220,30 @@ void main() {
         expect(model.creatorName, isNull);
         expect(model.createdAt, isNull);
         expect(model.updatedAt, isNull);
+        expect(model.priorityLevel, PriorityLevel.normal);
+        expect(model.status, IssueStatus.newStatus);
+      });
+
+      test('should default to normal/new when title is missing', () {
+        // Given - JSON without title fields (edge case)
+        final json = {
+          'id': 1,
+          'subject': 'Issue without titles',
+          'lockVersion': 0,
+          '_links': {
+            'project': {'href': '/api/v3/projects/1'},
+            'type': {'href': '/api/v3/types/1'},
+            'priority': {'href': '/api/v3/priorities/8'},
+            'status': {'href': '/api/v3/statuses/1'},
+          },
+        };
+
+        // When
+        final model = IssueModel.fromJson(json);
+
+        // Then - should use default values when title is missing
+        expect(model.priorityLevel, PriorityLevel.normal);
+        expect(model.status, IssueStatus.newStatus);
       });
     });
 
@@ -353,30 +410,30 @@ void main() {
 }
 
 // Helper functions for test data creation
-Map<String, dynamic> _createJsonWithPriority(int priorityId) {
+Map<String, dynamic> _createJsonWithPriority(int priorityId, String title) {
   return {
     'id': 1,
     'subject': 'Test',
     'lockVersion': 0,
     '_links': {
-      'project': {'href': '/api/v3/projects/1'},
-      'type': {'href': '/api/v3/types/1'},
-      'priority': {'href': '/api/v3/priorities/$priorityId'},
-      'status': {'href': '/api/v3/statuses/1'},
+      'project': {'href': '/api/v3/projects/1', 'title': 'Project'},
+      'type': {'href': '/api/v3/types/1', 'title': 'Task'},
+      'priority': {'href': '/api/v3/priorities/$priorityId', 'title': title},
+      'status': {'href': '/api/v3/statuses/1', 'title': 'New'},
     },
   };
 }
 
-Map<String, dynamic> _createJsonWithStatus(int statusId) {
+Map<String, dynamic> _createJsonWithStatus(int statusId, String title) {
   return {
     'id': 1,
     'subject': 'Test',
     'lockVersion': 0,
     '_links': {
-      'project': {'href': '/api/v3/projects/1'},
-      'type': {'href': '/api/v3/types/1'},
-      'priority': {'href': '/api/v3/priorities/2'},
-      'status': {'href': '/api/v3/statuses/$statusId'},
+      'project': {'href': '/api/v3/projects/1', 'title': 'Project'},
+      'type': {'href': '/api/v3/types/1', 'title': 'Task'},
+      'priority': {'href': '/api/v3/priorities/8', 'title': 'Normal'},
+      'status': {'href': '/api/v3/statuses/$statusId', 'title': title},
     },
   };
 }

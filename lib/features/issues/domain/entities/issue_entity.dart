@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 enum PriorityLevel { low, normal, high, immediate }
 
 /// Status values for issues
-enum IssueStatus { newStatus, inProgress, closed }
+enum IssueStatus { newStatus, inProgress, onHold, closed, rejected }
 
 /// Pure business entity representing an Issue
 ///
