@@ -1,25 +1,16 @@
 import 'package:equatable/equatable.dart';
 
 /// Priority levels for issues
-enum PriorityLevel {
-  low,
-  normal,
-  high,
-  immediate,
-}
+enum PriorityLevel { low, normal, high, immediate }
 
 /// Status values for issues
-enum IssueStatus {
-  newStatus,
-  inProgress,
-  closed,
-}
+enum IssueStatus { newStatus, inProgress, closed }
 
 /// Pure business entity representing an Issue
-/// 
+///
 /// This is a domain entity following Clean Architecture principles.
 /// It contains no framework dependencies and represents the core business object.
-/// 
+///
 /// Fields:
 /// - Subject: Required, user input (free text)
 /// - Description: Optional, user input (free text)
@@ -91,18 +82,17 @@ class IssueEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        subject,
-        description,
-        equipment,
-        group,
-        priorityLevel,
-        status,
-        creatorId,
-        creatorName,
-        lockVersion,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    subject,
+    description,
+    equipment,
+    group,
+    priorityLevel,
+    status,
+    creatorId,
+    creatorName,
+    lockVersion,
+    createdAt,
+    updatedAt,
+  ];
 }
-

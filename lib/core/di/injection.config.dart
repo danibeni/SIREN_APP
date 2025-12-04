@@ -19,6 +19,17 @@ import '../../features/config/presentation/cubit/app_initialization_cubit.dart'
     as _i465;
 import '../../features/config/presentation/cubit/server_config_cubit.dart'
     as _i34;
+import '../../features/issues/data/datasources/issue_remote_datasource.dart'
+    as _i192;
+import '../../features/issues/data/datasources/issue_remote_datasource_impl.dart'
+    as _i476;
+import '../../features/issues/data/repositories/issue_repository_impl.dart'
+    as _i635;
+import '../../features/issues/domain/repositories/issue_repository.dart'
+    as _i364;
+import '../../features/issues/domain/usecases/create_issue_uc.dart' as _i739;
+import '../../features/issues/presentation/bloc/create_issue_cubit.dart'
+    as _i560;
 import '../auth/auth_service.dart' as _i88;
 import '../auth/oauth2_service.dart' as _i151;
 import '../config/server_config_service.dart' as _i629;
@@ -73,6 +84,27 @@ _i174.GetIt init(
     () => _i34.ServerConfigCubit(
       gh<_i629.ServerConfigService>(),
       gh<_i88.AuthService>(),
+    ),
+  );
+  gh.lazySingleton<_i192.IssueRemoteDataSource>(
+    () => _i476.IssueRemoteDataSourceImpl(
+      dioClient: gh<_i667.DioClient>(),
+      serverConfigService: gh<_i629.ServerConfigService>(),
+      logger: gh<_i831.Logger>(),
+    ),
+  );
+  gh.lazySingleton<_i364.IssueRepository>(
+    () => _i635.IssueRepositoryImpl(
+      remoteDataSource: gh<_i192.IssueRemoteDataSource>(),
+    ),
+  );
+  gh.lazySingleton<_i739.CreateIssueUseCase>(
+    () => _i739.CreateIssueUseCase(gh<_i364.IssueRepository>()),
+  );
+  gh.factory<_i560.CreateIssueCubit>(
+    () => _i560.CreateIssueCubit(
+      gh<_i739.CreateIssueUseCase>(),
+      gh<_i192.IssueRemoteDataSource>(),
     ),
   );
   return getIt;
