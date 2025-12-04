@@ -12,7 +12,7 @@ final getIt = GetIt.instance;
 /// Call this method during app startup (in main.dart) before runApp().
 @InjectableInit(
   initializerName: 'init',
-  preferRelativeImports: true,
+  preferRelativeImports: false,
   asExtension: false,
 )
 Future<void> configureDependencies() async {

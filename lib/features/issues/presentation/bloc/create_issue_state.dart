@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
-
-import '../../domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 
 /// Base state for CreateIssueCubit
 abstract class CreateIssueState extends Equatable {

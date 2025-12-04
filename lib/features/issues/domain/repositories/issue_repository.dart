@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
-import '../../../../core/error/failures.dart';
-import '../entities/issue_entity.dart';
+import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 
 /// Repository interface for Issue management
 ///

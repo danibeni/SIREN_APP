@@ -1,9 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
-
-import '../../../../core/error/failures.dart';
-import '../../domain/entities/issue_entity.dart';
-import '../../domain/repositories/issue_repository.dart';
+import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/repositories/issue_repository.dart';
 import '../datasources/issue_remote_datasource.dart';
 import '../models/issue_model.dart';
 
