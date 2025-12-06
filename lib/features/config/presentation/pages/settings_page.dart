@@ -19,7 +19,9 @@ class SettingsPage extends StatelessWidget {
           create: (_) =>
               getIt<ServerConfigCubit>()..loadExistingConfiguration(),
         ),
-        BlocProvider(create: (_) => getIt<WorkPackageTypeCubit>()..load()),
+        // Use BlocProvider.value to use the singleton instance
+        // This prevents the cubit from being closed when the page is disposed
+        BlocProvider.value(value: getIt<WorkPackageTypeCubit>()..load()),
       ],
       child: const _SettingsView(),
     );

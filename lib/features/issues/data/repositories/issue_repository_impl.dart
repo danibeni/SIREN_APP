@@ -71,6 +71,7 @@ class IssueRepositoryImpl implements IssueRepository {
     int? equipmentId,
     PriorityLevel? priorityLevel,
     int? groupId,
+    required String workPackageType,
   }) async {
     try {
       // Map IssueStatus to API status ID
@@ -79,17 +80,57 @@ class IssueRepositoryImpl implements IssueRepository {
         statusId = _mapStatusToId(status);
       }
 
+      // Resolve Work Package Type name to ID
+      // Get all available types from OpenProject (global types, not project-specific)
+      int? typeId;
+      try {
+        // Use getTypes() to get all global types instead of project-specific types
+        final types = await remoteDataSource.getTypes();
+
+        // Find type by name (case-insensitive)
+        final matchingType = types.firstWhere(
+          (type) =>
+              (type['name'] as String?)?.toLowerCase() ==
+              workPackageType.toLowerCase(),
+          orElse: () => <String, dynamic>{},
+        );
+
+        if (matchingType.isNotEmpty) {
+          typeId = matchingType['id'] as int?;
+        } else {
+          throw ServerFailure(
+            'Work Package Type "$workPackageType" not found in OpenProject. '
+            'Please configure a valid type in Settings.',
+          );
+        }
+      } catch (e) {
+        // If type resolution fails, return failure instead of continuing
+        // This ensures we only show issues of the configured type
+        return Left(
+          ServerFailure('Failed to resolve Work Package Type: ${e.toString()}'),
+        );
+      }
+
       final responseList = await remoteDataSource.getIssues(
         status: statusId,
         equipmentId: equipmentId,
         priorityLevel: priorityLevel,
         groupId: groupId,
+        typeId: typeId,
       );
 
-      // Convert each map to entity
+      // Convert each map to entity and sort by updatedAt (most recent first)
       final entities = responseList
           .map((map) => IssueModel.fromJson(map).toEntity())
           .toList();
+
+      // Sort by updatedAt, most recent first
+      entities.sort((a, b) {
+        if (a.updatedAt == null && b.updatedAt == null) return 0;
+        if (a.updatedAt == null) return 1;
+        if (b.updatedAt == null) return -1;
+        return b.updatedAt!.compareTo(a.updatedAt!);
+      });
 
       return Right(entities);
     } on ServerFailure catch (e) {
@@ -146,6 +187,22 @@ class IssueRepositoryImpl implements IssueRepository {
         description: description,
       );
       return const Right(null);
+    } on ServerFailure catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkFailure catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (e) {
+      return Left(UnexpectedFailure('Unexpected error: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<dynamic>>> getAttachments(int issueId) async {
+    try {
+      // For MVP: Just return attachment metadata from remote data source
+      // Future: Check local cache first, download and cache attachments ≤ 5 MB
+      final attachments = await remoteDataSource.getAttachments(issueId);
+      return Right(attachments);
     } on ServerFailure catch (e) {
       return Left(ServerFailure(e.message));
     } on NetworkFailure catch (e) {

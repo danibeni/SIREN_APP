@@ -22,6 +22,7 @@ class IssueModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String? equipmentName;
+  final int? attachmentCount;
 
   const IssueModel({
     this.id,
@@ -41,6 +42,7 @@ class IssueModel {
     this.createdAt,
     this.updatedAt,
     this.equipmentName,
+    this.attachmentCount,
   });
 
   /// Create IssueModel from OpenProject API JSON response
@@ -92,6 +94,25 @@ class IssueModel {
     final createdAt = _parseDateTime(json['createdAt'] as String?);
     final updatedAt = _parseDateTime(json['updatedAt'] as String?);
 
+    // Extract attachment count from _links.attachments
+    int? attachmentCount;
+    try {
+      final attachmentsLink = links?['attachments'] as List<dynamic>?;
+      attachmentCount = attachmentsLink?.length;
+    } catch (e) {
+      // If attachments link is not an array, try getting count from _embedded
+      try {
+        final embeddedAttachments =
+            embedded?['attachments'] as Map<String, dynamic>?;
+        final attachmentElements =
+            embeddedAttachments?['elements'] as List<dynamic>?;
+        attachmentCount = attachmentElements?.length;
+      } catch (e) {
+        // If both fail, attachmentCount remains null
+        attachmentCount = null;
+      }
+    }
+
     return IssueModel(
       id: json['id'] as int?,
       subject: json['subject'] as String,
@@ -110,6 +131,7 @@ class IssueModel {
       createdAt: createdAt,
       updatedAt: updatedAt,
       equipmentName: equipmentName,
+      attachmentCount: attachmentCount,
     );
   }
 
@@ -159,6 +181,7 @@ class IssueModel {
       createdAt: createdAt,
       updatedAt: updatedAt,
       equipmentName: equipmentName,
+      attachmentCount: attachmentCount,
     );
   }
 
@@ -181,6 +204,7 @@ class IssueModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? equipmentName,
+    int? attachmentCount,
   }) {
     return IssueModel(
       id: id ?? this.id,
@@ -200,6 +224,7 @@ class IssueModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       equipmentName: equipmentName ?? this.equipmentName,
+      attachmentCount: attachmentCount ?? this.attachmentCount,
     );
   }
 

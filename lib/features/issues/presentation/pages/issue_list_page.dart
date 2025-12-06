@@ -16,7 +16,9 @@ class IssueListPage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => getIt<IssuesListCubit>()..loadIssues()),
-        BlocProvider(create: (_) => getIt<WorkPackageTypeCubit>()..load()),
+        // Use BlocProvider.value to use the singleton instance
+        // This prevents the cubit from being closed when the page is disposed
+        BlocProvider.value(value: getIt<WorkPackageTypeCubit>()..load()),
       ],
       child: const _IssueListView(),
     );
@@ -28,78 +30,92 @@ class _IssueListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('SIREN: Issue Reporting'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => context.read<IssuesListCubit>().refresh(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () async {
-              await Navigator.of(context).pushNamed('/settings');
-              // Reload type when returning from settings
-              if (context.mounted) {
-                context.read<WorkPackageTypeCubit>().load();
-                context.read<IssuesListCubit>().refresh();
-              }
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.of(context).pushNamed('/create-issue'),
-        backgroundColor: AppColors.primaryPurple,
-        foregroundColor: AppColors.buttonText,
-        icon: const Icon(Icons.add),
-        label: const Text('New Issue'),
-      ),
-      body: BlocBuilder<IssuesListCubit, IssuesListState>(
-        builder: (context, state) {
-          if (state is IssuesListLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state is IssuesListError) {
-            return _ErrorView(
-              message: state.message,
-              onRetry: () => context.read<IssuesListCubit>().loadIssues(),
-            );
-          }
-          if (state is IssuesListLoaded || state is IssuesListRefreshing) {
-            final issues = state is IssuesListLoaded
-                ? state.issues
-                : (state as IssuesListRefreshing).issues;
-            final typeState = context.watch<WorkPackageTypeCubit>().state;
-            final statusColorByName = _statusColorMap(typeState);
-
-            if (issues.isEmpty) {
-              return const _EmptyView();
+    return BlocListener<WorkPackageTypeCubit, WorkPackageTypeState>(
+      listener: (context, state) {
+        // When type changes (loaded), refresh the issue list
+        if (state is WorkPackageTypeLoaded) {
+          context.read<IssuesListCubit>().refresh();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('SIREN: Issue Reporting'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () => context.read<IssuesListCubit>().refresh(),
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () async {
+                await Navigator.of(context).pushNamed('/settings');
+                // Reload type when returning from settings
+                if (context.mounted) {
+                  context.read<WorkPackageTypeCubit>().load();
+                  // Don't call refresh here - BlocListener will handle it
+                }
+              },
+            ),
+          ],
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => Navigator.of(context).pushNamed('/create-issue'),
+          backgroundColor: AppColors.primaryPurple,
+          foregroundColor: AppColors.buttonText,
+          icon: const Icon(Icons.add),
+          label: const Text('New Issue'),
+        ),
+        body: BlocBuilder<IssuesListCubit, IssuesListState>(
+          builder: (context, state) {
+            if (state is IssuesListLoading) {
+              return const Center(child: CircularProgressIndicator());
             }
+            if (state is IssuesListError) {
+              return _ErrorView(
+                message: state.message,
+                onRetry: () => context.read<IssuesListCubit>().loadIssues(),
+              );
+            }
+            if (state is IssuesListLoaded || state is IssuesListRefreshing) {
+              final issues = state is IssuesListLoaded
+                  ? state.issues
+                  : (state as IssuesListRefreshing).issues;
 
-            return RefreshIndicator(
-              onRefresh: () => context.read<IssuesListCubit>().refresh(),
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: issues.length,
-                itemBuilder: (context, index) {
-                  final issue = issues[index];
-                  final colorHex =
-                      statusColorByName[_normalizeStatusName(issue.statusName)];
-                  return IssueCard(
-                    issue: issue,
-                    statusColorHex: colorHex,
-                    onTap: () {
-                      // Detail view will be added later
-                    },
+              if (issues.isEmpty) {
+                return const _EmptyView();
+              }
+
+              return BlocBuilder<WorkPackageTypeCubit, WorkPackageTypeState>(
+                builder: (context, typeState) {
+                  final statusColorByName = _statusColorMap(typeState);
+
+                  return RefreshIndicator(
+                    onRefresh: () => context.read<IssuesListCubit>().refresh(),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: issues.length,
+                      itemBuilder: (context, index) {
+                        final issue = issues[index];
+                        final colorHex =
+                            statusColorByName[_normalizeStatusName(
+                              issue.statusName,
+                            )];
+                        return IssueCard(
+                          issue: issue,
+                          statusColorHex: colorHex,
+                          onTap: () {
+                            // Detail view will be added later
+                          },
+                        );
+                      },
+                    ),
                   );
                 },
-              ),
-            );
-          }
-          return const SizedBox.shrink();
-        },
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       ),
     );
   }

@@ -11,11 +11,15 @@ abstract class IssueRepository {
   ///
   /// Returns issues filtered by user's authorized Groups/Departments
   /// (enforced by OpenProject API group-based access control)
+  ///
+  /// [workPackageType] - REQUIRED: Work Package Type name from Settings (default: "Issue")
+  /// This filter is always applied to ensure only work packages of the configured type are retrieved
   Future<Either<Failure, List<IssueEntity>>> getIssues({
     IssueStatus? status,
     int? equipmentId,
     PriorityLevel? priorityLevel,
     int? groupId,
+    required String workPackageType,
   });
 
   /// Retrieve a single issue by ID
@@ -58,4 +62,11 @@ abstract class IssueRepository {
     required String fileName,
     String? description,
   });
+
+  /// Get all attachments for an issue
+  ///
+  /// Returns list of attachment metadata (fileName, fileSize, contentType, downloadUrl)
+  /// Checks local cache first when offline
+  /// Used for displaying attachments in issue edit page
+  Future<Either<Failure, List<dynamic>>> getAttachments(int issueId);
 }
