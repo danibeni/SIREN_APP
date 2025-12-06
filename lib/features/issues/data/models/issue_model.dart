@@ -14,6 +14,8 @@ class IssueModel {
   final IssueStatus status;
   final String? statusName;
   final String? statusColorHex;
+  final String? priorityName;
+  final String? priorityColorHex;
   final int? creatorId;
   final String? creatorName;
   final int? updatedById;
@@ -34,6 +36,8 @@ class IssueModel {
     required this.status,
     this.statusName,
     this.statusColorHex,
+    this.priorityName,
+    this.priorityColorHex,
     this.creatorId,
     this.creatorName,
     this.updatedById,
@@ -73,10 +77,16 @@ class IssueModel {
     final status = _mapNameToStatus(statusTitle);
 
     String? statusColorHex;
+    String? priorityColorHex;
     final embedded = json['_embedded'] as Map<String, dynamic>?;
     final embeddedStatus = embedded?['status'] as Map<String, dynamic>?;
     if (embeddedStatus != null) {
       statusColorHex = embeddedStatus['color'] as String?;
+    }
+
+    final embeddedPriority = embedded?['priority'] as Map<String, dynamic>?;
+    if (embeddedPriority != null) {
+      priorityColorHex = embeddedPriority['color'] as String?;
     }
 
     // Extract creator/author from _links
@@ -123,6 +133,8 @@ class IssueModel {
       status: status,
       statusName: statusTitle,
       statusColorHex: statusColorHex,
+      priorityName: priorityTitle,
+      priorityColorHex: priorityColorHex,
       creatorId: creatorId,
       creatorName: creatorName,
       updatedById: updatedById,
@@ -173,6 +185,8 @@ class IssueModel {
       status: status,
       statusName: statusName,
       statusColorHex: statusColorHex,
+      priorityName: priorityName,
+      priorityColorHex: priorityColorHex,
       creatorId: creatorId,
       creatorName: creatorName,
       updatedById: updatedById,
@@ -196,6 +210,8 @@ class IssueModel {
     IssueStatus? status,
     String? statusName,
     String? statusColorHex,
+    String? priorityName,
+    String? priorityColorHex,
     int? creatorId,
     String? creatorName,
     int? updatedById,
@@ -216,6 +232,8 @@ class IssueModel {
       status: status ?? this.status,
       statusName: statusName ?? this.statusName,
       statusColorHex: statusColorHex ?? this.statusColorHex,
+      priorityName: priorityName ?? this.priorityName,
+      priorityColorHex: priorityColorHex ?? this.priorityColorHex,
       creatorId: creatorId ?? this.creatorId,
       creatorName: creatorName ?? this.creatorName,
       updatedById: updatedById ?? this.updatedById,

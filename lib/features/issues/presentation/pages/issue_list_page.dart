@@ -138,7 +138,10 @@ class _IssueListView extends StatelessWidget {
                                 issue: issue,
                                 statusColorHex: colorHex,
                                 onTap: () {
-                                  // Detail view will be added later
+                                  Navigator.of(context).pushNamed(
+                                    '/issue-detail',
+                                    arguments: issue.id,
+                                  );
                                 },
                               );
                             },

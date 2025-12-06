@@ -30,6 +30,8 @@ class IssueEntity extends Equatable {
   final IssueStatus status;
   final String? statusName;
   final String? statusColorHex;
+  final String? priorityName;
+  final String? priorityColorHex;
   final int? creatorId; // OpenProject user ID
   final String? creatorName;
   final int? updatedById;
@@ -50,6 +52,8 @@ class IssueEntity extends Equatable {
     required this.status,
     this.statusName,
     this.statusColorHex,
+    this.priorityName,
+    this.priorityColorHex,
     this.creatorId,
     this.creatorName,
     this.updatedById,
@@ -76,6 +80,8 @@ class IssueEntity extends Equatable {
     String? updatedByName,
     String? statusName,
     String? statusColorHex,
+    String? priorityName,
+    String? priorityColorHex,
     int? lockVersion,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -92,6 +98,8 @@ class IssueEntity extends Equatable {
       status: status ?? this.status,
       statusName: statusName ?? this.statusName,
       statusColorHex: statusColorHex ?? this.statusColorHex,
+      priorityName: priorityName ?? this.priorityName,
+      priorityColorHex: priorityColorHex ?? this.priorityColorHex,
       creatorId: creatorId ?? this.creatorId,
       creatorName: creatorName ?? this.creatorName,
       updatedById: updatedById ?? this.updatedById,
@@ -115,6 +123,8 @@ class IssueEntity extends Equatable {
     status,
     statusName,
     statusColorHex,
+    priorityName,
+    priorityColorHex,
     creatorId,
     creatorName,
     updatedById,
