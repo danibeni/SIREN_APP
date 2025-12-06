@@ -282,13 +282,23 @@ void main() {
               equipmentId: any(named: 'equipmentId'),
               priorityLevel: any(named: 'priorityLevel'),
               groupId: any(named: 'groupId'),
+              typeId: any(named: 'typeId'),
               offset: any(named: 'offset'),
               pageSize: any(named: 'pageSize'),
+              sortBy: any(named: 'sortBy'),
+              sortDirection: any(named: 'sortDirection'),
             ),
           ).thenAnswer((_) async => responseList);
 
+          // Also mock getTypes for type resolution
+          when(() => mockDataSource.getTypes()).thenAnswer(
+            (_) async => [
+              {'id': 1, 'name': 'Issue'},
+            ],
+          );
+
           // When
-          final result = await repository.getIssues();
+          final result = await repository.getIssues(workPackageType: 'Issue');
 
           // Then
           expect(result.isRight(), true);
@@ -308,13 +318,23 @@ void main() {
             equipmentId: any(named: 'equipmentId'),
             priorityLevel: any(named: 'priorityLevel'),
             groupId: any(named: 'groupId'),
+            typeId: any(named: 'typeId'),
             offset: any(named: 'offset'),
             pageSize: any(named: 'pageSize'),
+            sortBy: any(named: 'sortBy'),
+            sortDirection: any(named: 'sortDirection'),
           ),
         ).thenAnswer((_) async => []);
 
+        // Also mock getTypes for type resolution
+        when(() => mockDataSource.getTypes()).thenAnswer(
+          (_) async => [
+            {'id': 1, 'name': 'Issue'},
+          ],
+        );
+
         // When
-        final result = await repository.getIssues();
+        final result = await repository.getIssues(workPackageType: 'Issue');
 
         // Then
         expect(result.isRight(), true);
@@ -332,13 +352,23 @@ void main() {
             equipmentId: any(named: 'equipmentId'),
             priorityLevel: any(named: 'priorityLevel'),
             groupId: any(named: 'groupId'),
+            typeId: any(named: 'typeId'),
             offset: any(named: 'offset'),
             pageSize: any(named: 'pageSize'),
+            sortBy: any(named: 'sortBy'),
+            sortDirection: any(named: 'sortDirection'),
           ),
         ).thenThrow(const ServerFailure('Failed to fetch'));
 
+        // Also mock getTypes for type resolution
+        when(() => mockDataSource.getTypes()).thenAnswer(
+          (_) async => [
+            {'id': 1, 'name': 'Issue'},
+          ],
+        );
+
         // When
-        final result = await repository.getIssues();
+        final result = await repository.getIssues(workPackageType: 'Issue');
 
         // Then
         expect(result.isLeft(), true);

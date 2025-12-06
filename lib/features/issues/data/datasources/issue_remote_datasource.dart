@@ -14,15 +14,21 @@ abstract class IssueRemoteDataSource {
   /// [equipmentId] - Optional filter by project/equipment ID
   /// [priorityLevel] - Optional filter by priority
   /// [groupId] - Optional filter by group ID
+  /// [typeId] - Optional filter by Work Package Type ID
   /// [offset] - Pagination offset
   /// [pageSize] - Number of items per page
+  /// [sortBy] - Sort criteria (e.g., "updated_at" for modification date)
+  /// [sortDirection] - Sort direction ("asc" or "desc")
   Future<List<Map<String, dynamic>>> getIssues({
     int? status,
     int? equipmentId,
     PriorityLevel? priorityLevel,
     int? groupId,
+    int? typeId,
     int offset = 0,
     int pageSize = 50,
+    String sortBy = 'updated_at',
+    String sortDirection = 'desc',
   });
 
   /// Retrieve a single work package by ID
@@ -98,4 +104,11 @@ abstract class IssueRemoteDataSource {
   ///
   /// Used for Settings type selection
   Future<List<Map<String, dynamic>>> getTypes();
+
+  /// Retrieve all attachments for a work package
+  ///
+  /// Returns attachments in collection format with _embedded.elements
+  /// Includes metadata: fileName, fileSize, contentType, createdAt
+  /// HATEOAS links: downloadLocation, delete (if permitted), author
+  Future<List<Map<String, dynamic>>> getAttachments(int issueId);
 }

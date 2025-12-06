@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
@@ -51,38 +53,43 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
     int? equipmentId,
     PriorityLevel? priorityLevel,
     int? groupId,
+    int? typeId,
     int offset = 0,
     int pageSize = 50,
+    String sortBy = 'updated_at',
+    String sortDirection = 'desc',
   }) async {
     try {
       final dio = await _getDio();
-      final filters = <Map<String, dynamic>>[];
+      final filters = <String, dynamic>{};
+
+      // CRITICAL: Always filter by Work Package Type if provided
+      if (typeId != null) {
+        filters['type'] = {
+          'operator': '=',
+          'values': [typeId.toString()],
+        };
+      }
 
       if (status != null) {
-        filters.add({
-          'status': {
-            'operator': '=',
-            'values': [status.toString()],
-          },
-        });
+        filters['status'] = {
+          'operator': '=',
+          'values': [status.toString()],
+        };
       }
 
       if (equipmentId != null) {
-        filters.add({
-          'project': {
-            'operator': '=',
-            'values': [equipmentId.toString()],
-          },
-        });
+        filters['project'] = {
+          'operator': '=',
+          'values': [equipmentId.toString()],
+        };
       }
 
       if (priorityLevel != null) {
-        filters.add({
-          'priority': {
-            'operator': '=',
-            'values': [_mapPriorityToId(priorityLevel).toString()],
-          },
-        });
+        filters['priority'] = {
+          'operator': '=',
+          'values': [_mapPriorityToId(priorityLevel).toString()],
+        };
       }
 
       if (groupId != null) {
@@ -94,9 +101,15 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         'pageSize': pageSize,
       };
 
+      // Add filters as JSON string if not empty
       if (filters.isNotEmpty) {
-        queryParams['filters'] = filters;
+        queryParams['filters'] = jsonEncode([filters]);
       }
+
+      // Add sorting (OpenProject expects JSON array format)
+      queryParams['sortBy'] = jsonEncode([
+        [sortBy, sortDirection],
+      ]);
 
       final response = await dio.get(
         '/work_packages',
@@ -514,6 +527,41 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         return 4;
       case IssueStatus.rejected:
         return 5;
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getAttachments(int issueId) async {
+    try {
+      final dio = await _getDio();
+      final response = await dio.get('/work_packages/$issueId/attachments');
+
+      // Parse collection response format
+      final responseData = response.data as Map<String, dynamic>;
+      final embedded = responseData['_embedded'] as Map<String, dynamic>?;
+      final elements = embedded?['elements'] as List<dynamic>? ?? [];
+
+      logger.info(
+        'Retrieved ${elements.length} attachments for issue $issueId',
+      );
+      return elements.cast<Map<String, dynamic>>();
+    } on DioException catch (e) {
+      logger.severe('Error fetching attachments for issue $issueId: $e');
+
+      // Handle specific error codes
+      if (e.response?.statusCode == 404) {
+        throw ServerFailure('Work package not found or access denied');
+      } else if (e.response?.statusCode == 401) {
+        throw NetworkFailure('Authentication required');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        throw NetworkFailure('Connection timeout');
+      } else {
+        throw ServerFailure('Failed to fetch attachments: ${e.toString()}');
+      }
+    } catch (e) {
+      logger.severe('Unexpected error fetching attachments: $e');
+      throw ServerFailure('Failed to fetch attachments: ${e.toString()}');
     }
   }
 }

@@ -38,6 +38,7 @@ class IssueEntity extends Equatable {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String? equipmentName;
+  final int? attachmentCount; // Number of attachments (for UI indicator)
 
   const IssueEntity({
     this.id,
@@ -57,6 +58,7 @@ class IssueEntity extends Equatable {
     this.createdAt,
     this.updatedAt,
     this.equipmentName,
+    this.attachmentCount,
   });
 
   /// Create a copy of this entity with updated fields
@@ -78,6 +80,7 @@ class IssueEntity extends Equatable {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? equipmentName,
+    int? attachmentCount,
   }) {
     return IssueEntity(
       id: id ?? this.id,
@@ -97,6 +100,7 @@ class IssueEntity extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       equipmentName: equipmentName ?? this.equipmentName,
+      attachmentCount: attachmentCount ?? this.attachmentCount,
     );
   }
 
@@ -119,5 +123,6 @@ class IssueEntity extends Equatable {
     createdAt,
     updatedAt,
     equipmentName,
+    attachmentCount,
   ];
 }
