@@ -1,8 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logging/logging.dart';
 import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'package:siren_app/features/issues/domain/repositories/issue_repository.dart';
+import '../datasources/issue_local_datasource.dart';
 import '../datasources/issue_remote_datasource.dart';
 import '../models/issue_model.dart';
 
@@ -10,11 +12,18 @@ import '../models/issue_model.dart';
 ///
 /// Connects the domain layer with the data layer by calling the remote
 /// data source and mapping responses to domain entities.
+/// For MVP: Implements basic cache (3 screenfuls) with offline read access.
 @LazySingleton(as: IssueRepository)
 class IssueRepositoryImpl implements IssueRepository {
   final IssueRemoteDataSource remoteDataSource;
+  final IssueLocalDataSource localDataSource;
+  final Logger logger;
 
-  IssueRepositoryImpl({required this.remoteDataSource});
+  IssueRepositoryImpl({
+    required this.remoteDataSource,
+    required this.localDataSource,
+    required this.logger,
+  });
 
   @override
   Future<Either<Failure, IssueEntity>> createIssue({
@@ -111,13 +120,39 @@ class IssueRepositoryImpl implements IssueRepository {
         );
       }
 
-      final responseList = await remoteDataSource.getIssues(
-        status: statusId,
-        equipmentId: equipmentId,
-        priorityLevel: priorityLevel,
-        groupId: groupId,
-        typeId: typeId,
-      );
+      List<Map<String, dynamic>> responseList;
+      try {
+        // Try to fetch from server
+        responseList = await remoteDataSource.getIssues(
+          status: statusId,
+          equipmentId: equipmentId,
+          priorityLevel: priorityLevel,
+          groupId: groupId,
+          typeId: typeId,
+        );
+
+        // Cache the fetched issues (limited to 3 screenfuls)
+        await localDataSource.cacheIssues(responseList);
+        logger.info(
+          'Successfully fetched and cached ${responseList.length} issues',
+        );
+      } on NetworkFailure catch (e) {
+        // If network fails, try to load from cache
+        logger.warning(
+          'Network failure, attempting to load from cache: ${e.message}',
+        );
+        final cached = await localDataSource.getCachedIssues();
+        if (cached != null && cached.isNotEmpty) {
+          logger.info('Loaded ${cached.length} issues from cache');
+          responseList = cached;
+        } else {
+          return Left(
+            NetworkFailure(
+              'No internet connection and no cached data available',
+            ),
+          );
+        }
+      }
 
       // Convert each map to entity and sort by updatedAt (most recent first)
       final entities = responseList
@@ -134,9 +169,31 @@ class IssueRepositoryImpl implements IssueRepository {
 
       return Right(entities);
     } on ServerFailure catch (e) {
+      // Try cache as fallback for server errors
+      logger.warning(
+        'Server failure, attempting to load from cache: ${e.message}',
+      );
+      try {
+        final cached = await localDataSource.getCachedIssues();
+        if (cached != null && cached.isNotEmpty) {
+          logger.info(
+            'Loaded ${cached.length} issues from cache after server failure',
+          );
+          final entities = cached
+              .map((map) => IssueModel.fromJson(map).toEntity())
+              .toList();
+          entities.sort((a, b) {
+            if (a.updatedAt == null && b.updatedAt == null) return 0;
+            if (a.updatedAt == null) return 1;
+            if (b.updatedAt == null) return -1;
+            return b.updatedAt!.compareTo(a.updatedAt!);
+          });
+          return Right(entities);
+        }
+      } catch (cacheError) {
+        logger.severe('Failed to load from cache: $cacheError');
+      }
       return Left(ServerFailure(e.message));
-    } on NetworkFailure catch (e) {
-      return Left(NetworkFailure(e.message));
     } catch (e) {
       return Left(UnexpectedFailure('Unexpected error: ${e.toString()}'));
     }

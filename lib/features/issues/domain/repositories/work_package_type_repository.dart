@@ -11,5 +11,9 @@ abstract class WorkPackageTypeRepository {
 
   Future<Either<Failure, void>> setSelectedType(String typeName);
 
+  /// Get statuses for selected type (uses cache if available)
   Future<Either<Failure, List<StatusEntity>>> getStatusesForSelectedType();
+
+  /// Refresh statuses from server (bypasses cache)
+  Future<Either<Failure, List<StatusEntity>>> refreshStatusesForSelectedType();
 }

@@ -18,11 +18,12 @@ class IssuesListLoading extends IssuesListState {
 
 class IssuesListLoaded extends IssuesListState {
   final List<IssueEntity> issues;
+  final bool isFromCache;
 
-  const IssuesListLoaded(this.issues);
+  const IssuesListLoaded(this.issues, {this.isFromCache = false});
 
   @override
-  List<Object?> get props => [issues];
+  List<Object?> get props => [issues, isFromCache];
 }
 
 class IssuesListRefreshing extends IssuesListState {

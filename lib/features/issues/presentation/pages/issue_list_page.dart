@@ -80,6 +80,8 @@ class _IssueListView extends StatelessWidget {
               final issues = state is IssuesListLoaded
                   ? state.issues
                   : (state as IssuesListRefreshing).issues;
+              final isFromCache =
+                  state is IssuesListLoaded && state.isFromCache;
 
               if (issues.isEmpty) {
                 return const _EmptyView();
@@ -89,26 +91,61 @@ class _IssueListView extends StatelessWidget {
                 builder: (context, typeState) {
                   final statusColorByName = _statusColorMap(typeState);
 
-                  return RefreshIndicator(
-                    onRefresh: () => context.read<IssuesListCubit>().refresh(),
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: issues.length,
-                      itemBuilder: (context, index) {
-                        final issue = issues[index];
-                        final colorHex =
-                            statusColorByName[_normalizeStatusName(
-                              issue.statusName,
-                            )];
-                        return IssueCard(
-                          issue: issue,
-                          statusColorHex: colorHex,
-                          onTap: () {
-                            // Detail view will be added later
-                          },
-                        );
-                      },
-                    ),
+                  return Column(
+                    children: [
+                      if (isFromCache)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          color: AppColors.info.withValues(alpha: 0.1),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.cloud_off,
+                                size: 16,
+                                color: AppColors.info,
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Offline mode - Showing cached data',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.info,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: () =>
+                              context.read<IssuesListCubit>().refresh(),
+                          child: ListView.builder(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: issues.length,
+                            itemBuilder: (context, index) {
+                              final issue = issues[index];
+                              final colorHex =
+                                  statusColorByName[_normalizeStatusName(
+                                    issue.statusName,
+                                  )];
+                              return IssueCard(
+                                issue: issue,
+                                statusColorHex: colorHex,
+                                onTap: () {
+                                  // Detail view will be added later
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
                   );
                 },
               );

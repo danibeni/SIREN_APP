@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_issues_uc.dart';
+import 'package:siren_app/features/issues/domain/usecases/refresh_statuses_uc.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issues_list_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issues_list_state.dart';
 
@@ -10,13 +11,18 @@ import '../../../../core/fixtures/issue_fixtures.dart';
 
 class _MockGetIssuesUseCase extends Mock implements GetIssuesUseCase {}
 
+class _MockRefreshStatusesUseCase extends Mock
+    implements RefreshStatusesUseCase {}
+
 void main() {
   late IssuesListCubit cubit;
   late _MockGetIssuesUseCase getIssuesUseCase;
+  late _MockRefreshStatusesUseCase refreshStatusesUseCase;
 
   setUp(() {
     getIssuesUseCase = _MockGetIssuesUseCase();
-    cubit = IssuesListCubit(getIssuesUseCase);
+    refreshStatusesUseCase = _MockRefreshStatusesUseCase();
+    cubit = IssuesListCubit(getIssuesUseCase, refreshStatusesUseCase);
   });
 
   tearDown(() {
@@ -27,6 +33,9 @@ void main() {
     test('emits loading then loaded on success', () async {
       // Given
       final issues = IssueFixtures.createIssueEntityList(count: 1);
+      when(
+        () => refreshStatusesUseCase(),
+      ).thenAnswer((_) async => const Right([]));
       when(() => getIssuesUseCase()).thenAnswer((_) async => Right(issues));
 
       // Expect
@@ -41,6 +50,9 @@ void main() {
 
     test('emits loading then error on failure', () async {
       // Given
+      when(
+        () => refreshStatusesUseCase(),
+      ).thenAnswer((_) async => const Right([]));
       when(
         () => getIssuesUseCase(),
       ).thenAnswer((_) async => const Left(ServerFailure('fail')));
@@ -58,6 +70,9 @@ void main() {
     test('refresh emits refreshing then loaded', () async {
       // Given
       final issues = IssueFixtures.createIssueEntityList(count: 2);
+      when(
+        () => refreshStatusesUseCase(),
+      ).thenAnswer((_) async => const Right([]));
       when(() => getIssuesUseCase()).thenAnswer((_) async => Right(issues));
       await cubit.loadIssues();
       final newIssues = IssueFixtures.createIssueEntityList(count: 1);
