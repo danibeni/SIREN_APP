@@ -107,4 +107,33 @@ class WorkPackageTypeRepositoryImpl implements WorkPackageTypeRepository {
       return Left(UnexpectedFailure('Failed to load statuses: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<StatusEntity>>>
+  refreshStatusesForSelectedType() async {
+    try {
+      final typeName = await _localDataSource.getSelectedType();
+
+      // Always fetch from server, bypassing cache
+      final remote = await _remoteDataSource.getStatuses();
+      final remoteModels = remote
+          .map((map) => StatusModel.fromJson(map))
+          .toList();
+
+      // Update cache with fresh data
+      await _localDataSource.cacheStatuses(
+        typeName,
+        remoteModels.map((model) => model.toJson()).toList(),
+      );
+
+      return Right(remoteModels.map((model) => model.toEntity()).toList());
+    } on ServerFailure catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkFailure catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (e) {
+      _logger.severe('Failed to refresh statuses: $e');
+      return Left(UnexpectedFailure('Failed to refresh statuses: $e'));
+    }
+  }
 }

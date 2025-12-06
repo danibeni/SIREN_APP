@@ -37,6 +37,11 @@ class CacheFailure extends Failure {
   const CacheFailure(super.message);
 }
 
+/// Special failure indicating data was loaded from cache (offline mode)
+class CachedDataInfo extends Failure {
+  const CachedDataInfo(super.message);
+}
+
 /// Failure representing unexpected errors
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message);

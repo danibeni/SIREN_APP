@@ -24,6 +24,8 @@ import 'package:siren_app/features/config/presentation/cubit/app_initialization_
     as _i462;
 import 'package:siren_app/features/config/presentation/cubit/server_config_cubit.dart'
     as _i1033;
+import 'package:siren_app/features/issues/data/datasources/issue_local_datasource.dart'
+    as _i93;
 import 'package:siren_app/features/issues/data/datasources/issue_remote_datasource.dart'
     as _i407;
 import 'package:siren_app/features/issues/data/datasources/issue_remote_datasource_impl.dart'
@@ -50,6 +52,8 @@ import 'package:siren_app/features/issues/domain/usecases/get_statuses_for_type_
     as _i720;
 import 'package:siren_app/features/issues/domain/usecases/get_work_package_type_uc.dart'
     as _i589;
+import 'package:siren_app/features/issues/domain/usecases/refresh_statuses_uc.dart'
+    as _i198;
 import 'package:siren_app/features/issues/domain/usecases/set_work_package_type_uc.dart'
     as _i714;
 import 'package:siren_app/features/issues/domain/usecases/update_issue_uc.dart'
@@ -77,6 +81,12 @@ _i174.GetIt init(
   gh.lazySingleton<_i831.Logger>(() => coreModule.logger);
   gh.lazySingleton<_i1000.ServerConfigService>(
     () => _i1000.ServerConfigService(
+      secureStorage: gh<_i558.FlutterSecureStorage>(),
+      logger: gh<_i831.Logger>(),
+    ),
+  );
+  gh.lazySingleton<_i93.IssueLocalDataSource>(
+    () => _i93.IssueLocalDataSource(
       secureStorage: gh<_i558.FlutterSecureStorage>(),
       logger: gh<_i831.Logger>(),
     ),
@@ -128,6 +138,8 @@ _i174.GetIt init(
   gh.lazySingleton<_i885.IssueRepository>(
     () => _i711.IssueRepositoryImpl(
       remoteDataSource: gh<_i407.IssueRemoteDataSource>(),
+      localDataSource: gh<_i93.IssueLocalDataSource>(),
+      logger: gh<_i831.Logger>(),
     ),
   );
   gh.lazySingleton<_i725.CreateIssueUseCase>(
@@ -169,6 +181,9 @@ _i174.GetIt init(
     () =>
         _i589.GetWorkPackageTypeUseCase(gh<_i229.WorkPackageTypeRepository>()),
   );
+  gh.lazySingleton<_i198.RefreshStatusesUseCase>(
+    () => _i198.RefreshStatusesUseCase(gh<_i229.WorkPackageTypeRepository>()),
+  );
   gh.lazySingleton<_i714.SetWorkPackageTypeUseCase>(
     () =>
         _i714.SetWorkPackageTypeUseCase(gh<_i229.WorkPackageTypeRepository>()),
@@ -180,7 +195,10 @@ _i174.GetIt init(
     ),
   );
   gh.factory<_i849.IssuesListCubit>(
-    () => _i849.IssuesListCubit(gh<_i695.GetIssuesUseCase>()),
+    () => _i849.IssuesListCubit(
+      gh<_i695.GetIssuesUseCase>(),
+      gh<_i198.RefreshStatusesUseCase>(),
+    ),
   );
   gh.lazySingleton<_i904.WorkPackageTypeCubit>(
     () => _i904.WorkPackageTypeCubit(

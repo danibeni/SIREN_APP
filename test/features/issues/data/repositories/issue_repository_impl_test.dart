@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logging/logging.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/features/issues/data/datasources/issue_local_datasource.dart';
 import 'package:siren_app/features/issues/data/datasources/issue_remote_datasource.dart';
 import 'package:siren_app/features/issues/data/repositories/issue_repository_impl.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
@@ -8,6 +10,10 @@ import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import '../../../../core/fixtures/issue_fixtures.dart';
 
 class MockIssueRemoteDataSource extends Mock implements IssueRemoteDataSource {}
+
+class MockIssueLocalDataSource extends Mock implements IssueLocalDataSource {}
+
+class MockLogger extends Mock implements Logger {}
 
 void main() {
   late IssueRepositoryImpl repository;
@@ -19,9 +25,18 @@ void main() {
     registerFallbackValue(IssueStatus.newStatus);
   });
 
+  late MockIssueLocalDataSource mockLocalDataSource;
+  late MockLogger mockLogger;
+
   setUp(() {
     mockDataSource = MockIssueRemoteDataSource();
-    repository = IssueRepositoryImpl(remoteDataSource: mockDataSource);
+    mockLocalDataSource = MockIssueLocalDataSource();
+    mockLogger = MockLogger();
+    repository = IssueRepositoryImpl(
+      remoteDataSource: mockDataSource,
+      localDataSource: mockLocalDataSource,
+      logger: mockLogger,
+    );
   });
 
   group('IssueRepositoryImpl', () {
@@ -297,6 +312,12 @@ void main() {
             ],
           );
 
+          // Mock cache operation
+          when(
+            () => mockLocalDataSource.cacheIssues(any()),
+          ).thenAnswer((_) async {});
+          when(() => mockLogger.info(any())).thenReturn(null);
+
           // When
           final result = await repository.getIssues(workPackageType: 'Issue');
 
@@ -332,6 +353,12 @@ void main() {
             {'id': 1, 'name': 'Issue'},
           ],
         );
+
+        // Mock cache operation
+        when(
+          () => mockLocalDataSource.cacheIssues(any()),
+        ).thenAnswer((_) async {});
+        when(() => mockLogger.info(any())).thenReturn(null);
 
         // When
         final result = await repository.getIssues(workPackageType: 'Issue');
