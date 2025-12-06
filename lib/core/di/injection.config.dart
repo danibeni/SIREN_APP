@@ -62,6 +62,8 @@ import 'package:siren_app/features/issues/presentation/bloc/create_issue_cubit.d
     as _i279;
 import 'package:siren_app/features/issues/presentation/cubit/edit_issue_cubit.dart'
     as _i719;
+import 'package:siren_app/features/issues/presentation/cubit/issue_detail_cubit.dart'
+    as _i435;
 import 'package:siren_app/features/issues/presentation/cubit/issues_list_cubit.dart'
     as _i849;
 import 'package:siren_app/features/issues/presentation/cubit/work_package_type_cubit.dart'
@@ -162,6 +164,11 @@ _i174.GetIt init(
     () => _i279.CreateIssueCubit(
       gh<_i725.CreateIssueUseCase>(),
       gh<_i407.IssueRemoteDataSource>(),
+    ),
+  );
+  gh.factory<_i435.IssueDetailCubit>(
+    () => _i435.IssueDetailCubit(
+      getIssueByIdUseCase: gh<_i216.GetIssueByIdUseCase>(),
     ),
   );
   gh.factory<_i719.EditIssueCubit>(

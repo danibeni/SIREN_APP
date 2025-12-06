@@ -8,6 +8,7 @@ import 'package:siren_app/core/theme/app_colors.dart';
 import 'package:siren_app/features/config/presentation/pages/app_initialization_page.dart';
 import 'package:siren_app/features/config/presentation/pages/server_config_page.dart';
 import 'package:siren_app/features/config/presentation/pages/settings_page.dart';
+import 'package:siren_app/features/issues/presentation/pages/issue_detail_page.dart';
 import 'package:siren_app/features/issues/presentation/pages/issue_form_page.dart';
 import 'package:siren_app/features/issues/presentation/pages/issue_list_page.dart';
 
@@ -112,6 +113,15 @@ class _SirenAppState extends State<SirenApp> {
         '/home': (context) => const IssueListPage(),
         '/issues': (context) => const IssueListPage(),
         '/create-issue': (context) => const IssueFormPage(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/issue-detail') {
+          final issueId = settings.arguments as int;
+          return MaterialPageRoute(
+            builder: (context) => IssueDetailPage(issueId: issueId),
+          );
+        }
+        return null;
       },
     );
   }

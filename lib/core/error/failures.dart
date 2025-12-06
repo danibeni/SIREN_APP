@@ -42,6 +42,11 @@ class CachedDataInfo extends Failure {
   const CachedDataInfo(super.message);
 }
 
+/// Failure representing resource not found errors
+class NotFoundFailure extends Failure {
+  const NotFoundFailure(super.message);
+}
+
 /// Failure representing unexpected errors
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message);
