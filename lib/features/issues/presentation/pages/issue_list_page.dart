@@ -30,7 +30,7 @@ class _IssueListView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Issues'),
+        title: const Text('SIREN: Issue Reporting'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -56,60 +56,50 @@ class _IssueListView extends StatelessWidget {
         icon: const Icon(Icons.add),
         label: const Text('New Issue'),
       ),
-      body: Column(
-        children: [
-          _TypeBanner(),
-          Expanded(
-            child: BlocBuilder<IssuesListCubit, IssuesListState>(
-              builder: (context, state) {
-                if (state is IssuesListLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (state is IssuesListError) {
-                  return _ErrorView(
-                    message: state.message,
-                    onRetry: () => context.read<IssuesListCubit>().loadIssues(),
-                  );
-                }
-                if (state is IssuesListLoaded ||
-                    state is IssuesListRefreshing) {
-                  final issues = state is IssuesListLoaded
-                      ? state.issues
-                      : (state as IssuesListRefreshing).issues;
-                  final typeState = context.watch<WorkPackageTypeCubit>().state;
-                  final statusColorByName = _statusColorMap(typeState);
+      body: BlocBuilder<IssuesListCubit, IssuesListState>(
+        builder: (context, state) {
+          if (state is IssuesListLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state is IssuesListError) {
+            return _ErrorView(
+              message: state.message,
+              onRetry: () => context.read<IssuesListCubit>().loadIssues(),
+            );
+          }
+          if (state is IssuesListLoaded || state is IssuesListRefreshing) {
+            final issues = state is IssuesListLoaded
+                ? state.issues
+                : (state as IssuesListRefreshing).issues;
+            final typeState = context.watch<WorkPackageTypeCubit>().state;
+            final statusColorByName = _statusColorMap(typeState);
 
-                  if (issues.isEmpty) {
-                    return const _EmptyView();
-                  }
+            if (issues.isEmpty) {
+              return const _EmptyView();
+            }
 
-                  return RefreshIndicator(
-                    onRefresh: () => context.read<IssuesListCubit>().refresh(),
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: issues.length,
-                      itemBuilder: (context, index) {
-                        final issue = issues[index];
-                        final colorHex =
-                            statusColorByName[_normalizeStatusName(
-                              issue.statusName,
-                            )];
-                        return IssueCard(
-                          issue: issue,
-                          statusColorHex: colorHex,
-                          onTap: () {
-                            // Detail view will be added later
-                          },
-                        );
-                      },
-                    ),
+            return RefreshIndicator(
+              onRefresh: () => context.read<IssuesListCubit>().refresh(),
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: issues.length,
+                itemBuilder: (context, index) {
+                  final issue = issues[index];
+                  final colorHex =
+                      statusColorByName[_normalizeStatusName(issue.statusName)];
+                  return IssueCard(
+                    issue: issue,
+                    statusColorHex: colorHex,
+                    onTap: () {
+                      // Detail view will be added later
+                    },
                   );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          ),
-        ],
+                },
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        },
       ),
     );
   }
@@ -129,77 +119,6 @@ Map<String, String?> _statusColorMap(WorkPackageTypeState state) {
 String _normalizeStatusName(String? name) {
   if (name == null) return '';
   return name.trim().toLowerCase().replaceAll(' ', '');
-}
-
-class _TypeBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<WorkPackageTypeCubit, WorkPackageTypeState>(
-      builder: (context, state) {
-        if (state is WorkPackageTypeLoading ||
-            state is WorkPackageTypeInitial) {
-          return const LinearProgressIndicator(minHeight: 3);
-        }
-
-        if (state is WorkPackageTypeLoaded) {
-          return Container(
-            width: double.infinity,
-            color: AppColors.info.withValues(alpha: 0.08),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.category_outlined,
-                  size: 18,
-                  color: AppColors.info,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Type: ${state.selectedType}',
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pushNamed('/settings'),
-                  child: const Text('Change'),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (state is WorkPackageTypeError) {
-          return Container(
-            width: double.infinity,
-            color: AppColors.error.withValues(alpha: 0.1),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  size: 18,
-                  color: AppColors.error,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    state.message,
-                    style: const TextStyle(color: AppColors.error),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return const SizedBox.shrink();
-      },
-    );
-  }
 }
 
 class _EmptyView extends StatelessWidget {
