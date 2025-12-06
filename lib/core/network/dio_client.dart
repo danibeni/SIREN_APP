@@ -9,16 +9,13 @@ class DioClient {
   final AuthService authService;
   final Logger logger;
 
-  DioClient({
-    required this.authService,
-    required this.logger,
-  });
+  DioClient({required this.authService, required this.logger});
 
   /// Create configured Dio instance for OpenProject API v3
-  /// 
+  ///
   /// [baseUrl] - OpenProject server base URL (e.g., https://your-instance.com)
   /// The method automatically appends `/api/v3` to construct the API base URL.
-  /// 
+  ///
   /// According to OpenProject API v3 documentation:
   /// - Base URL: All API requests must be directed to `/api/v3/`
   /// - Content Format: `application/hal+json` for both requests and responses
@@ -27,10 +24,10 @@ class DioClient {
     final normalizedBaseUrl = baseUrl.endsWith('/')
         ? baseUrl.substring(0, baseUrl.length - 1)
         : baseUrl;
-    
+
     // Construct API base URL: server URL + /api/v3
     final apiBaseUrl = '$normalizedBaseUrl/api/v3';
-    
+
     final dio = Dio(
       BaseOptions(
         baseUrl: apiBaseUrl,
@@ -44,10 +41,7 @@ class DioClient {
     );
 
     dio.interceptors.add(
-      AuthInterceptor(
-        authService: authService,
-        logger: logger,
-      ),
+      AuthInterceptor(authService: authService, logger: logger),
     );
 
     // Add logging interceptor for debugging
@@ -62,4 +56,3 @@ class DioClient {
     return dio;
   }
 }
-

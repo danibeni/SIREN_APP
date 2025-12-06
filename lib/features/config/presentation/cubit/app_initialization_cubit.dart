@@ -9,10 +9,8 @@ class AppInitializationCubit extends Cubit<AppInitializationState> {
   final ServerConfigService _serverConfigService;
   final AuthService _authService;
 
-  AppInitializationCubit(
-    this._serverConfigService,
-    this._authService,
-  ) : super(const AppInitializationChecking());
+  AppInitializationCubit(this._serverConfigService, this._authService)
+    : super(const AppInitializationChecking());
 
   /// Check if app is properly configured
   Future<void> checkConfiguration() async {
@@ -42,4 +40,3 @@ class AppInitializationCubit extends Cubit<AppInitializationState> {
     }
   }
 }
-

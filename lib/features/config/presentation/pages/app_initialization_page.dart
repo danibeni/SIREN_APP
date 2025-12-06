@@ -25,11 +25,7 @@ class AppInitializationPage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.settings_remote,
-                  size: 80,
-                  color: Colors.deepOrange,
-                ),
+                Icon(Icons.settings_remote, size: 80, color: Colors.deepOrange),
                 SizedBox(height: 24),
                 Text(
                   'SIREN',
@@ -43,20 +39,12 @@ class AppInitializationPage extends StatelessWidget {
                 Text(
                   'System for Issue Reporting\nand Engineering Notification',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 SizedBox(height: 32),
-                CircularProgressIndicator(
-                  color: Colors.deepOrange,
-                ),
+                CircularProgressIndicator(color: Colors.deepOrange),
                 SizedBox(height: 16),
-                Text(
-                  'Initializing...',
-                  style: TextStyle(color: Colors.grey),
-                ),
+                Text('Initializing...', style: TextStyle(color: Colors.grey)),
               ],
             ),
           ),
@@ -65,4 +53,3 @@ class AppInitializationPage extends StatelessWidget {
     );
   }
 }
-

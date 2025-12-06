@@ -48,4 +48,3 @@ class AppColors {
   static const Color accent = primaryPurple;
   static const Color accentLight = lightPurple;
 }
-

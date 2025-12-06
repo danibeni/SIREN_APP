@@ -52,10 +52,7 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Server Configuration'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Server Configuration'), elevation: 0),
       body: BlocConsumer<ServerConfigCubit, ServerConfigState>(
         listener: (context, state) {
           if (state is ServerConfigLoaded) {
@@ -78,10 +75,9 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
               ),
             );
             // Clear navigation stack and go to home
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              '/home',
-              (route) => false,
-            );
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil('/home', (route) => false);
           } else if (state is ServerConfigError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -92,11 +88,15 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
           }
         },
         builder: (context, state) {
-          final isLoading = state is ServerConfigLoading || 
-                           state is ServerConfigAuthenticating;
-          final isConfigSaved = state is ServerConfigSuccess || 
-                               (state is ServerConfigLoaded && state.serverUrl != null);
-          final validationState = state is ServerConfigValidating ? state : null;
+          final isLoading =
+              state is ServerConfigLoading ||
+              state is ServerConfigAuthenticating;
+          final isConfigSaved =
+              state is ServerConfigSuccess ||
+              (state is ServerConfigLoaded && state.serverUrl != null);
+          final validationState = state is ServerConfigValidating
+              ? state
+              : null;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
@@ -133,7 +133,10 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                       hintText: 'https://openproject.example.com',
                       prefixIcon: const Icon(Icons.cloud),
                       suffixIcon: validationState?.isServerUrlValid == true
-                          ? const Icon(Icons.check_circle, color: AppColors.primaryBlue)
+                          ? const Icon(
+                              Icons.check_circle,
+                              color: AppColors.primaryBlue,
+                            )
                           : null,
                       helperText: 'Enter your OpenProject server base URL',
                       errorText: validationState?.serverUrlError,
@@ -145,7 +148,9 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                     enableSuggestions: false,
                     enabled: !isLoading,
                     onChanged: (value) {
-                      context.read<ServerConfigCubit>().validateServerUrl(value);
+                      context.read<ServerConfigCubit>().validateServerUrl(
+                        value,
+                      );
                     },
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -185,8 +190,11 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                           ? null
                           : () {
                               if (_formKey.currentState!.validate()) {
-                                context.read<ServerConfigCubit>().saveConfiguration(
-                                      serverUrl: _serverUrlController.text.trim(),
+                                context
+                                    .read<ServerConfigCubit>()
+                                    .saveConfiguration(
+                                      serverUrl: _serverUrlController.text
+                                          .trim(),
                                     );
                               }
                             },
@@ -201,8 +209,9 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : const Text(
@@ -217,9 +226,9 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                           : () {
                               if (_formKey.currentState!.validate()) {
                                 context.read<ServerConfigCubit>().authenticate(
-                                      serverUrl: _serverUrlController.text.trim(),
-                                      clientId: _clientIdController.text.trim(),
-                                    );
+                                  serverUrl: _serverUrlController.text.trim(),
+                                  clientId: _clientIdController.text.trim(),
+                                );
                               }
                             },
                       icon: const Icon(Icons.login),
@@ -239,8 +248,11 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                           ? null
                           : () {
                               if (_formKey.currentState!.validate()) {
-                                context.read<ServerConfigCubit>().saveConfiguration(
-                                      serverUrl: _serverUrlController.text.trim(),
+                                context
+                                    .read<ServerConfigCubit>()
+                                    .saveConfiguration(
+                                      serverUrl: _serverUrlController.text
+                                          .trim(),
                                     );
                               }
                             },
@@ -256,4 +268,3 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
     );
   }
 }
-

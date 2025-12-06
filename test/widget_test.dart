@@ -22,8 +22,10 @@ void main() {
 
     // Verify that the app initializes and shows the initialization screen
     expect(find.text('SIREN'), findsOneWidget);
-    expect(find.text('System for Issue Reporting\nand Engineering Notification'),
-        findsOneWidget);
+    expect(
+      find.text('System for Issue Reporting\nand Engineering Notification'),
+      findsOneWidget,
+    );
     expect(find.text('Initializing...'), findsOneWidget);
   });
 }

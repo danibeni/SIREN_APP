@@ -28,11 +28,16 @@ class IssueEntity extends Equatable {
   final int group; // OpenProject group ID
   final PriorityLevel priorityLevel;
   final IssueStatus status;
+  final String? statusName;
+  final String? statusColorHex;
   final int? creatorId; // OpenProject user ID
   final String? creatorName;
+  final int? updatedById;
+  final String? updatedByName;
   final int lockVersion; // Required for optimistic locking
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? equipmentName;
 
   const IssueEntity({
     this.id,
@@ -42,11 +47,16 @@ class IssueEntity extends Equatable {
     required this.group,
     required this.priorityLevel,
     required this.status,
+    this.statusName,
+    this.statusColorHex,
     this.creatorId,
     this.creatorName,
+    this.updatedById,
+    this.updatedByName,
     required this.lockVersion,
     this.createdAt,
     this.updatedAt,
+    this.equipmentName,
   });
 
   /// Create a copy of this entity with updated fields
@@ -60,9 +70,14 @@ class IssueEntity extends Equatable {
     IssueStatus? status,
     int? creatorId,
     String? creatorName,
+    int? updatedById,
+    String? updatedByName,
+    String? statusName,
+    String? statusColorHex,
     int? lockVersion,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? equipmentName,
   }) {
     return IssueEntity(
       id: id ?? this.id,
@@ -72,11 +87,16 @@ class IssueEntity extends Equatable {
       group: group ?? this.group,
       priorityLevel: priorityLevel ?? this.priorityLevel,
       status: status ?? this.status,
+      statusName: statusName ?? this.statusName,
+      statusColorHex: statusColorHex ?? this.statusColorHex,
       creatorId: creatorId ?? this.creatorId,
       creatorName: creatorName ?? this.creatorName,
+      updatedById: updatedById ?? this.updatedById,
+      updatedByName: updatedByName ?? this.updatedByName,
       lockVersion: lockVersion ?? this.lockVersion,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      equipmentName: equipmentName ?? this.equipmentName,
     );
   }
 
@@ -89,10 +109,15 @@ class IssueEntity extends Equatable {
     group,
     priorityLevel,
     status,
+    statusName,
+    statusColorHex,
     creatorId,
     creatorName,
+    updatedById,
+    updatedByName,
     lockVersion,
     createdAt,
     updatedAt,
+    equipmentName,
   ];
 }

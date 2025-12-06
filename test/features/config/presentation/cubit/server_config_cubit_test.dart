@@ -9,6 +9,7 @@ import 'package:siren_app/features/config/presentation/cubit/server_config_cubit
 import 'package:siren_app/features/config/presentation/cubit/server_config_state.dart';
 
 class MockServerConfigService extends Mock implements ServerConfigService {}
+
 class MockAuthService extends Mock implements AuthService {}
 
 void main() {
@@ -19,10 +20,7 @@ void main() {
   setUp(() {
     mockServerConfigService = MockServerConfigService();
     mockAuthService = MockAuthService();
-    cubit = ServerConfigCubit(
-      mockServerConfigService,
-      mockAuthService,
-    );
+    cubit = ServerConfigCubit(mockServerConfigService, mockAuthService);
   });
 
   tearDown(() {
@@ -66,7 +64,8 @@ void main() {
         'emits [ServerConfigValidating] with isServerUrlValid true '
         'when URL starts with https://',
         build: () => cubit,
-        act: (cubit) => cubit.validateServerUrl('https://openproject.example.com'),
+        act: (cubit) =>
+            cubit.validateServerUrl('https://openproject.example.com'),
         expect: () => [
           const ServerConfigValidating(
             serverUrlError: null,
@@ -97,21 +96,21 @@ void main() {
         'when configuration is saved successfully',
         build: () {
           // Given
-          when(() => mockServerConfigService.storeServerUrl(testServerUrl))
-              .thenAnswer((_) async => const Right(testServerUrl));
+          when(
+            () => mockServerConfigService.storeServerUrl(testServerUrl),
+          ).thenAnswer((_) async => const Right(testServerUrl));
           return cubit;
         },
-        act: (cubit) => cubit.saveConfiguration(
-          serverUrl: testServerUrl,
-        ),
+        act: (cubit) => cubit.saveConfiguration(serverUrl: testServerUrl),
         expect: () => [
           const ServerConfigLoading(),
           const ServerConfigSuccess(testServerUrl),
         ],
         verify: (_) {
           // Then
-          verify(() => mockServerConfigService.storeServerUrl(testServerUrl))
-              .called(1);
+          verify(
+            () => mockServerConfigService.storeServerUrl(testServerUrl),
+          ).called(1);
         },
       );
 
@@ -120,23 +119,27 @@ void main() {
         'when server URL validation fails',
         build: () {
           // Given
-          when(() => mockServerConfigService.storeServerUrl(any()))
-              .thenAnswer((_) async => const Left(
-                    ValidationFailure('Server URL must start with http:// or https://'),
-                  ));
+          when(() => mockServerConfigService.storeServerUrl(any())).thenAnswer(
+            (_) async => const Left(
+              ValidationFailure(
+                'Server URL must start with http:// or https://',
+              ),
+            ),
+          );
           return cubit;
         },
-        act: (cubit) => cubit.saveConfiguration(
-          serverUrl: 'invalid-url',
-        ),
+        act: (cubit) => cubit.saveConfiguration(serverUrl: 'invalid-url'),
         expect: () => [
           const ServerConfigLoading(),
-          const ServerConfigError('Server URL must start with http:// or https://'),
+          const ServerConfigError(
+            'Server URL must start with http:// or https://',
+          ),
         ],
         verify: (_) {
           // Then
-          verify(() => mockServerConfigService.storeServerUrl('invalid-url'))
-              .called(1);
+          verify(
+            () => mockServerConfigService.storeServerUrl('invalid-url'),
+          ).called(1);
         },
       );
     });
@@ -144,8 +147,9 @@ void main() {
     group('isConfigured', () {
       test('should return true when server URL is configured', () async {
         // Given
-        when(() => mockServerConfigService.isConfigured())
-            .thenAnswer((_) async => const Right(true));
+        when(
+          () => mockServerConfigService.isConfigured(),
+        ).thenAnswer((_) async => const Right(true));
 
         // When
         final result = await cubit.isConfigured();
@@ -157,8 +161,9 @@ void main() {
 
       test('should return false when server URL is not configured', () async {
         // Given
-        when(() => mockServerConfigService.isConfigured())
-            .thenAnswer((_) async => const Right(false));
+        when(
+          () => mockServerConfigService.isConfigured(),
+        ).thenAnswer((_) async => const Right(false));
 
         // When
         final result = await cubit.isConfigured();
@@ -169,8 +174,9 @@ void main() {
 
       test('should return false when checking configuration fails', () async {
         // Given
-        when(() => mockServerConfigService.isConfigured())
-            .thenAnswer((_) async => const Left(CacheFailure('Error')));
+        when(
+          () => mockServerConfigService.isConfigured(),
+        ).thenAnswer((_) async => const Left(CacheFailure('Error')));
 
         // When
         final result = await cubit.isConfigured();
@@ -186,16 +192,15 @@ void main() {
         'when configuration exists',
         build: () {
           // Given
-          when(() => mockServerConfigService.getServerUrl())
-              .thenAnswer((_) async => const Right('https://example.com'));
+          when(
+            () => mockServerConfigService.getServerUrl(),
+          ).thenAnswer((_) async => const Right('https://example.com'));
           return cubit;
         },
         act: (cubit) => cubit.loadExistingConfiguration(),
         expect: () => [
           const ServerConfigLoading(),
-          const ServerConfigLoaded(
-            serverUrl: 'https://example.com',
-          ),
+          const ServerConfigLoaded(serverUrl: 'https://example.com'),
         ],
       );
 
@@ -204,16 +209,15 @@ void main() {
         'when no configuration exists',
         build: () {
           // Given
-          when(() => mockServerConfigService.getServerUrl())
-              .thenAnswer((_) async => const Right(null));
+          when(
+            () => mockServerConfigService.getServerUrl(),
+          ).thenAnswer((_) async => const Right(null));
           return cubit;
         },
         act: (cubit) => cubit.loadExistingConfiguration(),
         expect: () => [
           const ServerConfigLoading(),
-          const ServerConfigLoaded(
-            serverUrl: null,
-          ),
+          const ServerConfigLoaded(serverUrl: null),
         ],
       );
 
@@ -222,8 +226,9 @@ void main() {
         'when loading fails',
         build: () {
           // Given
-          when(() => mockServerConfigService.getServerUrl())
-              .thenAnswer((_) async => const Left(CacheFailure('Load error')));
+          when(
+            () => mockServerConfigService.getServerUrl(),
+          ).thenAnswer((_) async => const Left(CacheFailure('Load error')));
           return cubit;
         },
         act: (cubit) => cubit.loadExistingConfiguration(),
@@ -240,10 +245,12 @@ void main() {
         'when configuration is cleared successfully',
         build: () {
           // Given
-          when(() => mockServerConfigService.clearServerUrl())
-              .thenAnswer((_) async => const Right(null));
-          when(() => mockAuthService.clearCredentials())
-              .thenAnswer((_) async {});
+          when(
+            () => mockServerConfigService.clearServerUrl(),
+          ).thenAnswer((_) async => const Right(null));
+          when(
+            () => mockAuthService.clearCredentials(),
+          ).thenAnswer((_) async {});
           return cubit;
         },
         act: (cubit) => cubit.clearConfiguration(),
@@ -262,10 +269,12 @@ void main() {
         'when clearing server URL fails',
         build: () {
           // Given
-          when(() => mockServerConfigService.clearServerUrl())
-              .thenAnswer((_) async => const Left(CacheFailure('Clear error')));
-          when(() => mockAuthService.clearCredentials())
-              .thenAnswer((_) async {});
+          when(
+            () => mockServerConfigService.clearServerUrl(),
+          ).thenAnswer((_) async => const Left(CacheFailure('Clear error')));
+          when(
+            () => mockAuthService.clearCredentials(),
+          ).thenAnswer((_) async {});
           return cubit;
         },
         act: (cubit) => cubit.clearConfiguration(),
@@ -277,4 +286,3 @@ void main() {
     });
   });
 }
-

@@ -9,55 +9,56 @@ class ServerConfigCubit extends Cubit<ServerConfigState> {
   final ServerConfigService _serverConfigService;
   final AuthService _authService;
 
-  ServerConfigCubit(
-    this._serverConfigService,
-    this._authService,
-  ) : super(const ServerConfigInitial());
+  ServerConfigCubit(this._serverConfigService, this._authService)
+    : super(const ServerConfigInitial());
 
   /// Validate server URL in real-time
   void validateServerUrl(String url) {
     final currentState = state;
-    
+
     if (url.trim().isEmpty) {
-      emit(const ServerConfigValidating(
-        serverUrlError: null,
-        isServerUrlValid: false,
-      ));
+      emit(
+        const ServerConfigValidating(
+          serverUrlError: null,
+          isServerUrlValid: false,
+        ),
+      );
       return;
     }
 
     // Basic validation (detailed validation happens on save)
     if (!url.trim().startsWith('http://') &&
         !url.trim().startsWith('https://')) {
-      emit(const ServerConfigValidating(
-        serverUrlError: 'URL must start with http:// or https://',
-        isServerUrlValid: false,
-      ));
+      emit(
+        const ServerConfigValidating(
+          serverUrlError: 'URL must start with http:// or https://',
+          isServerUrlValid: false,
+        ),
+      );
       return;
     }
 
     // URL looks valid
     if (currentState is ServerConfigValidating) {
-      emit(currentState.copyWith(
-        serverUrlError: null,
-        isServerUrlValid: true,
-      ));
+      emit(currentState.copyWith(serverUrlError: null, isServerUrlValid: true));
     } else {
-      emit(const ServerConfigValidating(
-        serverUrlError: null,
-        isServerUrlValid: true,
-      ));
+      emit(
+        const ServerConfigValidating(
+          serverUrlError: null,
+          isServerUrlValid: true,
+        ),
+      );
     }
   }
 
   /// Save server configuration
-  Future<void> saveConfiguration({
-    required String serverUrl,
-  }) async {
+  Future<void> saveConfiguration({required String serverUrl}) async {
     emit(const ServerConfigLoading());
 
     // Validate and store server URL
-    final serverUrlResult = await _serverConfigService.storeServerUrl(serverUrl);
+    final serverUrlResult = await _serverConfigService.storeServerUrl(
+      serverUrl,
+    );
 
     serverUrlResult.fold(
       (failure) => emit(ServerConfigError(failure.message)),
@@ -68,10 +69,7 @@ class ServerConfigCubit extends Cubit<ServerConfigState> {
   /// Check if configuration already exists
   Future<bool> isConfigured() async {
     final result = await _serverConfigService.isConfigured();
-    return result.fold(
-      (failure) => false,
-      (isConfigured) => isConfigured,
-    );
+    return result.fold((failure) => false, (isConfigured) => isConfigured);
   }
 
   /// Load existing configuration for editing
@@ -82,9 +80,7 @@ class ServerConfigCubit extends Cubit<ServerConfigState> {
 
     urlResult.fold(
       (failure) => emit(ServerConfigError(failure.message)),
-      (url) => emit(ServerConfigLoaded(
-        serverUrl: url,
-      )),
+      (url) => emit(ServerConfigLoaded(serverUrl: url)),
     );
   }
 

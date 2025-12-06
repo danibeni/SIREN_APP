@@ -12,11 +12,16 @@ class IssueModel {
   final int group; // OpenProject group ID
   final PriorityLevel priorityLevel;
   final IssueStatus status;
+  final String? statusName;
+  final String? statusColorHex;
   final int? creatorId;
   final String? creatorName;
+  final int? updatedById;
+  final String? updatedByName;
   final int lockVersion;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? equipmentName;
 
   const IssueModel({
     this.id,
@@ -26,11 +31,16 @@ class IssueModel {
     required this.group,
     required this.priorityLevel,
     required this.status,
+    this.statusName,
+    this.statusColorHex,
     this.creatorId,
     this.creatorName,
+    this.updatedById,
+    this.updatedByName,
     required this.lockVersion,
     this.createdAt,
     this.updatedAt,
+    this.equipmentName,
   });
 
   /// Create IssueModel from OpenProject API JSON response
@@ -48,6 +58,7 @@ class IssueModel {
     final projectLink = links?['project'] as Map<String, dynamic>?;
     final projectHref = projectLink?['href'] as String?;
     final equipment = _extractIdFromHref(projectHref) ?? 0;
+    final equipmentName = projectLink?['title'] as String?;
 
     // Extract priority from _links and map by NAME (title), not ID
     final priorityLink = links?['priority'] as Map<String, dynamic>?;
@@ -59,11 +70,23 @@ class IssueModel {
     final statusTitle = statusLink?['title'] as String?;
     final status = _mapNameToStatus(statusTitle);
 
+    String? statusColorHex;
+    final embedded = json['_embedded'] as Map<String, dynamic>?;
+    final embeddedStatus = embedded?['status'] as Map<String, dynamic>?;
+    if (embeddedStatus != null) {
+      statusColorHex = embeddedStatus['color'] as String?;
+    }
+
     // Extract creator/author from _links
     final authorLink = links?['author'] as Map<String, dynamic>?;
     final authorHref = authorLink?['href'] as String?;
     final creatorId = _extractIdFromHref(authorHref);
     final creatorName = authorLink?['title'] as String?;
+
+    final updatedByLink = links?['updatedBy'] as Map<String, dynamic>?;
+    final updatedByHref = updatedByLink?['href'] as String?;
+    final updatedById = _extractIdFromHref(updatedByHref);
+    final updatedByName = updatedByLink?['title'] as String?;
 
     // Parse dates
     final createdAt = _parseDateTime(json['createdAt'] as String?);
@@ -77,11 +100,16 @@ class IssueModel {
       group: 0, // Group is determined from project membership
       priorityLevel: priorityLevel,
       status: status,
+      statusName: statusTitle,
+      statusColorHex: statusColorHex,
       creatorId: creatorId,
       creatorName: creatorName,
+      updatedById: updatedById,
+      updatedByName: updatedByName,
       lockVersion: json['lockVersion'] as int? ?? 0,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      equipmentName: equipmentName,
     );
   }
 
@@ -121,11 +149,16 @@ class IssueModel {
       group: group,
       priorityLevel: priorityLevel,
       status: status,
+      statusName: statusName,
+      statusColorHex: statusColorHex,
       creatorId: creatorId,
       creatorName: creatorName,
+      updatedById: updatedById,
+      updatedByName: updatedByName,
       lockVersion: lockVersion,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      equipmentName: equipmentName,
     );
   }
 
@@ -138,11 +171,16 @@ class IssueModel {
     int? group,
     PriorityLevel? priorityLevel,
     IssueStatus? status,
+    String? statusName,
+    String? statusColorHex,
     int? creatorId,
     String? creatorName,
+    int? updatedById,
+    String? updatedByName,
     int? lockVersion,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? equipmentName,
   }) {
     return IssueModel(
       id: id ?? this.id,
@@ -152,11 +190,16 @@ class IssueModel {
       group: group ?? this.group,
       priorityLevel: priorityLevel ?? this.priorityLevel,
       status: status ?? this.status,
+      statusName: statusName ?? this.statusName,
+      statusColorHex: statusColorHex ?? this.statusColorHex,
       creatorId: creatorId ?? this.creatorId,
       creatorName: creatorName ?? this.creatorName,
+      updatedById: updatedById ?? this.updatedById,
+      updatedByName: updatedByName ?? this.updatedByName,
       lockVersion: lockVersion ?? this.lockVersion,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      equipmentName: equipmentName ?? this.equipmentName,
     );
   }
 

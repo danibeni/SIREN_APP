@@ -17,10 +17,8 @@ class AuthService {
   Completer<String?>? _authCompleter;
   ChromeSafariBrowser? _browser;
 
-  AuthService({
-    required OAuth2Service oauth2Service,
-    required this.logger,
-  }) : _oauth2Service = oauth2Service;
+  AuthService({required OAuth2Service oauth2Service, required this.logger})
+    : _oauth2Service = oauth2Service;
 
   Future<bool> isAuthenticated() async {
     return await _oauth2Service.hasValidToken();
@@ -113,7 +111,11 @@ class AuthService {
     }
   }
 
-  void handleAuthCallback(String? authorizationCode, {String? error, String? errorDescription}) {
+  void handleAuthCallback(
+    String? authorizationCode, {
+    String? error,
+    String? errorDescription,
+  }) {
     if (_authCompleter != null && !_authCompleter!.isCompleted) {
       if (error != null) {
         logger.warning('OAuth2 error: $error - $errorDescription');

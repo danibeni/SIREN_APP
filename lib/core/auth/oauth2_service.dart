@@ -14,11 +14,7 @@ class OAuth2Service {
   static const String _tokenExpiryKey = 'oauth2_token_expiry';
   static const String _clientIdKey = 'oauth2_client_id';
 
-  OAuth2Service(
-    this._secureStorage,
-    this._dio,
-    this._logger,
-  );
+  OAuth2Service(this._secureStorage, this._dio, this._logger);
 
   Future<void> storeTokens({
     required String accessToken,
@@ -127,9 +123,7 @@ class OAuth2Service {
           'refresh_token': refreshToken,
           'client_id': clientId,
         },
-        options: Options(
-          contentType: Headers.formUrlEncodedContentType,
-        ),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
       );
 
       if (response.statusCode == 200) {
@@ -181,9 +175,7 @@ class OAuth2Service {
           'client_id': clientId,
           'code_verifier': codeVerifier,
         },
-        options: Options(
-          contentType: Headers.formUrlEncodedContentType,
-        ),
+        options: Options(contentType: Headers.formUrlEncodedContentType),
       );
 
       if (response.statusCode == 200) {
@@ -199,4 +191,3 @@ class OAuth2Service {
     }
   }
 }
-

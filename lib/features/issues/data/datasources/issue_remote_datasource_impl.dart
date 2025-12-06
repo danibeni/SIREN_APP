@@ -21,8 +21,8 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
     required DioClient dioClient,
     required ServerConfigService serverConfigService,
     required this.logger,
-  })  : _dioClient = dioClient,
-        _serverConfigService = serverConfigService;
+  }) : _dioClient = dioClient,
+       _serverConfigService = serverConfigService;
 
   /// Get configured Dio instance with server baseUrl
   Future<Dio> _getDio() async {
@@ -140,12 +140,11 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
       // Step 0: Get available types for the project
       final types = await getTypesByProject(equipment);
       if (types.isEmpty) {
-        throw ServerFailure(
-          'No work package types available for this project',
-        );
+        throw ServerFailure('No work package types available for this project');
       }
       final typeId = types.first['id'] as int;
-      final typeHref = types.first['_links']?['self']?['href'] as String? ??
+      final typeHref =
+          types.first['_links']?['self']?['href'] as String? ??
           '/api/v3/types/$typeId';
 
       // Get priority href dynamically from server
@@ -419,6 +418,22 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
     } catch (e) {
       logger.severe('Error fetching priorities: $e');
       throw ServerFailure('Failed to fetch priorities: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getTypes() async {
+    try {
+      final dio = await _getDio();
+      final response = await dio.get('/types');
+
+      final embedded = response.data['_embedded'] as Map<String, dynamic>?;
+      final elements = embedded?['elements'] as List<dynamic>? ?? [];
+
+      return elements.cast<Map<String, dynamic>>();
+    } catch (e) {
+      logger.severe('Error fetching types: $e');
+      throw ServerFailure('Failed to fetch types: ${e.toString()}');
     }
   }
 

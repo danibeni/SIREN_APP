@@ -28,14 +28,34 @@ import 'package:siren_app/features/issues/data/datasources/issue_remote_datasour
     as _i407;
 import 'package:siren_app/features/issues/data/datasources/issue_remote_datasource_impl.dart'
     as _i372;
+import 'package:siren_app/features/issues/data/datasources/work_package_type_local_datasource.dart'
+    as _i139;
 import 'package:siren_app/features/issues/data/repositories/issue_repository_impl.dart'
     as _i711;
+import 'package:siren_app/features/issues/data/repositories/work_package_type_repository_impl.dart'
+    as _i34;
 import 'package:siren_app/features/issues/domain/repositories/issue_repository.dart'
     as _i885;
+import 'package:siren_app/features/issues/domain/repositories/work_package_type_repository.dart'
+    as _i229;
 import 'package:siren_app/features/issues/domain/usecases/create_issue_uc.dart'
     as _i725;
+import 'package:siren_app/features/issues/domain/usecases/get_available_types_uc.dart'
+    as _i85;
+import 'package:siren_app/features/issues/domain/usecases/get_issues_uc.dart'
+    as _i695;
+import 'package:siren_app/features/issues/domain/usecases/get_statuses_for_type_uc.dart'
+    as _i720;
+import 'package:siren_app/features/issues/domain/usecases/get_work_package_type_uc.dart'
+    as _i589;
+import 'package:siren_app/features/issues/domain/usecases/set_work_package_type_uc.dart'
+    as _i714;
 import 'package:siren_app/features/issues/presentation/bloc/create_issue_cubit.dart'
     as _i279;
+import 'package:siren_app/features/issues/presentation/cubit/issues_list_cubit.dart'
+    as _i849;
+import 'package:siren_app/features/issues/presentation/cubit/work_package_type_cubit.dart'
+    as _i904;
 
 // initializes the registration of main-scope dependencies inside of GetIt
 _i174.GetIt init(
@@ -51,6 +71,12 @@ _i174.GetIt init(
   gh.lazySingleton<_i831.Logger>(() => coreModule.logger);
   gh.lazySingleton<_i1000.ServerConfigService>(
     () => _i1000.ServerConfigService(
+      secureStorage: gh<_i558.FlutterSecureStorage>(),
+      logger: gh<_i831.Logger>(),
+    ),
+  );
+  gh.lazySingleton<_i139.WorkPackageTypeLocalDataSource>(
+    () => _i139.WorkPackageTypeLocalDataSource(
       secureStorage: gh<_i558.FlutterSecureStorage>(),
       logger: gh<_i831.Logger>(),
     ),
@@ -101,10 +127,46 @@ _i174.GetIt init(
   gh.lazySingleton<_i725.CreateIssueUseCase>(
     () => _i725.CreateIssueUseCase(gh<_i885.IssueRepository>()),
   );
+  gh.lazySingleton<_i229.WorkPackageTypeRepository>(
+    () => _i34.WorkPackageTypeRepositoryImpl(
+      remoteDataSource: gh<_i407.IssueRemoteDataSource>(),
+      localDataSource: gh<_i139.WorkPackageTypeLocalDataSource>(),
+      logger: gh<_i831.Logger>(),
+    ),
+  );
   gh.factory<_i279.CreateIssueCubit>(
     () => _i279.CreateIssueCubit(
       gh<_i725.CreateIssueUseCase>(),
       gh<_i407.IssueRemoteDataSource>(),
+    ),
+  );
+  gh.lazySingleton<_i695.GetIssuesUseCase>(
+    () => _i695.GetIssuesUseCase(gh<_i885.IssueRepository>()),
+  );
+  gh.lazySingleton<_i85.GetAvailableTypesUseCase>(
+    () => _i85.GetAvailableTypesUseCase(gh<_i229.WorkPackageTypeRepository>()),
+  );
+  gh.lazySingleton<_i720.GetStatusesForTypeUseCase>(
+    () =>
+        _i720.GetStatusesForTypeUseCase(gh<_i229.WorkPackageTypeRepository>()),
+  );
+  gh.lazySingleton<_i589.GetWorkPackageTypeUseCase>(
+    () =>
+        _i589.GetWorkPackageTypeUseCase(gh<_i229.WorkPackageTypeRepository>()),
+  );
+  gh.lazySingleton<_i714.SetWorkPackageTypeUseCase>(
+    () =>
+        _i714.SetWorkPackageTypeUseCase(gh<_i229.WorkPackageTypeRepository>()),
+  );
+  gh.factory<_i849.IssuesListCubit>(
+    () => _i849.IssuesListCubit(gh<_i695.GetIssuesUseCase>()),
+  );
+  gh.lazySingleton<_i904.WorkPackageTypeCubit>(
+    () => _i904.WorkPackageTypeCubit(
+      gh<_i85.GetAvailableTypesUseCase>(),
+      gh<_i589.GetWorkPackageTypeUseCase>(),
+      gh<_i714.SetWorkPackageTypeUseCase>(),
+      gh<_i720.GetStatusesForTypeUseCase>(),
     ),
   );
   return getIt;
