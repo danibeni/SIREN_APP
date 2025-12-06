@@ -33,9 +33,11 @@ void main() {
           expect(model.subject, 'Test Issue');
           expect(model.description, 'Test Description');
           expect(model.equipment, 100);
+          expect(model.equipmentName, 'Test Project');
           expect(model.lockVersion, 2);
           expect(model.creatorId, 5);
           expect(model.creatorName, 'John Doe');
+          expect(model.statusName, 'New');
           expect(model.createdAt, DateTime.utc(2024, 1, 15, 10, 30, 0));
           expect(model.updatedAt, DateTime.utc(2024, 1, 16, 14, 45, 0));
         },
@@ -169,7 +171,10 @@ void main() {
 
         // When & Then
         expect(IssueModel.fromJson(jsonLower).priorityLevel, PriorityLevel.low);
-        expect(IssueModel.fromJson(jsonUpper).priorityLevel, PriorityLevel.high);
+        expect(
+          IssueModel.fromJson(jsonUpper).priorityLevel,
+          PriorityLevel.high,
+        );
         expect(
           IssueModel.fromJson(jsonMixed).priorityLevel,
           PriorityLevel.immediate,
@@ -186,10 +191,7 @@ void main() {
 
         // When & Then
         expect(IssueModel.fromJson(jsonLower).status, IssueStatus.newStatus);
-        expect(
-          IssueModel.fromJson(jsonUpper).status,
-          IssueStatus.inProgress,
-        );
+        expect(IssueModel.fromJson(jsonUpper).status, IssueStatus.inProgress);
         expect(IssueModel.fromJson(jsonOnHold).status, IssueStatus.onHold);
         expect(IssueModel.fromJson(jsonClosed).status, IssueStatus.closed);
         expect(IssueModel.fromJson(jsonRejected).status, IssueStatus.rejected);
@@ -258,11 +260,13 @@ void main() {
           group: 10,
           priorityLevel: PriorityLevel.high,
           status: IssueStatus.inProgress,
+          statusName: 'In Progress',
           creatorId: 5,
           creatorName: 'John Doe',
           lockVersion: 2,
           createdAt: DateTime.utc(2024, 1, 15),
           updatedAt: DateTime.utc(2024, 1, 16),
+          equipmentName: 'Main Mirror',
         );
 
         // When
@@ -277,11 +281,13 @@ void main() {
         expect(entity.group, 10);
         expect(entity.priorityLevel, PriorityLevel.high);
         expect(entity.status, IssueStatus.inProgress);
+        expect(entity.statusName, 'In Progress');
         expect(entity.creatorId, 5);
         expect(entity.creatorName, 'John Doe');
         expect(entity.lockVersion, 2);
         expect(entity.createdAt, DateTime.utc(2024, 1, 15));
         expect(entity.updatedAt, DateTime.utc(2024, 1, 16));
+        expect(entity.equipmentName, 'Main Mirror');
       });
 
       test('should preserve null values when converting to entity', () {

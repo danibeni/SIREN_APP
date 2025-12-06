@@ -18,4 +18,3 @@ final getIt = GetIt.instance;
 Future<void> configureDependencies() async {
   init(getIt);
 }
-

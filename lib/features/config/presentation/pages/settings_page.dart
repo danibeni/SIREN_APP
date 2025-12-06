@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/features/issues/presentation/cubit/work_package_type_cubit.dart';
+import 'package:siren_app/features/issues/presentation/cubit/work_package_type_state.dart';
 import '../cubit/server_config_cubit.dart';
 import '../cubit/server_config_state.dart';
 
@@ -11,8 +13,14 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<ServerConfigCubit>()..loadExistingConfiguration(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) =>
+              getIt<ServerConfigCubit>()..loadExistingConfiguration(),
+        ),
+        BlocProvider(create: (_) => getIt<WorkPackageTypeCubit>()..load()),
+      ],
       child: const _SettingsView(),
     );
   }
@@ -51,10 +59,7 @@ class _SettingsViewState extends State<_SettingsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Settings'), elevation: 0),
       body: BlocConsumer<ServerConfigCubit, ServerConfigState>(
         listener: (context, state) {
           if (state is ServerConfigSuccess) {
@@ -77,10 +82,9 @@ class _SettingsViewState extends State<_SettingsView> {
               ),
             );
           } else if (state is ServerConfigInitial) {
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              '/config',
-              (route) => false,
-            );
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil('/config', (route) => false);
           } else if (state is ServerConfigLoggedOut) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -88,10 +92,9 @@ class _SettingsViewState extends State<_SettingsView> {
                 backgroundColor: AppColors.success,
               ),
             );
-            Navigator.of(context).pushNamedAndRemoveUntil(
-              '/config',
-              (route) => false,
-            );
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil('/config', (route) => false);
           }
         },
         builder: (context, state) {
@@ -146,6 +149,8 @@ class _SettingsViewState extends State<_SettingsView> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          _buildTypeSelectionCard(context),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () => _enterEditMode(state.serverUrl),
@@ -173,7 +178,10 @@ class _SettingsViewState extends State<_SettingsView> {
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => _showClearConfirmation(context),
-            icon: const Icon(Icons.delete_outline, color: AppColors.textSecondary),
+            icon: const Icon(
+              Icons.delete_outline,
+              color: AppColors.textSecondary,
+            ),
             label: const Text(
               'Clear Configuration',
               style: TextStyle(color: AppColors.textSecondary),
@@ -185,7 +193,7 @@ class _SettingsViewState extends State<_SettingsView> {
           ),
           const SizedBox(height: 24),
           Card(
-            color: AppColors.info.withOpacity(0.1),
+            color: AppColors.info.withValues(alpha: 0.1),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -208,6 +216,94 @@ class _SettingsViewState extends State<_SettingsView> {
     );
   }
 
+  Widget _buildTypeSelectionCard(BuildContext context) {
+    return BlocBuilder<WorkPackageTypeCubit, WorkPackageTypeState>(
+      builder: (context, state) {
+        if (state is WorkPackageTypeLoading ||
+            state is WorkPackageTypeInitial ||
+            state is WorkPackageTypeSaving) {
+          return const LinearProgressIndicator(minHeight: 3);
+        }
+
+        if (state is WorkPackageTypeError) {
+          return Card(
+            color: AppColors.error.withValues(alpha: 0.08),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: AppColors.error),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      state.message,
+                      style: const TextStyle(color: AppColors.error),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        context.read<WorkPackageTypeCubit>().load(),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (state is WorkPackageTypeLoaded) {
+          final items = state.availableTypes;
+          return Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.category_outlined,
+                        color: AppColors.iconPrimary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Work Package Type',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: state.selectedType,
+                    items: items
+                        .map(
+                          (type) => DropdownMenuItem(
+                            value: type.name,
+                            child: Text(type.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        context.read<WorkPackageTypeCubit>().selectType(value);
+                      }
+                    },
+                    decoration: const InputDecoration(
+                      labelText: 'Select type',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
   Widget _buildConfigItem(
     BuildContext context, {
     required String label,
@@ -224,15 +320,12 @@ class _SettingsViewState extends State<_SettingsView> {
             children: [
               Text(
                 label,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
               ),
               const SizedBox(height: 4),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              Text(value, style: Theme.of(context).textTheme.bodyMedium),
             ],
           ),
         ),
@@ -310,7 +403,9 @@ class _SettingsViewState extends State<_SettingsView> {
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.buttonText),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.buttonText,
+                              ),
                             ),
                           )
                         : const Text('Save'),
@@ -327,8 +422,8 @@ class _SettingsViewState extends State<_SettingsView> {
   void _saveConfiguration() {
     if (_formKey.currentState!.validate()) {
       context.read<ServerConfigCubit>().saveConfiguration(
-            serverUrl: _serverUrlController.text.trim(),
-          );
+        serverUrl: _serverUrlController.text.trim(),
+      );
     }
   }
 
@@ -387,4 +482,3 @@ class _SettingsViewState extends State<_SettingsView> {
     );
   }
 }
-

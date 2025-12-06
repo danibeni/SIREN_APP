@@ -11,6 +11,8 @@ class IssueFixtures {
     int? group,
     PriorityLevel? priorityLevel,
     IssueStatus? status,
+    String? statusName,
+    String? equipmentName,
     int? creatorId,
     String? creatorName,
     int? lockVersion,
@@ -25,18 +27,18 @@ class IssueFixtures {
       group: group ?? 10,
       priorityLevel: priorityLevel ?? PriorityLevel.normal,
       status: status ?? IssueStatus.newStatus,
+      statusName: statusName ?? 'New',
       creatorId: creatorId ?? 1,
       creatorName: creatorName ?? 'Test User',
       lockVersion: lockVersion ?? 0,
       createdAt: createdAt ?? DateTime(2024, 1, 1),
       updatedAt: updatedAt ?? DateTime(2024, 1, 1),
+      equipmentName: equipmentName ?? 'Test Project',
     );
   }
 
   /// Create a list of sample IssueEntity objects
-  static List<IssueEntity> createIssueEntityList({
-    int count = 3,
-  }) {
+  static List<IssueEntity> createIssueEntityList({int count = 3}) {
     return List.generate(
       count,
       (index) => createIssueEntity(
@@ -45,7 +47,8 @@ class IssueFixtures {
         description: 'Description for issue ${index + 1}',
         equipment: 100 + index,
         group: 10,
-        priorityLevel: PriorityLevel.values[index % PriorityLevel.values.length],
+        priorityLevel:
+            PriorityLevel.values[index % PriorityLevel.values.length],
         status: IssueStatus.values[index % IssueStatus.values.length],
         lockVersion: index,
       ),
@@ -59,6 +62,7 @@ class IssueFixtures {
     String? subject,
     String? description,
     int? projectId,
+    String? projectName,
     int? groupId,
     int? priorityId,
     String? priorityTitle,
@@ -83,12 +87,9 @@ class IssueFixtures {
       '_links': {
         'project': {
           'href': '/api/v3/projects/${projectId ?? 100}',
-          'title': 'Test Project',
+          'title': projectName ?? 'Test Project',
         },
-        'type': {
-          'href': '/api/v3/types/1',
-          'title': 'Task',
-        },
+        'type': {'href': '/api/v3/types/1', 'title': 'Task'},
         'priority': {
           'href': '/api/v3/priorities/${priorityId ?? 8}',
           'title': priorityTitle ?? 'Normal',
@@ -111,11 +112,15 @@ class IssueFixtures {
   }
 
   /// Create a list of sample OpenProject API response maps
-  static List<Map<String, dynamic>> createWorkPackageMapList({
-    int count = 3,
-  }) {
+  static List<Map<String, dynamic>> createWorkPackageMapList({int count = 3}) {
     final priorityTitles = ['Low', 'Normal', 'High', 'Immediate'];
-    final statusTitles = ['New', 'In progress', 'On hold', 'Closed', 'Rejected'];
+    final statusTitles = [
+      'New',
+      'In progress',
+      'On hold',
+      'Closed',
+      'Rejected',
+    ];
     return List.generate(
       count,
       (index) => createWorkPackageMap(
@@ -133,10 +138,7 @@ class IssueFixtures {
   }
 
   /// Create a sample group map for OpenProject API response
-  static Map<String, dynamic> createGroupMap({
-    int? id,
-    String? name,
-  }) {
+  static Map<String, dynamic> createGroupMap({int? id, String? name}) {
     return {
       'id': id ?? 10,
       'name': name ?? 'Test Group',
@@ -150,15 +152,11 @@ class IssueFixtures {
   }
 
   /// Create a list of sample group maps
-  static List<Map<String, dynamic>> createGroupMapList({
-    int count = 3,
-  }) {
+  static List<Map<String, dynamic>> createGroupMapList({int count = 3}) {
     return List.generate(
       count,
-      (index) => createGroupMap(
-        id: 10 + index,
-        name: 'Test Group ${index + 1}',
-      ),
+      (index) =>
+          createGroupMap(id: 10 + index, name: 'Test Group ${index + 1}'),
     );
   }
 
@@ -182,9 +180,7 @@ class IssueFixtures {
   }
 
   /// Create a list of sample project maps
-  static List<Map<String, dynamic>> createProjectMapList({
-    int count = 3,
-  }) {
+  static List<Map<String, dynamic>> createProjectMapList({int count = 3}) {
     return List.generate(
       count,
       (index) => createProjectMap(
@@ -208,10 +204,7 @@ class IssueFixtures {
       'isDefault': isDefault ?? false,
       'isClosed': isClosed ?? false,
       '_links': {
-        'self': {
-          'href': '/api/v3/statuses/${id ?? 1}',
-          'title': name ?? 'New',
-        },
+        'self': {'href': '/api/v3/statuses/${id ?? 1}', 'title': name ?? 'New'},
       },
     };
   }
@@ -220,34 +213,41 @@ class IssueFixtures {
   static List<Map<String, dynamic>> createStatusMapList() {
     return [
       createStatusMap(id: 1, name: 'New', isDefault: true, isClosed: false),
-      createStatusMap(id: 7, name: 'In progress', isDefault: false, isClosed: false),
-      createStatusMap(id: 9, name: 'On hold', isDefault: false, isClosed: false),
+      createStatusMap(
+        id: 7,
+        name: 'In progress',
+        isDefault: false,
+        isClosed: false,
+      ),
+      createStatusMap(
+        id: 9,
+        name: 'On hold',
+        isDefault: false,
+        isClosed: false,
+      ),
       createStatusMap(id: 12, name: 'Closed', isDefault: false, isClosed: true),
-      createStatusMap(id: 13, name: 'Rejected', isDefault: false, isClosed: true),
+      createStatusMap(
+        id: 13,
+        name: 'Rejected',
+        isDefault: false,
+        isClosed: true,
+      ),
     ];
   }
 
   /// Create a sample type map for OpenProject API response
-  static Map<String, dynamic> createTypeMap({
-    int? id,
-    String? name,
-  }) {
+  static Map<String, dynamic> createTypeMap({int? id, String? name}) {
     return {
       'id': id ?? 1,
       'name': name ?? 'Task',
       '_links': {
-        'self': {
-          'href': '/api/v3/types/${id ?? 1}',
-          'title': name ?? 'Task',
-        },
+        'self': {'href': '/api/v3/types/${id ?? 1}', 'title': name ?? 'Task'},
       },
     };
   }
 
   /// Create a list of sample type maps
-  static List<Map<String, dynamic>> createTypeMapList({
-    int count = 3,
-  }) {
+  static List<Map<String, dynamic>> createTypeMapList({int count = 3}) {
     return List.generate(
       count,
       (index) => createTypeMap(
@@ -257,4 +257,3 @@ class IssueFixtures {
     );
   }
 }
-

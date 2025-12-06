@@ -9,6 +9,7 @@ import 'package:siren_app/features/config/presentation/cubit/app_initialization_
 import 'package:siren_app/features/config/presentation/cubit/app_initialization_state.dart';
 
 class MockServerConfigService extends Mock implements ServerConfigService {}
+
 class MockAuthService extends Mock implements AuthService {}
 
 void main() {
@@ -19,10 +20,7 @@ void main() {
   setUp(() {
     mockServerConfigService = MockServerConfigService();
     mockAuthService = MockAuthService();
-    cubit = AppInitializationCubit(
-      mockServerConfigService,
-      mockAuthService,
-    );
+    cubit = AppInitializationCubit(mockServerConfigService, mockAuthService);
   });
 
   tearDown(() {
@@ -41,10 +39,12 @@ void main() {
         'when server is configured and user is authenticated',
         build: () {
           // Given
-          when(() => mockServerConfigService.isConfigured())
-              .thenAnswer((_) async => const Right(true));
-          when(() => mockAuthService.isAuthenticated())
-              .thenAnswer((_) async => true);
+          when(
+            () => mockServerConfigService.isConfigured(),
+          ).thenAnswer((_) async => const Right(true));
+          when(
+            () => mockAuthService.isAuthenticated(),
+          ).thenAnswer((_) async => true);
           return cubit;
         },
         act: (cubit) => cubit.checkConfiguration(),
@@ -63,10 +63,12 @@ void main() {
         'when server is configured but user is not authenticated',
         build: () {
           // Given
-          when(() => mockServerConfigService.isConfigured())
-              .thenAnswer((_) async => const Right(true));
-          when(() => mockAuthService.isAuthenticated())
-              .thenAnswer((_) async => false);
+          when(
+            () => mockServerConfigService.isConfigured(),
+          ).thenAnswer((_) async => const Right(true));
+          when(
+            () => mockAuthService.isAuthenticated(),
+          ).thenAnswer((_) async => false);
           return cubit;
         },
         act: (cubit) => cubit.checkConfiguration(),
@@ -85,8 +87,9 @@ void main() {
         'when server is not configured',
         build: () {
           // Given
-          when(() => mockServerConfigService.isConfigured())
-              .thenAnswer((_) async => const Right(false));
+          when(
+            () => mockServerConfigService.isConfigured(),
+          ).thenAnswer((_) async => const Right(false));
           return cubit;
         },
         act: (cubit) => cubit.checkConfiguration(),
@@ -104,8 +107,9 @@ void main() {
         'when server config check fails',
         build: () {
           // Given
-          when(() => mockServerConfigService.isConfigured())
-              .thenAnswer((_) async => const Left(CacheFailure('Error')));
+          when(
+            () => mockServerConfigService.isConfigured(),
+          ).thenAnswer((_) async => const Left(CacheFailure('Error')));
           return cubit;
         },
         act: (cubit) => cubit.checkConfiguration(),
@@ -115,14 +119,14 @@ void main() {
         ],
       );
 
-
       blocTest<AppInitializationCubit, AppInitializationState>(
         'emits [AppInitializationChecking, AppInitializationError] '
         'when an exception is thrown',
         build: () {
           // Given
-          when(() => mockServerConfigService.isConfigured())
-              .thenThrow(Exception('Unexpected error'));
+          when(
+            () => mockServerConfigService.isConfigured(),
+          ).thenThrow(Exception('Unexpected error'));
           return cubit;
         },
         act: (cubit) => cubit.checkConfiguration(),
@@ -136,4 +140,3 @@ void main() {
     });
   });
 }
-

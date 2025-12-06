@@ -9,6 +9,7 @@ import 'package:siren_app/features/config/presentation/pages/app_initialization_
 import 'package:siren_app/features/config/presentation/pages/server_config_page.dart';
 import 'package:siren_app/features/config/presentation/pages/settings_page.dart';
 import 'package:siren_app/features/issues/presentation/pages/issue_form_page.dart';
+import 'package:siren_app/features/issues/presentation/pages/issue_list_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,7 +54,9 @@ class _SirenAppState extends State<SirenApp> {
   }
 
   void _handleDeepLink(Uri uri) {
-    if (uri.scheme == 'siren' && uri.host == 'oauth' && uri.path == '/callback') {
+    if (uri.scheme == 'siren' &&
+        uri.host == 'oauth' &&
+        uri.path == '/callback') {
       final code = uri.queryParameters['code'];
       final error = uri.queryParameters['error'];
       final errorDescription = uri.queryParameters['error_description'];
@@ -106,79 +109,10 @@ class _SirenAppState extends State<SirenApp> {
       routes: {
         '/config': (context) => const ServerConfigPage(),
         '/settings': (context) => const SettingsPage(),
-        '/home': (context) => const HomePage(),
+        '/home': (context) => const IssueListPage(),
+        '/issues': (context) => const IssueListPage(),
         '/create-issue': (context) => const IssueFormPage(),
       },
-    );
-  }
-}
-
-
-/// Placeholder home page - will be replaced with IssueListPage in Story 4
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('SIREN'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.of(context).pushNamed('/settings'),
-            tooltip: 'Settings',
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.assignment,
-              size: 80,
-              color: AppColors.primaryBlue,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Issue Management',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create and manage technical issues',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              'Tap + to create a new issue',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await Navigator.of(context).pushNamed('/create-issue');
-          if (result == true && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Issue created successfully!'),
-                backgroundColor: AppColors.success,
-              ),
-            );
-          }
-        },
-        backgroundColor: AppColors.primaryPurple,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text('New Issue'),
-      ),
     );
   }
 }

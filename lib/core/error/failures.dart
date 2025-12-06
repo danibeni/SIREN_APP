@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Base class for all failures in the application
-/// 
+///
 /// All failure types should extend this class to ensure consistent error handling
 abstract class Failure extends Equatable {
   final String message;
@@ -41,4 +41,3 @@ class CacheFailure extends Failure {
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message);
 }
-

@@ -6,4 +6,3 @@ abstract class ConfigModule {
   @lazySingleton
   Dio provideDio() => Dio();
 }
-

@@ -17,9 +17,7 @@ class ServerConfigInitial extends ServerConfigState {
 class ServerConfigLoaded extends ServerConfigState {
   final String? serverUrl;
 
-  const ServerConfigLoaded({
-    this.serverUrl,
-  });
+  const ServerConfigLoaded({this.serverUrl});
 
   @override
   List<Object?> get props => [serverUrl];
@@ -61,10 +59,7 @@ class ServerConfigValidating extends ServerConfigState {
   });
 
   @override
-  List<Object?> get props => [
-        serverUrlError,
-        isServerUrlValid,
-      ];
+  List<Object?> get props => [serverUrlError, isServerUrlValid];
 
   ServerConfigValidating copyWith({
     String? serverUrlError,

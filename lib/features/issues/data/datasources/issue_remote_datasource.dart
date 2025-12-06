@@ -93,4 +93,9 @@ abstract class IssueRemoteDataSource {
   ///
   /// Used for mapping PriorityLevel to actual OpenProject priority IDs
   Future<List<Map<String, dynamic>>> getPriorities();
+
+  /// Retrieve available work package types
+  ///
+  /// Used for Settings type selection
+  Future<List<Map<String, dynamic>>> getTypes();
 }

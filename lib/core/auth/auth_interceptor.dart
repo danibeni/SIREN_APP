@@ -6,10 +6,7 @@ class AuthInterceptor extends Interceptor {
   final AuthService authService;
   final Logger logger;
 
-  AuthInterceptor({
-    required this.authService,
-    required this.logger,
-  });
+  AuthInterceptor({required this.authService, required this.logger});
 
   @override
   void onRequest(
@@ -28,12 +25,7 @@ class AuthInterceptor extends Interceptor {
       handler.next(options);
     } catch (e) {
       logger.severe('Error in AuthInterceptor: $e');
-      handler.reject(
-        DioException(
-          requestOptions: options,
-          error: e,
-        ),
-      );
+      handler.reject(DioException(requestOptions: options, error: e));
     }
   }
 
@@ -43,4 +35,3 @@ class AuthInterceptor extends Interceptor {
     handler.next(err);
   }
 }
-

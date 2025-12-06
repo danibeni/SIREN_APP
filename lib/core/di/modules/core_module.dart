@@ -14,4 +14,3 @@ abstract class CoreModule {
   @lazySingleton
   Logger get logger => Logger('SIREN');
 }
-

@@ -21,4 +21,3 @@ class PkceHelper {
     return base64Url.encode(digest.bytes).replaceAll('=', '');
   }
 }
-

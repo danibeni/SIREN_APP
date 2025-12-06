@@ -295,6 +295,7 @@ void main() {
           result.fold((failure) => fail('Expected success'), (entities) {
             expect(entities.length, 3);
             expect(entities, isA<List<IssueEntity>>());
+            expect(entities.first.equipmentName, isNotEmpty);
           });
         },
       );

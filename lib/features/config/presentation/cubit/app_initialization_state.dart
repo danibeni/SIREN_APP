@@ -32,4 +32,3 @@ class AppInitializationError extends AppInitializationState {
   @override
   List<Object?> get props => [message];
 }
-
