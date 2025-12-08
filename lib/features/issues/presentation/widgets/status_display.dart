@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:siren_app/core/theme/app_colors.dart';
 
 class StatusDisplay extends StatelessWidget {
   final String statusName;
@@ -45,13 +46,13 @@ class StatusDisplay extends StatelessWidget {
 
   Color _parseColor(String? hexColor) {
     if (hexColor == null || hexColor.isEmpty) {
-      return Colors.grey;
+      return AppColors.textSecondary;
     }
     try {
       final hex = hexColor.replaceAll('#', '');
       return Color(int.parse(hex, radix: 16) + 0xFF000000);
     } catch (e) {
-      return Colors.grey;
+      return AppColors.textSecondary;
     }
   }
 }
