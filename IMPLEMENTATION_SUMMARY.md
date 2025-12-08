@@ -1,6 +1,19 @@
-# Implementación: Filtrado por Type y Preparación para Adjuntos
+# Implementación: Attachments Optimization & Display
 
-## Resumen de Cambios
+## Recent Updates
+
+**Date:** December 8, 2025  
+**Feature:** Story 4 - Attachments Visualization
+
+### Latest Changes: Optimized Attachment Loading Strategy
+
+Se ha implementado una estrategia optimizada para la carga de adjuntos que **reduce las llamadas API de 2 a 1** al extraer los attachments directamente de la respuesta del work package. Esta optimización sigue los principios de Clean Architecture mientras maximiza el rendimiento en dispositivos móviles.
+
+**Documentación técnica completa:** `context/SDD/ATTACHMENT_OPTIMIZATION_STRATEGY.md`
+
+---
+
+## Resumen de Cambios Previos
 
 Se ha completado la implementación del filtrado automático por Work Package Type configurado en Settings, ordenación por fecha de modificación, y preparación para la carga de adjuntos en el listado de incidencias.
 

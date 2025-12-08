@@ -42,6 +42,8 @@ import 'package:siren_app/features/issues/domain/repositories/work_package_type_
     as _i229;
 import 'package:siren_app/features/issues/domain/usecases/create_issue_uc.dart'
     as _i725;
+import 'package:siren_app/features/issues/domain/usecases/get_attachments_uc.dart'
+    as _i277;
 import 'package:siren_app/features/issues/domain/usecases/get_available_types_uc.dart'
     as _i85;
 import 'package:siren_app/features/issues/domain/usecases/get_issue_by_id_uc.dart'
@@ -83,12 +85,6 @@ _i174.GetIt init(
   gh.lazySingleton<_i831.Logger>(() => coreModule.logger);
   gh.lazySingleton<_i1000.ServerConfigService>(
     () => _i1000.ServerConfigService(
-      secureStorage: gh<_i558.FlutterSecureStorage>(),
-      logger: gh<_i831.Logger>(),
-    ),
-  );
-  gh.lazySingleton<_i93.IssueLocalDataSource>(
-    () => _i93.IssueLocalDataSource(
       secureStorage: gh<_i558.FlutterSecureStorage>(),
       logger: gh<_i831.Logger>(),
     ),
@@ -137,21 +133,13 @@ _i174.GetIt init(
       logger: gh<_i831.Logger>(),
     ),
   );
-  gh.lazySingleton<_i885.IssueRepository>(
-    () => _i711.IssueRepositoryImpl(
-      remoteDataSource: gh<_i407.IssueRemoteDataSource>(),
-      localDataSource: gh<_i93.IssueLocalDataSource>(),
+  gh.lazySingleton<_i93.IssueLocalDataSource>(
+    () => _i93.IssueLocalDataSource(
+      secureStorage: gh<_i558.FlutterSecureStorage>(),
       logger: gh<_i831.Logger>(),
+      dioClient: gh<_i657.DioClient>(),
+      serverConfigService: gh<_i1000.ServerConfigService>(),
     ),
-  );
-  gh.lazySingleton<_i725.CreateIssueUseCase>(
-    () => _i725.CreateIssueUseCase(gh<_i885.IssueRepository>()),
-  );
-  gh.lazySingleton<_i216.GetIssueByIdUseCase>(
-    () => _i216.GetIssueByIdUseCase(gh<_i885.IssueRepository>()),
-  );
-  gh.lazySingleton<_i812.UpdateIssueUseCase>(
-    () => _i812.UpdateIssueUseCase(gh<_i885.IssueRepository>()),
   );
   gh.lazySingleton<_i229.WorkPackageTypeRepository>(
     () => _i34.WorkPackageTypeRepositoryImpl(
@@ -160,22 +148,25 @@ _i174.GetIt init(
       logger: gh<_i831.Logger>(),
     ),
   );
-  gh.factory<_i279.CreateIssueCubit>(
-    () => _i279.CreateIssueCubit(
-      gh<_i725.CreateIssueUseCase>(),
-      gh<_i407.IssueRemoteDataSource>(),
+  gh.lazySingleton<_i885.IssueRepository>(
+    () => _i711.IssueRepositoryImpl(
+      remoteDataSource: gh<_i407.IssueRemoteDataSource>(),
+      localDataSource: gh<_i93.IssueLocalDataSource>(),
+      serverConfigService: gh<_i1000.ServerConfigService>(),
+      logger: gh<_i831.Logger>(),
     ),
   );
-  gh.factory<_i435.IssueDetailCubit>(
-    () => _i435.IssueDetailCubit(
-      getIssueByIdUseCase: gh<_i216.GetIssueByIdUseCase>(),
-    ),
+  gh.lazySingleton<_i725.CreateIssueUseCase>(
+    () => _i725.CreateIssueUseCase(gh<_i885.IssueRepository>()),
   );
-  gh.factory<_i719.EditIssueCubit>(
-    () => _i719.EditIssueCubit(
-      gh<_i216.GetIssueByIdUseCase>(),
-      gh<_i812.UpdateIssueUseCase>(),
-    ),
+  gh.lazySingleton<_i277.GetAttachmentsUseCase>(
+    () => _i277.GetAttachmentsUseCase(gh<_i885.IssueRepository>()),
+  );
+  gh.lazySingleton<_i216.GetIssueByIdUseCase>(
+    () => _i216.GetIssueByIdUseCase(gh<_i885.IssueRepository>()),
+  );
+  gh.lazySingleton<_i812.UpdateIssueUseCase>(
+    () => _i812.UpdateIssueUseCase(gh<_i885.IssueRepository>()),
   );
   gh.lazySingleton<_i85.GetAvailableTypesUseCase>(
     () => _i85.GetAvailableTypesUseCase(gh<_i229.WorkPackageTypeRepository>()),
@@ -195,6 +186,13 @@ _i174.GetIt init(
     () =>
         _i714.SetWorkPackageTypeUseCase(gh<_i229.WorkPackageTypeRepository>()),
   );
+  gh.factory<_i435.IssueDetailCubit>(
+    () => _i435.IssueDetailCubit(
+      getIssueByIdUseCase: gh<_i216.GetIssueByIdUseCase>(),
+      getAttachmentsUseCase: gh<_i277.GetAttachmentsUseCase>(),
+      logger: gh<_i831.Logger>(),
+    ),
+  );
   gh.lazySingleton<_i695.GetIssuesUseCase>(
     () => _i695.GetIssuesUseCase(
       gh<_i885.IssueRepository>(),
@@ -207,12 +205,24 @@ _i174.GetIt init(
       gh<_i198.RefreshStatusesUseCase>(),
     ),
   );
+  gh.factory<_i279.CreateIssueCubit>(
+    () => _i279.CreateIssueCubit(
+      gh<_i725.CreateIssueUseCase>(),
+      gh<_i407.IssueRemoteDataSource>(),
+    ),
+  );
   gh.lazySingleton<_i904.WorkPackageTypeCubit>(
     () => _i904.WorkPackageTypeCubit(
       gh<_i85.GetAvailableTypesUseCase>(),
       gh<_i589.GetWorkPackageTypeUseCase>(),
       gh<_i714.SetWorkPackageTypeUseCase>(),
       gh<_i720.GetStatusesForTypeUseCase>(),
+    ),
+  );
+  gh.factory<_i719.EditIssueCubit>(
+    () => _i719.EditIssueCubit(
+      gh<_i216.GetIssueByIdUseCase>(),
+      gh<_i812.UpdateIssueUseCase>(),
     ),
   );
   return getIt;

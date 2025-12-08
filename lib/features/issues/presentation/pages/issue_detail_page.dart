@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart' as injection;
 import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_state.dart';
@@ -12,26 +13,19 @@ import 'package:siren_app/features/issues/presentation/widgets/status_display.da
 class IssueDetailPage extends StatelessWidget {
   final int issueId;
 
-  const IssueDetailPage({
-    super.key,
-    required this.issueId,
-  });
+  const IssueDetailPage({super.key, required this.issueId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => injection.getIt<IssueDetailCubit>()
-        ..loadIssue(issueId),
+      create: (context) =>
+          injection.getIt<IssueDetailCubit>()..loadIssue(issueId),
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Issue Details'),
-        ),
+        appBar: AppBar(title: const Text('Issue Details')),
         body: BlocBuilder<IssueDetailCubit, IssueDetailState>(
           builder: (context, state) {
             if (state is IssueDetailLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (state is IssueDetailError) {
@@ -66,7 +60,11 @@ class IssueDetailPage extends StatelessWidget {
             }
 
             if (state is IssueDetailLoaded) {
-              return _DetailView(issue: state.issue);
+              return _DetailView(
+                issue: state.issue,
+                attachments: state.attachments,
+                isLoadingAttachments: state.isLoadingAttachments,
+              );
             }
 
             return const SizedBox.shrink();
@@ -93,8 +91,14 @@ class IssueDetailPage extends StatelessWidget {
 
 class _DetailView extends StatelessWidget {
   final IssueEntity issue;
+  final List<AttachmentEntity> attachments;
+  final bool isLoadingAttachments;
 
-  const _DetailView({required this.issue});
+  const _DetailView({
+    required this.issue,
+    this.attachments = const [],
+    this.isLoadingAttachments = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +337,7 @@ class _DetailView extends StatelessWidget {
                           border: Border.all(color: AppColors.lightBlue),
                         ),
                         child: Text(
-                          '${issue.attachmentCount ?? 0}',
+                          '${attachments.length}',
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -344,20 +348,25 @@ class _DetailView extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  if (issue.attachmentCount != null &&
-                      issue.attachmentCount! > 0)
+                  if (isLoadingAttachments)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (attachments.isNotEmpty)
                     ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: issue.attachmentCount!,
-                      separatorBuilder: (context, index) => const Divider(
-                        height: 8,
-                      ),
+                      itemCount: attachments.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 8),
                       itemBuilder: (context, index) {
-                        // Placeholder for actual attachment data
+                        final attachment = attachments[index];
                         return AttachmentListItem(
-                          fileName: 'attachment_${index + 1}.pdf',
-                          mimeType: 'application/pdf',
+                          fileName: attachment.fileName,
+                          mimeType: attachment.contentType,
+                          downloadUrl: attachment.downloadUrl,
+                          localFilePath: attachment.localFilePath,
                         );
                       },
                     )
@@ -381,4 +390,3 @@ class _DetailView extends StatelessWidget {
     );
   }
 }
-

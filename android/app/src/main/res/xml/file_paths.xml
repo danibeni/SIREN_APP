@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Cache directory for attachments -->
+    <cache-path name="attachments" path="attachments/" />
+    <!-- External cache directory (if needed) -->
+    <external-cache-path name="external_attachments" path="attachments/" />
+</paths>
+
