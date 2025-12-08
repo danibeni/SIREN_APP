@@ -1,22 +1,34 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logging/logging.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/usecases/get_attachments_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_issue_by_id_uc.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_state.dart';
 
 class MockGetIssueByIdUseCase extends Mock implements GetIssueByIdUseCase {}
 
+class MockGetAttachmentsUseCase extends Mock implements GetAttachmentsUseCase {}
+
 void main() {
   late IssueDetailCubit cubit;
   late MockGetIssueByIdUseCase mockGetIssueByIdUseCase;
+  late MockGetAttachmentsUseCase mockGetAttachmentsUseCase;
+  late Logger logger;
 
   setUp(() {
     mockGetIssueByIdUseCase = MockGetIssueByIdUseCase();
-    cubit = IssueDetailCubit(getIssueByIdUseCase: mockGetIssueByIdUseCase);
+    mockGetAttachmentsUseCase = MockGetAttachmentsUseCase();
+    logger = Logger('IssueDetailCubit');
+    cubit = IssueDetailCubit(
+      getIssueByIdUseCase: mockGetIssueByIdUseCase,
+      getAttachmentsUseCase: mockGetAttachmentsUseCase,
+      logger: logger,
+    );
   });
 
   tearDown(() {
@@ -50,12 +62,21 @@ void main() {
         when(
           () => mockGetIssueByIdUseCase(testIssueId),
         ).thenAnswer((_) async => Right(testIssue));
+        when(
+          () => mockGetAttachmentsUseCase(testIssueId),
+        ).thenAnswer((_) async => const Right([]));
         return cubit;
       },
       act: (cubit) => cubit.loadIssue(testIssueId),
-      expect: () => [const IssueDetailLoading(), IssueDetailLoaded(testIssue)],
+      expect: () => [
+        const IssueDetailLoading(),
+        IssueDetailLoaded(testIssue),
+        IssueDetailLoaded(testIssue, isLoadingAttachments: true),
+        IssueDetailLoaded(testIssue, isLoadingAttachments: false),
+      ],
       verify: (_) {
         verify(() => mockGetIssueByIdUseCase(testIssueId)).called(1);
+        verify(() => mockGetAttachmentsUseCase(testIssueId)).called(1);
       },
     );
 
@@ -74,6 +95,7 @@ void main() {
       ],
       verify: (_) {
         verify(() => mockGetIssueByIdUseCase(testIssueId)).called(1);
+        verifyNever(() => mockGetAttachmentsUseCase(testIssueId));
       },
     );
 
@@ -92,6 +114,7 @@ void main() {
       ],
       verify: (_) {
         verify(() => mockGetIssueByIdUseCase(testIssueId)).called(1);
+        verifyNever(() => mockGetAttachmentsUseCase(testIssueId));
       },
     );
 
@@ -110,6 +133,7 @@ void main() {
       ],
       verify: (_) {
         verify(() => mockGetIssueByIdUseCase(testIssueId)).called(1);
+        verifyNever(() => mockGetAttachmentsUseCase(testIssueId));
       },
     );
   });

@@ -1,8 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+import 'package:siren_app/core/config/server_config_service.dart';
+import 'package:siren_app/core/network/dio_client.dart';
 
 /// Local data source for caching issues (limited to ~3 screenfuls for MVP).
 ///
@@ -13,11 +19,17 @@ class IssueLocalDataSource {
   IssueLocalDataSource({
     required FlutterSecureStorage secureStorage,
     required Logger logger,
+    required DioClient dioClient,
+    required ServerConfigService serverConfigService,
   }) : _secureStorage = secureStorage,
-       _logger = logger;
+       _logger = logger,
+       _dioClient = dioClient,
+       _serverConfigService = serverConfigService;
 
   final FlutterSecureStorage _secureStorage;
   final Logger _logger;
+  final DioClient _dioClient;
+  final ServerConfigService _serverConfigService;
 
   static const _cacheKey = 'cached_issues';
   static const _cacheTimestampKey = 'cached_issues_timestamp';
@@ -26,8 +38,28 @@ class IssueLocalDataSource {
   static const int maxCacheSize = 150;
 
   /// Cache issues to local storage (limited to maxCacheSize)
+  ///
+  /// Also cleans up cached details for issues that are no longer in the list
   Future<void> cacheIssues(List<Map<String, dynamic>> issues) async {
     try {
+      // Get current cached list to identify removed issues
+      final currentCached = await getCachedIssues();
+      final currentIds =
+          currentCached?.map((i) => i['id'] as int?).whereType<int>().toSet() ??
+          {};
+      final newIds = issues
+          .map((i) => i['id'] as int?)
+          .whereType<int>()
+          .toSet();
+
+      // Clear details for issues removed from list
+      // (They are no longer in the 3-screenful cache)
+      final removedIds = currentIds.difference(newIds);
+      for (final id in removedIds) {
+        await clearIssueDetails(id);
+        _logger.info('Cleared cached details for removed issue $id');
+      }
+
       // Limit to maxCacheSize (3 screenfuls)
       final limitedIssues = issues.take(maxCacheSize).toList();
 
@@ -87,5 +119,247 @@ class IssueLocalDataSource {
   Future<bool> hasCachedIssues() async {
     final cached = await _secureStorage.read(key: _cacheKey);
     return cached != null;
+  }
+
+  /// Cache individual issue details (including attachments)
+  ///
+  /// Used for offline access to complete issue information
+  Future<void> cacheIssueDetails(
+    int issueId,
+    Map<String, dynamic> issueJson,
+  ) async {
+    try {
+      final key = 'issue_details_$issueId';
+      await _secureStorage.write(key: key, value: jsonEncode(issueJson));
+      _logger.info('Cached details for issue $issueId');
+    } catch (e) {
+      _logger.warning('Failed to cache issue details: $e');
+    }
+  }
+
+  /// Get cached issue details
+  Future<Map<String, dynamic>?> getCachedIssueDetails(int issueId) async {
+    try {
+      final key = 'issue_details_$issueId';
+      final raw = await _secureStorage.read(key: key);
+      if (raw == null) return null;
+      return jsonDecode(raw) as Map<String, dynamic>;
+    } catch (e) {
+      _logger.warning('Failed to read cached issue details: $e');
+      return null;
+    }
+  }
+
+  /// Cache attachments for an issue
+  Future<void> cacheAttachments(
+    int issueId,
+    List<Map<String, dynamic>> attachments,
+  ) async {
+    try {
+      final key = 'attachments_$issueId';
+      await _secureStorage.write(key: key, value: jsonEncode(attachments));
+      _logger.info(
+        'Cached ${attachments.length} attachments for issue $issueId',
+      );
+    } catch (e) {
+      _logger.warning('Failed to cache attachments: $e');
+    }
+  }
+
+  /// Get cached attachments
+  Future<List<Map<String, dynamic>>?> getCachedAttachments(int issueId) async {
+    try {
+      final key = 'attachments_$issueId';
+      final raw = await _secureStorage.read(key: key);
+      if (raw == null) return null;
+      final decoded = jsonDecode(raw) as List<dynamic>;
+      return decoded.cast<Map<String, dynamic>>();
+    } catch (e) {
+      _logger.warning('Failed to read cached attachments: $e');
+      return null;
+    }
+  }
+
+  /// Clear cached issue details (when issue is removed from list cache)
+  Future<void> clearIssueDetails(int issueId) async {
+    try {
+      final detailsKey = 'issue_details_$issueId';
+      await _secureStorage.delete(key: detailsKey);
+      await clearAttachments(issueId);
+      _logger.info('Cleared cached details for issue $issueId');
+    } catch (e) {
+      _logger.warning('Failed to clear issue details: $e');
+    }
+  }
+
+  /// Clear cached attachments (also clears local files)
+  Future<void> clearAttachments(int issueId) async {
+    try {
+      final key = 'attachments_$issueId';
+      await _secureStorage.delete(key: key);
+      // Also clear local files
+      await clearLocalAttachments(issueId);
+    } catch (e) {
+      _logger.warning('Failed to clear attachments: $e');
+    }
+  }
+
+  /// Download and cache attachment file locally
+  ///
+  /// Downloads attachment if size <= 5MB and stores in app's cache directory
+  /// Returns local file path if successful, null otherwise
+  Future<String?> downloadAndCacheAttachment({
+    required int issueId,
+    required int attachmentId,
+    required String downloadUrl,
+    required String fileName,
+    required int fileSize,
+  }) async {
+    try {
+      // Limit: 5MB (5 * 1024 * 1024 bytes)
+      const maxSize = 5 * 1024 * 1024;
+      if (fileSize > maxSize) {
+        _logger.info(
+          'Attachment $attachmentId exceeds 5MB limit ($fileSize bytes), skipping download',
+        );
+        return null;
+      }
+
+      // Get app cache directory
+      final cacheDir = await getApplicationCacheDirectory();
+      final attachmentsDir = Directory(
+        path.join(cacheDir.path, 'attachments', issueId.toString()),
+      );
+
+      if (!await attachmentsDir.exists()) {
+        await attachmentsDir.create(recursive: true);
+      }
+
+      // Sanitize filename to avoid path issues
+      final sanitizedFileName = fileName.replaceAll(
+        RegExp(r'[<>:"/\\|?*]'),
+        '_',
+      );
+      final localFilePath = path.join(
+        attachmentsDir.path,
+        '${attachmentId}_$sanitizedFileName',
+      );
+
+      // Check if file already exists
+      final file = File(localFilePath);
+      if (await file.exists()) {
+        _logger.info(
+          'Attachment $attachmentId already cached at $localFilePath',
+        );
+        return localFilePath;
+      }
+
+      // Get Dio instance with authentication
+      final dio = await _getDio();
+
+      // Download file
+      _logger.info(
+        'Downloading attachment $attachmentId from $downloadUrl',
+      );
+      final response = await dio.download(
+        downloadUrl,
+        localFilePath,
+        options: Options(
+          responseType: ResponseType.bytes,
+          followRedirects: true,
+          validateStatus: (status) => status! < 400,
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        // Verify file was actually written
+        final downloadedFile = File(localFilePath);
+        if (await downloadedFile.exists()) {
+          final downloadedSize = await downloadedFile.length();
+          _logger.info(
+            'Successfully downloaded and cached attachment $attachmentId '
+            '($downloadedSize bytes)',
+          );
+          return localFilePath;
+        } else {
+          _logger.severe(
+            'Download reported success but file does not exist at $localFilePath',
+          );
+          return null;
+        }
+      } else {
+        _logger.warning(
+          'Failed to download attachment $attachmentId: HTTP ${response.statusCode}',
+        );
+        return null;
+      }
+    } catch (e) {
+      _logger.warning('Failed to download attachment $attachmentId: $e');
+      return null;
+    }
+  }
+
+  /// Get local file path for cached attachment
+  Future<String?> getLocalAttachmentPath({
+    required int issueId,
+    required int attachmentId,
+    required String fileName,
+  }) async {
+    try {
+      final cacheDir = await getApplicationCacheDirectory();
+      final sanitizedFileName = fileName.replaceAll(
+        RegExp(r'[<>:"/\\|?*]'),
+        '_',
+      );
+      final localFilePath = path.join(
+        cacheDir.path,
+        'attachments',
+        issueId.toString(),
+        '${attachmentId}_$sanitizedFileName',
+      );
+
+      final file = File(localFilePath);
+      if (await file.exists()) {
+        return localFilePath;
+      }
+      return null;
+    } catch (e) {
+      _logger.warning('Failed to get local attachment path: $e');
+      return null;
+    }
+  }
+
+  /// Clear local attachment files for an issue
+  Future<void> clearLocalAttachments(int issueId) async {
+    try {
+      final cacheDir = await getApplicationCacheDirectory();
+      final attachmentsDir = Directory(
+        path.join(cacheDir.path, 'attachments', issueId.toString()),
+      );
+
+      if (await attachmentsDir.exists()) {
+        await attachmentsDir.delete(recursive: true);
+        _logger.info('Cleared local attachments for issue $issueId');
+      }
+    } catch (e) {
+      _logger.warning('Failed to clear local attachments: $e');
+    }
+  }
+
+  /// Get configured Dio instance with server baseUrl
+  Future<Dio> _getDio() async {
+    final serverUrlResult = await _serverConfigService.getServerUrl();
+    return serverUrlResult.fold(
+      (failure) {
+        _logger.severe('Failed to get server URL: ${failure.message}');
+        throw Exception('Server URL not configured');
+      },
+      (serverUrl) {
+        if (serverUrl == null || serverUrl.isEmpty) {
+          throw Exception('Server URL not configured');
+        }
+        return _dioClient.createDio(serverUrl);
+      },
+    );
   }
 }

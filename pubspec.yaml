@@ -40,8 +40,17 @@ dependencies:
   flutter_inappwebview: ^6.0.0
   app_links: ^6.0.0
 
+  # File System (for local attachment storage)
+  path_provider: ^2.1.1
+  path: ^1.8.3
+
   # Crypto for PKCE
   crypto: ^3.0.3
+
+  # URL Launcher for opening files
+  url_launcher: ^6.2.0
+  # Open local files (handles FileProvider automatically on Android)
+  open_filex: ^4.6.0
 
 dev_dependencies:
   flutter_test:

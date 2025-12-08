@@ -1,6 +1,8 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:siren_app/core/config/server_config_service.dart';
 import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/features/issues/data/datasources/issue_local_datasource.dart';
 import 'package:siren_app/features/issues/data/datasources/issue_remote_datasource.dart';
@@ -12,6 +14,8 @@ import '../../../../core/fixtures/issue_fixtures.dart';
 class MockIssueRemoteDataSource extends Mock implements IssueRemoteDataSource {}
 
 class MockIssueLocalDataSource extends Mock implements IssueLocalDataSource {}
+
+class MockServerConfigService extends Mock implements ServerConfigService {}
 
 class MockLogger extends Mock implements Logger {}
 
@@ -26,15 +30,33 @@ void main() {
   });
 
   late MockIssueLocalDataSource mockLocalDataSource;
+  late MockServerConfigService mockServerConfigService;
   late MockLogger mockLogger;
 
   setUp(() {
     mockDataSource = MockIssueRemoteDataSource();
     mockLocalDataSource = MockIssueLocalDataSource();
+    mockServerConfigService = MockServerConfigService();
     mockLogger = MockLogger();
+
+    // Setup default return for server config
+    when(
+      () => mockServerConfigService.getServerUrl(),
+    ).thenAnswer((_) async => const Right('https://example.com'));
+
+    // Setup default return for cache methods (used by getIssueById and getAttachments)
+    when(
+      () => mockLocalDataSource.cacheIssueDetails(any(), any()),
+    ).thenAnswer((_) async => {});
+
+    when(
+      () => mockLocalDataSource.cacheAttachments(any(), any()),
+    ).thenAnswer((_) async => {});
+
     repository = IssueRepositoryImpl(
       remoteDataSource: mockDataSource,
       localDataSource: mockLocalDataSource,
+      serverConfigService: mockServerConfigService,
       logger: mockLogger,
     );
   });

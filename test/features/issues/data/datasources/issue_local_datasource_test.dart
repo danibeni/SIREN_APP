@@ -4,23 +4,35 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:siren_app/core/config/server_config_service.dart';
+import 'package:siren_app/core/network/dio_client.dart';
 import 'package:siren_app/features/issues/data/datasources/issue_local_datasource.dart';
 
 class MockFlutterSecureStorage extends Mock implements FlutterSecureStorage {}
 
 class MockLogger extends Mock implements Logger {}
 
+class MockDioClient extends Mock implements DioClient {}
+
+class MockServerConfigService extends Mock implements ServerConfigService {}
+
 void main() {
   late IssueLocalDataSource dataSource;
   late MockFlutterSecureStorage mockSecureStorage;
   late MockLogger mockLogger;
+  late MockDioClient mockDioClient;
+  late MockServerConfigService mockServerConfigService;
 
   setUp(() {
     mockSecureStorage = MockFlutterSecureStorage();
     mockLogger = MockLogger();
+    mockDioClient = MockDioClient();
+    mockServerConfigService = MockServerConfigService();
     dataSource = IssueLocalDataSource(
       secureStorage: mockSecureStorage,
       logger: mockLogger,
+      dioClient: mockDioClient,
+      serverConfigService: mockServerConfigService,
     );
   });
 
@@ -92,6 +104,11 @@ void main() {
         final issues = [
           {'id': 1, 'subject': 'Test Issue'},
         ];
+        // Mock getCachedIssues to return null (no previous cache)
+        when(
+          () => mockSecureStorage.read(key: 'cached_issues'),
+        ).thenAnswer((_) async => null);
+
         when(
           () => mockSecureStorage.write(
             key: any(named: 'key'),
@@ -103,7 +120,7 @@ void main() {
         // When
         await dataSource.cacheIssues(issues);
 
-        // Then
+        // Then - Now called 1 time (the cacheIssues exception)
         verify(() => mockLogger.warning(any())).called(1);
       });
     });
@@ -229,6 +246,176 @@ void main() {
 
         // Then
         expect(result, isFalse);
+      });
+    });
+
+    group('cacheIssueDetails', () {
+      test('should cache issue details successfully', () async {
+        // Given
+        final issueJson = {
+          'id': 1,
+          'subject': 'Test Issue',
+          'description': {'raw': 'Test description'},
+        };
+        when(
+          () => mockSecureStorage.write(
+            key: 'issue_details_1',
+            value: any(named: 'value'),
+          ),
+        ).thenAnswer((_) async {});
+        when(() => mockLogger.info(any())).thenReturn(null);
+
+        // When
+        await dataSource.cacheIssueDetails(1, issueJson);
+
+        // Then
+        verify(
+          () => mockSecureStorage.write(
+            key: 'issue_details_1',
+            value: any(named: 'value'),
+          ),
+        ).called(1);
+        verify(() => mockLogger.info(any())).called(1);
+      });
+
+      test('should log warning on cache failure', () async {
+        // Given
+        final issueJson = {'id': 1, 'subject': 'Test Issue'};
+        when(
+          () => mockSecureStorage.write(
+            key: any(named: 'key'),
+            value: any(named: 'value'),
+          ),
+        ).thenThrow(Exception('Storage error'));
+        when(() => mockLogger.warning(any())).thenReturn(null);
+
+        // When
+        await dataSource.cacheIssueDetails(1, issueJson);
+
+        // Then
+        verify(() => mockLogger.warning(any())).called(1);
+      });
+    });
+
+    group('getCachedIssueDetails', () {
+      test('should return cached issue details when available', () async {
+        // Given
+        final issueJson = {'id': 1, 'subject': 'Cached Issue'};
+        when(
+          () => mockSecureStorage.read(key: 'issue_details_1'),
+        ).thenAnswer((_) async => jsonEncode(issueJson));
+
+        // When
+        final result = await dataSource.getCachedIssueDetails(1);
+
+        // Then
+        expect(result, isNotNull);
+        expect(result!['id'], 1);
+        expect(result['subject'], 'Cached Issue');
+      });
+
+      test('should return null when no cache exists', () async {
+        // Given
+        when(
+          () => mockSecureStorage.read(key: 'issue_details_999'),
+        ).thenAnswer((_) async => null);
+
+        // When
+        final result = await dataSource.getCachedIssueDetails(999);
+
+        // Then
+        expect(result, isNull);
+      });
+    });
+
+    group('cacheAttachments', () {
+      test('should cache attachments successfully', () async {
+        // Given
+        final attachments = [
+          {
+            'id': 1,
+            'fileName': 'test.pdf',
+            'fileSize': 1024,
+            'contentType': 'application/pdf',
+          },
+        ];
+        when(
+          () => mockSecureStorage.write(
+            key: 'attachments_1',
+            value: any(named: 'value'),
+          ),
+        ).thenAnswer((_) async {});
+        when(() => mockLogger.info(any())).thenReturn(null);
+
+        // When
+        await dataSource.cacheAttachments(1, attachments);
+
+        // Then
+        verify(
+          () => mockSecureStorage.write(
+            key: 'attachments_1',
+            value: any(named: 'value'),
+          ),
+        ).called(1);
+        verify(() => mockLogger.info(any())).called(1);
+      });
+    });
+
+    group('getCachedAttachments', () {
+      test('should return cached attachments when available', () async {
+        // Given
+        final attachments = [
+          {
+            'id': 1,
+            'fileName': 'test.pdf',
+            'fileSize': 1024,
+            'contentType': 'application/pdf',
+          },
+        ];
+        when(
+          () => mockSecureStorage.read(key: 'attachments_1'),
+        ).thenAnswer((_) async => jsonEncode(attachments));
+
+        // When
+        final result = await dataSource.getCachedAttachments(1);
+
+        // Then
+        expect(result, isNotNull);
+        expect(result!.length, 1);
+        expect(result[0]['fileName'], 'test.pdf');
+      });
+
+      test('should return null when no cache exists', () async {
+        // Given
+        when(
+          () => mockSecureStorage.read(key: 'attachments_999'),
+        ).thenAnswer((_) async => null);
+
+        // When
+        final result = await dataSource.getCachedAttachments(999);
+
+        // Then
+        expect(result, isNull);
+      });
+    });
+
+    group('clearIssueDetails', () {
+      test('should clear issue details and attachments', () async {
+        // Given
+        when(
+          () => mockSecureStorage.delete(key: any(named: 'key')),
+        ).thenAnswer((_) async {});
+        when(() => mockLogger.info(any())).thenReturn(null);
+
+        // When
+        await dataSource.clearIssueDetails(1);
+
+        // Then
+        verify(
+          () => mockSecureStorage.delete(key: 'issue_details_1'),
+        ).called(1);
+        verify(() => mockSecureStorage.delete(key: 'attachments_1')).called(1);
+        verify(() => mockLogger.info(any())).called(1);
       });
     });
   });

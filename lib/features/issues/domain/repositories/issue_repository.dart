@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 
 /// Repository interface for Issue management
@@ -67,6 +68,6 @@ abstract class IssueRepository {
   ///
   /// Returns list of attachment metadata (fileName, fileSize, contentType, downloadUrl)
   /// Checks local cache first when offline
-  /// Used for displaying attachments in issue edit page
-  Future<Either<Failure, List<dynamic>>> getAttachments(int issueId);
+  /// Used for displaying attachments in issue detail and edit pages
+  Future<Either<Failure, List<AttachmentEntity>>> getAttachments(int issueId);
 }

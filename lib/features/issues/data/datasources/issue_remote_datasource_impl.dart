@@ -536,6 +536,8 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
       final dio = await _getDio();
       final response = await dio.get('/work_packages/$issueId/attachments');
 
+      logger.info('Raw attachments response: ${response.data}');
+
       // Parse collection response format
       final responseData = response.data as Map<String, dynamic>;
       final embedded = responseData['_embedded'] as Map<String, dynamic>?;
@@ -544,6 +546,12 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
       logger.info(
         'Retrieved ${elements.length} attachments for issue $issueId',
       );
+
+      // Log each attachment for debugging
+      for (var element in elements) {
+        logger.info('Attachment data: $element');
+      }
+
       return elements.cast<Map<String, dynamic>>();
     } on DioException catch (e) {
       logger.severe('Error fetching attachments for issue $issueId: $e');

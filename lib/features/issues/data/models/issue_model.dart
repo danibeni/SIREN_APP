@@ -104,23 +104,20 @@ class IssueModel {
     final createdAt = _parseDateTime(json['createdAt'] as String?);
     final updatedAt = _parseDateTime(json['updatedAt'] as String?);
 
-    // Extract attachment count from _links.attachments
+    // Extract attachment count from _embedded.attachments._embedded.elements
+    // OpenProject embeds attachments in the work package response
     int? attachmentCount;
     try {
-      final attachmentsLink = links?['attachments'] as List<dynamic>?;
-      attachmentCount = attachmentsLink?.length;
+      final embeddedAttachments =
+          embedded?['attachments'] as Map<String, dynamic>?;
+      final attachmentsEmbedded =
+          embeddedAttachments?['_embedded'] as Map<String, dynamic>?;
+      final attachmentElements =
+          attachmentsEmbedded?['elements'] as List<dynamic>?;
+      attachmentCount = attachmentElements?.length;
     } catch (e) {
-      // If attachments link is not an array, try getting count from _embedded
-      try {
-        final embeddedAttachments =
-            embedded?['attachments'] as Map<String, dynamic>?;
-        final attachmentElements =
-            embeddedAttachments?['elements'] as List<dynamic>?;
-        attachmentCount = attachmentElements?.length;
-      } catch (e) {
-        // If both fail, attachmentCount remains null
-        attachmentCount = null;
-      }
+      // If extraction fails, attachmentCount remains null
+      attachmentCount = null;
     }
 
     return IssueModel(
