@@ -125,8 +125,29 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
       final elements = embedded?['elements'] as List<dynamic>? ?? [];
 
       return elements.cast<Map<String, dynamic>>();
+    } on DioException catch (e) {
+      logger.severe('Error fetching issues: $e');
+      // Check for network/server inaccessibility errors
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.response?.statusCode == null) {
+        // Use enhanced message from interceptor if available
+        final errorMessage = e.message?.contains('server') == true ||
+                e.message?.contains('unreachable') == true ||
+                e.message?.contains('Wi-Fi') == true
+            ? e.message!
+            : 'Cannot connect to OpenProject server. Please verify the server is accessible via Wi-Fi.';
+        throw NetworkFailure(errorMessage);
+      }
+      final errorMessage = _extractErrorMessage(e);
+      throw ServerFailure('Failed to fetch issues: $errorMessage');
     } catch (e) {
       logger.severe('Error fetching issues: $e');
+      if (e is NetworkFailure || e is ServerFailure) {
+        rethrow;
+      }
       throw ServerFailure('Failed to fetch issues: ${e.toString()}');
     }
   }
@@ -141,8 +162,29 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
       );
 
       return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      logger.severe('Error fetching issue $id: $e');
+      // Check for network/server inaccessibility errors
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.response?.statusCode == null) {
+        // Use enhanced message from interceptor if available
+        final errorMessage = e.message?.contains('server') == true ||
+                e.message?.contains('unreachable') == true ||
+                e.message?.contains('Wi-Fi') == true
+            ? e.message!
+            : 'Cannot connect to OpenProject server. Please verify the server is accessible via Wi-Fi.';
+        throw NetworkFailure(errorMessage);
+      }
+      final errorMessage = _extractErrorMessage(e);
+      throw ServerFailure('Failed to fetch issue: $errorMessage');
     } catch (e) {
       logger.severe('Error fetching issue $id: $e');
+      if (e is NetworkFailure || e is ServerFailure) {
+        rethrow;
+      }
       throw ServerFailure('Failed to fetch issue: ${e.toString()}');
     }
   }
@@ -349,8 +391,22 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
           e.type == DioExceptionType.receiveTimeout ||
           e.type == DioExceptionType.sendTimeout ||
           e.type == DioExceptionType.connectionError) {
-        // Network errors
-        throw NetworkException('Network error: ${e.message}');
+        // Network errors - use enhanced message from interceptor if available
+        // The interceptor already provides user-friendly messages about server inaccessibility
+        final errorMessage = e.message?.contains('server') == true ||
+                e.message?.contains('unreachable') == true ||
+                e.message?.contains('Wi-Fi') == true
+            ? e.message!
+            : 'Cannot connect to OpenProject server. Please verify the server is accessible via Wi-Fi.';
+        throw NetworkException(errorMessage);
+      } else if (e.response?.statusCode == null) {
+        // No response received - likely server unreachable
+        final errorMessage = e.message?.contains('server') == true ||
+                e.message?.contains('unreachable') == true ||
+                e.message?.contains('Wi-Fi') == true
+            ? e.message!
+            : 'OpenProject server unreachable. Please check your Wi-Fi connection and verify the server is accessible.';
+        throw NetworkException(errorMessage);
       } else {
         final errorMessage = _extractErrorMessage(e);
         throw ServerException('Failed to update issue: $errorMessage');

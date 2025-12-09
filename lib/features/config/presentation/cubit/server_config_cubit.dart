@@ -103,15 +103,23 @@ class ServerConfigCubit extends Cubit<ServerConfigState> {
   }) async {
     emit(const ServerConfigAuthenticating());
 
-    final success = await _authService.login(
-      serverUrl: serverUrl,
-      clientId: clientId,
-    );
+    try {
+      final success = await _authService.login(
+        serverUrl: serverUrl,
+        clientId: clientId,
+      );
 
-    if (success) {
-      emit(const ServerConfigAuthenticationSuccess());
-    } else {
-      emit(const ServerConfigError('Authentication failed'));
+      if (success) {
+        emit(const ServerConfigAuthenticationSuccess());
+      } else {
+        emit(const ServerConfigError(
+          'Authentication failed. Please check your Client ID and try again.',
+        ));
+      }
+    } catch (e) {
+      // Handle specific error messages from AuthService
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      emit(ServerConfigError(errorMessage));
     }
   }
 
