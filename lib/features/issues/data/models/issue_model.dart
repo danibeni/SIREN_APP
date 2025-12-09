@@ -25,6 +25,8 @@ class IssueModel {
   final DateTime? updatedAt;
   final String? equipmentName;
   final int? attachmentCount;
+  final bool
+  hasPendingSync; // Indicates if issue has pending offline modifications
 
   const IssueModel({
     this.id,
@@ -47,6 +49,7 @@ class IssueModel {
     this.updatedAt,
     this.equipmentName,
     this.attachmentCount,
+    this.hasPendingSync = false,
   });
 
   /// Create IssueModel from OpenProject API JSON response
@@ -141,6 +144,7 @@ class IssueModel {
       updatedAt: updatedAt,
       equipmentName: equipmentName,
       attachmentCount: attachmentCount,
+      hasPendingSync: json['hasPendingSync'] as bool? ?? false,
     );
   }
 
@@ -193,6 +197,7 @@ class IssueModel {
       updatedAt: updatedAt,
       equipmentName: equipmentName,
       attachmentCount: attachmentCount,
+      hasPendingSync: hasPendingSync,
     );
   }
 
@@ -218,6 +223,7 @@ class IssueModel {
     DateTime? updatedAt,
     String? equipmentName,
     int? attachmentCount,
+    bool? hasPendingSync,
   }) {
     return IssueModel(
       id: id ?? this.id,
@@ -240,6 +246,7 @@ class IssueModel {
       updatedAt: updatedAt ?? this.updatedAt,
       equipmentName: equipmentName ?? this.equipmentName,
       attachmentCount: attachmentCount ?? this.attachmentCount,
+      hasPendingSync: hasPendingSync ?? this.hasPendingSync,
     );
   }
 

@@ -44,6 +44,9 @@ dependencies:
   path_provider: ^2.1.1
   path: ^1.8.3
 
+  # Network connectivity detection
+  connectivity_plus: ^6.0.0
+
   # Crypto for PKCE
   crypto: ^3.0.3
 

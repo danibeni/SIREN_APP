@@ -68,7 +68,8 @@ abstract class IssueRemoteDataSource {
   /// Add attachment to a work package
   ///
   /// Uploads photo/document for issue resolution
-  Future<void> addAttachment({
+  /// Returns attachment metadata including id, fileName, fileSize, etc.
+  Future<Map<String, dynamic>> addAttachment({
     required int issueId,
     required String filePath,
     required String fileName,

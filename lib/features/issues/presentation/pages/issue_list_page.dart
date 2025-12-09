@@ -137,12 +137,34 @@ class _IssueListView extends StatelessWidget {
                               return IssueCard(
                                 issue: issue,
                                 statusColorHex: colorHex,
-                                onTap: () {
-                                  Navigator.of(context).pushNamed(
+                                onTap: () async {
+                                  // Navigate to detail page
+                                  await Navigator.of(context).pushNamed(
                                     '/issue-detail',
                                     arguments: issue.id,
                                   );
+                                  // Reload list when returning from detail page
+                                  // This ensures pending sync changes are visible
+                                  if (context.mounted) {
+                                    context.read<IssuesListCubit>().loadIssues();
+                                  }
                                 },
+                                onSync: issue.hasPendingSync
+                                    ? () {
+                                        context
+                                            .read<IssuesListCubit>()
+                                            .syncIssue(issue.id!);
+                                      }
+                                    : null,
+                                onCancelSync: issue.hasPendingSync
+                                    ? () {
+                                        // Show confirmation dialog
+                                        _showDiscardConfirmation(
+                                          context,
+                                          issue.id!,
+                                        );
+                                      }
+                                    : null,
                               );
                             },
                           ),
@@ -213,6 +235,33 @@ class _EmptyView extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Show confirmation dialog before discarding local changes
+void _showDiscardConfirmation(BuildContext context, int issueId) {
+  showDialog(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Discard Changes?'),
+      content: const Text(
+        'This will discard all local modifications and restore the issue from the server. This action cannot be undone.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.of(dialogContext).pop();
+            context.read<IssuesListCubit>().discardLocalChanges(issueId);
+          },
+          style: TextButton.styleFrom(foregroundColor: AppColors.error),
+          child: const Text('Discard'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _ErrorView extends StatelessWidget {

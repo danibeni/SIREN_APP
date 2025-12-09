@@ -258,9 +258,7 @@ class IssueLocalDataSource {
       final dio = await _getDio();
 
       // Download file
-      _logger.info(
-        'Downloading attachment $attachmentId from $downloadUrl',
-      );
+      _logger.info('Downloading attachment $attachmentId from $downloadUrl');
       final response = await dio.download(
         downloadUrl,
         localFilePath,
@@ -343,6 +341,112 @@ class IssueLocalDataSource {
       }
     } catch (e) {
       _logger.warning('Failed to clear local attachments: $e');
+    }
+  }
+
+  /// Save issue modifications locally for offline synchronization
+  ///
+  /// Stores local changes with metadata indicating pending sync
+  /// Returns the stored issue JSON
+  Future<Map<String, dynamic>> saveLocalModifications(
+    Map<String, dynamic> issue,
+  ) async {
+    try {
+      final issueId = issue['id'] as int?;
+      if (issueId == null) {
+        throw Exception('Issue ID is required for local modifications');
+      }
+
+      // Mark as having pending sync
+      final modifiedIssue = Map<String, dynamic>.from(issue);
+      modifiedIssue['hasPendingSync'] = true;
+      modifiedIssue['localModifiedAt'] = DateTime.now().toIso8601String();
+
+      // Store in separate pending sync storage
+      final pendingKey = 'pending_sync_$issueId';
+      await _secureStorage.write(
+        key: pendingKey,
+        value: jsonEncode(modifiedIssue),
+      );
+
+      // Also cache the modified issue details
+      await cacheIssueDetails(issueId, modifiedIssue);
+
+      _logger.info('Saved local modifications for issue $issueId');
+      return modifiedIssue;
+    } catch (e) {
+      _logger.severe('Failed to save local modifications: $e');
+      rethrow;
+    }
+  }
+
+  /// Get issue with pending local modifications
+  ///
+  /// Returns the locally modified issue if it has pending changes
+  /// Returns null if no pending modifications exist
+  Future<Map<String, dynamic>?> getIssueWithPendingSync(int issueId) async {
+    try {
+      final pendingKey = 'pending_sync_$issueId';
+      final pendingJson = await _secureStorage.read(key: pendingKey);
+
+      if (pendingJson == null) {
+        return null;
+      }
+
+      final issue = jsonDecode(pendingJson) as Map<String, dynamic>;
+      _logger.info('Retrieved pending modifications for issue $issueId');
+      return issue;
+    } catch (e) {
+      _logger.warning('Failed to get pending modifications: $e');
+      return null;
+    }
+  }
+
+  /// Clear pending sync status for an issue
+  ///
+  /// Removes local modifications and restores server version
+  Future<void> clearPendingSync(int issueId) async {
+    try {
+      final pendingKey = 'pending_sync_$issueId';
+      await _secureStorage.delete(key: pendingKey);
+
+      // Re-cache the server version (if available)
+      final serverVersion = await getCachedIssueDetails(issueId);
+      if (serverVersion != null) {
+        final cleanVersion = Map<String, dynamic>.from(serverVersion);
+        cleanVersion['hasPendingSync'] = false;
+        await cacheIssueDetails(issueId, cleanVersion);
+      }
+
+      _logger.info('Cleared pending sync status for issue $issueId');
+    } catch (e) {
+      _logger.warning('Failed to clear pending sync: $e');
+    }
+  }
+
+  /// Get all issues with pending sync status
+  ///
+  /// Returns list of issue IDs that have pending local modifications
+  Future<List<int>> getIssuesWithPendingSync() async {
+    try {
+      final allKeys = await _secureStorage.readAll();
+      final pendingIds = <int>[];
+
+      for (final key in allKeys.keys) {
+        if (key.startsWith('pending_sync_')) {
+          final idStr = key.replaceFirst('pending_sync_', '');
+          final id = int.tryParse(idStr);
+          if (id != null) {
+            pendingIds.add(id);
+          }
+        }
+      }
+
+      _logger.info('Found ${pendingIds.length} issues with pending sync');
+      return pendingIds;
+    } catch (e) {
+      _logger.warning('Failed to get issues with pending sync: $e');
+      return [];
     }
   }
 

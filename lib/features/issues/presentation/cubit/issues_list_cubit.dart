@@ -1,17 +1,28 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logging/logging.dart';
 import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/features/issues/domain/usecases/discard_local_changes_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_issues_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/refresh_statuses_uc.dart';
+import 'package:siren_app/features/issues/domain/usecases/sync_issue_uc.dart';
 import 'issues_list_state.dart';
 
 @injectable
 class IssuesListCubit extends Cubit<IssuesListState> {
-  IssuesListCubit(this._getIssuesUseCase, this._refreshStatusesUseCase)
-    : super(const IssuesListInitial());
+  IssuesListCubit(
+    this._getIssuesUseCase,
+    this._refreshStatusesUseCase,
+    this._syncIssueUseCase,
+    this._discardLocalChangesUseCase,
+    this._logger,
+  ) : super(const IssuesListInitial());
 
   final GetIssuesUseCase _getIssuesUseCase;
   final RefreshStatusesUseCase _refreshStatusesUseCase;
+  final SyncIssueUseCase _syncIssueUseCase;
+  final DiscardLocalChangesUseCase _discardLocalChangesUseCase;
+  final Logger _logger;
 
   Future<void> loadIssues() async {
     emit(const IssuesListLoading());
@@ -49,6 +60,46 @@ class IssuesListCubit extends Cubit<IssuesListState> {
         emit(IssuesListError(_mapFailure(failure)));
       }
     }, (issues) => emit(IssuesListLoaded(issues)));
+  }
+
+  /// Synchronize an issue with pending offline modifications
+  Future<void> syncIssue(int issueId) async {
+    _logger.info('Synchronizing issue $issueId');
+    final result = await _syncIssueUseCase(issueId);
+
+    result.fold(
+      (failure) {
+        _logger.warning('Failed to sync issue $issueId: ${failure.message}');
+        // Reload issues to show updated state (even on failure)
+        loadIssues();
+      },
+      (updatedIssue) {
+        _logger.info('Issue $issueId synchronized successfully');
+        // Reload issues to refresh the list with synced data
+        loadIssues();
+      },
+    );
+  }
+
+  /// Discard local changes for an issue
+  Future<void> discardLocalChanges(int issueId) async {
+    _logger.info('Discarding local changes for issue $issueId');
+    final result = await _discardLocalChangesUseCase(issueId);
+
+    result.fold(
+      (failure) {
+        _logger.warning(
+          'Failed to discard changes for issue $issueId: ${failure.message}',
+        );
+        // Reload issues anyway to show current state
+        loadIssues();
+      },
+      (restoredIssue) {
+        _logger.info('Local changes discarded for issue $issueId');
+        // Reload issues to refresh the list
+        loadIssues();
+      },
+    );
   }
 
   String _mapFailure(Failure failure) {

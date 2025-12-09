@@ -19,6 +19,7 @@ import 'package:siren_app/core/auth/oauth2_service.dart' as _i527;
 import 'package:siren_app/core/config/server_config_service.dart' as _i1000;
 import 'package:siren_app/core/di/modules/config_module.dart' as _i956;
 import 'package:siren_app/core/di/modules/core_module.dart' as _i1008;
+import 'package:siren_app/core/network/connectivity_service.dart' as _i811;
 import 'package:siren_app/core/network/dio_client.dart' as _i657;
 import 'package:siren_app/features/config/presentation/cubit/app_initialization_cubit.dart'
     as _i462;
@@ -40,8 +41,12 @@ import 'package:siren_app/features/issues/domain/repositories/issue_repository.d
     as _i885;
 import 'package:siren_app/features/issues/domain/repositories/work_package_type_repository.dart'
     as _i229;
+import 'package:siren_app/features/issues/domain/usecases/add_attachment_uc.dart'
+    as _i228;
 import 'package:siren_app/features/issues/domain/usecases/create_issue_uc.dart'
     as _i725;
+import 'package:siren_app/features/issues/domain/usecases/discard_local_changes_uc.dart'
+    as _i914;
 import 'package:siren_app/features/issues/domain/usecases/get_attachments_uc.dart'
     as _i277;
 import 'package:siren_app/features/issues/domain/usecases/get_available_types_uc.dart'
@@ -58,6 +63,8 @@ import 'package:siren_app/features/issues/domain/usecases/refresh_statuses_uc.da
     as _i198;
 import 'package:siren_app/features/issues/domain/usecases/set_work_package_type_uc.dart'
     as _i714;
+import 'package:siren_app/features/issues/domain/usecases/sync_issue_uc.dart'
+    as _i904;
 import 'package:siren_app/features/issues/domain/usecases/update_issue_uc.dart'
     as _i812;
 import 'package:siren_app/features/issues/presentation/bloc/create_issue_cubit.dart'
@@ -83,6 +90,9 @@ _i174.GetIt init(
   gh.lazySingleton<_i361.Dio>(() => configModule.provideDio());
   gh.lazySingleton<_i558.FlutterSecureStorage>(() => coreModule.secureStorage);
   gh.lazySingleton<_i831.Logger>(() => coreModule.logger);
+  gh.lazySingleton<_i811.ConnectivityService>(
+    () => _i811.ConnectivityService(),
+  );
   gh.lazySingleton<_i1000.ServerConfigService>(
     () => _i1000.ServerConfigService(
       secureStorage: gh<_i558.FlutterSecureStorage>(),
@@ -141,6 +151,15 @@ _i174.GetIt init(
       serverConfigService: gh<_i1000.ServerConfigService>(),
     ),
   );
+  gh.lazySingleton<_i885.IssueRepository>(
+    () => _i711.IssueRepositoryImpl(
+      remoteDataSource: gh<_i407.IssueRemoteDataSource>(),
+      localDataSource: gh<_i93.IssueLocalDataSource>(),
+      serverConfigService: gh<_i1000.ServerConfigService>(),
+      connectivityService: gh<_i811.ConnectivityService>(),
+      logger: gh<_i831.Logger>(),
+    ),
+  );
   gh.lazySingleton<_i229.WorkPackageTypeRepository>(
     () => _i34.WorkPackageTypeRepositoryImpl(
       remoteDataSource: gh<_i407.IssueRemoteDataSource>(),
@@ -148,22 +167,23 @@ _i174.GetIt init(
       logger: gh<_i831.Logger>(),
     ),
   );
-  gh.lazySingleton<_i885.IssueRepository>(
-    () => _i711.IssueRepositoryImpl(
-      remoteDataSource: gh<_i407.IssueRemoteDataSource>(),
-      localDataSource: gh<_i93.IssueLocalDataSource>(),
-      serverConfigService: gh<_i1000.ServerConfigService>(),
-      logger: gh<_i831.Logger>(),
-    ),
+  gh.lazySingleton<_i228.AddAttachmentUseCase>(
+    () => _i228.AddAttachmentUseCase(gh<_i885.IssueRepository>()),
   );
   gh.lazySingleton<_i725.CreateIssueUseCase>(
     () => _i725.CreateIssueUseCase(gh<_i885.IssueRepository>()),
+  );
+  gh.lazySingleton<_i914.DiscardLocalChangesUseCase>(
+    () => _i914.DiscardLocalChangesUseCase(gh<_i885.IssueRepository>()),
   );
   gh.lazySingleton<_i277.GetAttachmentsUseCase>(
     () => _i277.GetAttachmentsUseCase(gh<_i885.IssueRepository>()),
   );
   gh.lazySingleton<_i216.GetIssueByIdUseCase>(
     () => _i216.GetIssueByIdUseCase(gh<_i885.IssueRepository>()),
+  );
+  gh.lazySingleton<_i904.SyncIssueUseCase>(
+    () => _i904.SyncIssueUseCase(gh<_i885.IssueRepository>()),
   );
   gh.lazySingleton<_i812.UpdateIssueUseCase>(
     () => _i812.UpdateIssueUseCase(gh<_i885.IssueRepository>()),
@@ -186,23 +206,29 @@ _i174.GetIt init(
     () =>
         _i714.SetWorkPackageTypeUseCase(gh<_i229.WorkPackageTypeRepository>()),
   );
-  gh.factory<_i435.IssueDetailCubit>(
-    () => _i435.IssueDetailCubit(
-      getIssueByIdUseCase: gh<_i216.GetIssueByIdUseCase>(),
-      getAttachmentsUseCase: gh<_i277.GetAttachmentsUseCase>(),
-      logger: gh<_i831.Logger>(),
-    ),
-  );
   gh.lazySingleton<_i695.GetIssuesUseCase>(
     () => _i695.GetIssuesUseCase(
       gh<_i885.IssueRepository>(),
       gh<_i589.GetWorkPackageTypeUseCase>(),
     ),
   );
+  gh.factory<_i435.IssueDetailCubit>(
+    () => _i435.IssueDetailCubit(
+      getIssueByIdUseCase: gh<_i216.GetIssueByIdUseCase>(),
+      getAttachmentsUseCase: gh<_i277.GetAttachmentsUseCase>(),
+      updateIssueUseCase: gh<_i812.UpdateIssueUseCase>(),
+      addAttachmentUseCase: gh<_i228.AddAttachmentUseCase>(),
+      connectivityService: gh<_i811.ConnectivityService>(),
+      logger: gh<_i831.Logger>(),
+    ),
+  );
   gh.factory<_i849.IssuesListCubit>(
     () => _i849.IssuesListCubit(
       gh<_i695.GetIssuesUseCase>(),
       gh<_i198.RefreshStatusesUseCase>(),
+      gh<_i904.SyncIssueUseCase>(),
+      gh<_i914.DiscardLocalChangesUseCase>(),
+      gh<_i831.Logger>(),
     ),
   );
   gh.factory<_i279.CreateIssueCubit>(

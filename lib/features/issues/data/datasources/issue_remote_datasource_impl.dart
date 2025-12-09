@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
 import 'package:siren_app/core/config/server_config_service.dart';
+import 'package:siren_app/core/error/exceptions.dart';
 import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/core/network/dio_client.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
@@ -320,14 +321,41 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
       final response = await dio.patch('/work_packages/$id', data: payload);
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
+    } on DioException catch (e) {
       logger.severe('Error updating issue $id: $e');
-      throw ServerFailure('Failed to update issue: ${e.toString()}');
+
+      // Handle specific error cases
+      if (e.response?.statusCode == 409) {
+        // Conflict - lockVersion mismatch (optimistic locking)
+        throw ConflictException('Issue has been modified by another user');
+      } else if (e.response?.statusCode == 404) {
+        throw NotFoundException('Issue not found');
+      } else if (e.response?.statusCode == 422) {
+        // Unprocessable Entity - validation error
+        final errorMessage = _extractErrorMessage(e);
+        throw ValidationException('Validation failed: $errorMessage');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        // Network errors
+        throw NetworkException('Network error: ${e.message}');
+      } else {
+        final errorMessage = _extractErrorMessage(e);
+        throw ServerException('Failed to update issue: $errorMessage');
+      }
+    } catch (e) {
+      // Re-throw if already an exception
+      if (e is AppException) {
+        rethrow;
+      }
+      logger.severe('Unexpected error updating issue $id: $e');
+      throw ServerException('Unexpected error: ${e.toString()}');
     }
   }
 
   @override
-  Future<void> addAttachment({
+  Future<Map<String, dynamic>> addAttachment({
     required int issueId,
     required String filePath,
     required String fileName,
@@ -335,12 +363,19 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
   }) async {
     try {
       final dio = await _getDio();
+
+      // Build multipart form data according to OpenProject API v3
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath, filename: fileName),
         if (description != null) 'description': description,
       });
 
-      await dio.post('/work_packages/$issueId/attachments', data: formData);
+      final response = await dio.post(
+        '/work_packages/$issueId/attachments',
+        data: formData,
+      );
+
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       logger.severe('Error adding attachment to issue $issueId: $e');
       throw ServerFailure('Failed to add attachment: ${e.toString()}');

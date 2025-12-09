@@ -4,9 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:logging/logging.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/core/network/connectivity_service.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/usecases/add_attachment_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_attachments_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_issue_by_id_uc.dart';
+import 'package:siren_app/features/issues/domain/usecases/update_issue_uc.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_state.dart';
 
@@ -14,19 +17,34 @@ class MockGetIssueByIdUseCase extends Mock implements GetIssueByIdUseCase {}
 
 class MockGetAttachmentsUseCase extends Mock implements GetAttachmentsUseCase {}
 
+class MockUpdateIssueUseCase extends Mock implements UpdateIssueUseCase {}
+
+class MockAddAttachmentUseCase extends Mock implements AddAttachmentUseCase {}
+
+class MockConnectivityService extends Mock implements ConnectivityService {}
+
 void main() {
   late IssueDetailCubit cubit;
   late MockGetIssueByIdUseCase mockGetIssueByIdUseCase;
   late MockGetAttachmentsUseCase mockGetAttachmentsUseCase;
+  late MockUpdateIssueUseCase mockUpdateIssueUseCase;
+  late MockAddAttachmentUseCase mockAddAttachmentUseCase;
+  late MockConnectivityService mockConnectivityService;
   late Logger logger;
 
   setUp(() {
     mockGetIssueByIdUseCase = MockGetIssueByIdUseCase();
     mockGetAttachmentsUseCase = MockGetAttachmentsUseCase();
+    mockUpdateIssueUseCase = MockUpdateIssueUseCase();
+    mockAddAttachmentUseCase = MockAddAttachmentUseCase();
+    mockConnectivityService = MockConnectivityService();
     logger = Logger('IssueDetailCubit');
     cubit = IssueDetailCubit(
       getIssueByIdUseCase: mockGetIssueByIdUseCase,
       getAttachmentsUseCase: mockGetAttachmentsUseCase,
+      updateIssueUseCase: mockUpdateIssueUseCase,
+      addAttachmentUseCase: mockAddAttachmentUseCase,
+      connectivityService: mockConnectivityService,
       logger: logger,
     );
   });

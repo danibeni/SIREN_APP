@@ -57,7 +57,8 @@ abstract class IssueRepository {
   /// Add attachment to an issue
   ///
   /// Used for uploading photos/documents for issue resolution
-  Future<Either<Failure, void>> addAttachment({
+  /// Returns AttachmentEntity on success
+  Future<Either<Failure, AttachmentEntity>> addAttachment({
     required int issueId,
     required String filePath,
     required String fileName,
@@ -70,4 +71,16 @@ abstract class IssueRepository {
   /// Checks local cache first when offline
   /// Used for displaying attachments in issue detail and edit pages
   Future<Either<Failure, List<AttachmentEntity>>> getAttachments(int issueId);
+
+  /// Synchronize an issue with pending offline modifications
+  ///
+  /// Uploads local changes and pending attachments to the server
+  /// Returns updated IssueEntity on success
+  Future<Either<Failure, IssueEntity>> syncIssue(int issueId);
+
+  /// Discard local changes for an issue and restore server version
+  ///
+  /// Removes pending modifications and restores issue from cache
+  /// Returns restored IssueEntity on success
+  Future<Either<Failure, IssueEntity>> discardLocalChanges(int issueId);
 }

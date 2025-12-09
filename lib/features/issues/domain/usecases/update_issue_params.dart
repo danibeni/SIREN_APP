@@ -1,6 +1,9 @@
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 
-/// Parameters for updating an issue.
+/// Parameters for updating an existing issue
+///
+/// Encapsulates all data needed to update an issue through OpenProject API
+/// Only the fields that are provided (non-null) will be updated
 class UpdateIssueParams {
   final int id;
   final int lockVersion;

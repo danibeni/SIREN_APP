@@ -41,6 +41,8 @@ class IssueEntity extends Equatable {
   final DateTime? updatedAt;
   final String? equipmentName;
   final int? attachmentCount; // Number of attachments (for UI indicator)
+  final bool
+  hasPendingSync; // Indicates if issue has pending offline modifications
 
   const IssueEntity({
     this.id,
@@ -63,6 +65,7 @@ class IssueEntity extends Equatable {
     this.updatedAt,
     this.equipmentName,
     this.attachmentCount,
+    this.hasPendingSync = false,
   });
 
   /// Create a copy of this entity with updated fields
@@ -87,6 +90,7 @@ class IssueEntity extends Equatable {
     DateTime? updatedAt,
     String? equipmentName,
     int? attachmentCount,
+    bool? hasPendingSync,
   }) {
     return IssueEntity(
       id: id ?? this.id,
@@ -109,6 +113,7 @@ class IssueEntity extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
       equipmentName: equipmentName ?? this.equipmentName,
       attachmentCount: attachmentCount ?? this.attachmentCount,
+      hasPendingSync: hasPendingSync ?? this.hasPendingSync,
     );
   }
 
@@ -134,5 +139,6 @@ class IssueEntity extends Equatable {
     updatedAt,
     equipmentName,
     attachmentCount,
+    hasPendingSync,
   ];
 }

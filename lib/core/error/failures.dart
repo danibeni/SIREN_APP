@@ -51,3 +51,8 @@ class NotFoundFailure extends Failure {
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message);
 }
+
+/// Failure representing conflict errors (e.g., optimistic locking conflicts)
+class ConflictFailure extends Failure {
+  const ConflictFailure(super.message);
+}
