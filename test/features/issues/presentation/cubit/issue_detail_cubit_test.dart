@@ -9,6 +9,8 @@ import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'package:siren_app/features/issues/domain/usecases/add_attachment_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_attachments_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_issue_by_id_uc.dart';
+import 'package:siren_app/features/issues/domain/usecases/get_priorities_uc.dart';
+import 'package:siren_app/features/issues/domain/usecases/get_statuses_for_type_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/update_issue_uc.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_state.dart';
@@ -21,6 +23,11 @@ class MockUpdateIssueUseCase extends Mock implements UpdateIssueUseCase {}
 
 class MockAddAttachmentUseCase extends Mock implements AddAttachmentUseCase {}
 
+class MockGetStatusesForTypeUseCase extends Mock
+    implements GetStatusesForTypeUseCase {}
+
+class MockGetPrioritiesUseCase extends Mock implements GetPrioritiesUseCase {}
+
 class MockConnectivityService extends Mock implements ConnectivityService {}
 
 void main() {
@@ -29,6 +36,8 @@ void main() {
   late MockGetAttachmentsUseCase mockGetAttachmentsUseCase;
   late MockUpdateIssueUseCase mockUpdateIssueUseCase;
   late MockAddAttachmentUseCase mockAddAttachmentUseCase;
+  late MockGetStatusesForTypeUseCase mockGetStatusesForTypeUseCase;
+  late MockGetPrioritiesUseCase mockGetPrioritiesUseCase;
   late MockConnectivityService mockConnectivityService;
   late Logger logger;
 
@@ -37,6 +46,8 @@ void main() {
     mockGetAttachmentsUseCase = MockGetAttachmentsUseCase();
     mockUpdateIssueUseCase = MockUpdateIssueUseCase();
     mockAddAttachmentUseCase = MockAddAttachmentUseCase();
+    mockGetStatusesForTypeUseCase = MockGetStatusesForTypeUseCase();
+    mockGetPrioritiesUseCase = MockGetPrioritiesUseCase();
     mockConnectivityService = MockConnectivityService();
     logger = Logger('IssueDetailCubit');
     cubit = IssueDetailCubit(
@@ -44,6 +55,8 @@ void main() {
       getAttachmentsUseCase: mockGetAttachmentsUseCase,
       updateIssueUseCase: mockUpdateIssueUseCase,
       addAttachmentUseCase: mockAddAttachmentUseCase,
+      getStatusesForTypeUseCase: mockGetStatusesForTypeUseCase,
+      getPrioritiesUseCase: mockGetPrioritiesUseCase,
       connectivityService: mockConnectivityService,
       logger: logger,
     );

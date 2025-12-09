@@ -9,6 +9,7 @@ import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/core/network/connectivity_service.dart';
 import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/priority_entity.dart';
 import 'package:siren_app/features/issues/domain/repositories/issue_repository.dart';
 import '../datasources/issue_local_datasource.dart';
 import '../datasources/issue_remote_datasource.dart';
@@ -255,7 +256,9 @@ class IssueRepositoryImpl implements IssueRepository {
         }
       } catch (e) {
         // If type resolution fails due to network error, try to use cache
-        if (e is NetworkFailure || e.toString().contains('connection') || e.toString().contains('Network')) {
+        if (e is NetworkFailure ||
+            e.toString().contains('connection') ||
+            e.toString().contains('Network')) {
           logger.warning(
             'Failed to resolve Work Package Type due to network error, will try cache: ${e.toString()}',
           );
@@ -264,16 +267,20 @@ class IssueRepositoryImpl implements IssueRepository {
         } else {
           // For other errors (e.g., type not found), return failure
           return Left(
-            ServerFailure('Failed to resolve Work Package Type: ${e.toString()}'),
+            ServerFailure(
+              'Failed to resolve Work Package Type: ${e.toString()}',
+            ),
           );
         }
       }
 
       List<Map<String, dynamic>> responseList;
-      
+
       // If type resolution failed due to network, skip server fetch and go to cache
       if (typeResolutionFailed) {
-        logger.info('Skipping server fetch due to type resolution failure, loading from cache');
+        logger.info(
+          'Skipping server fetch due to type resolution failure, loading from cache',
+        );
         final cached = await localDataSource.getCachedIssues();
         if (cached != null && cached.isNotEmpty) {
           logger.info('Loaded ${cached.length} issues from cache');
@@ -361,7 +368,9 @@ class IssueRepositoryImpl implements IssueRepository {
                   );
                 }
               } catch (e) {
-                logger.warning('Failed to cache details for issue $issueId: $e');
+                logger.warning(
+                  'Failed to cache details for issue $issueId: $e',
+                );
               }
             }
           }
@@ -508,12 +517,12 @@ class IssueRepositoryImpl implements IssueRepository {
 
         // Prepare JSON for local storage (maintain OpenProject API structure)
         final modifiedJson = Map<String, dynamic>.from(cachedIssueJson);
-        
+
         // Update subject if provided
         if (subject != null) {
           modifiedJson['subject'] = subject;
         }
-        
+
         // Update description if provided
         if (description != null) {
           modifiedJson['description'] = {
@@ -521,7 +530,7 @@ class IssueRepositoryImpl implements IssueRepository {
             'raw': description,
           };
         }
-        
+
         // Update priority in _links if provided
         if (priorityLevel != null) {
           final links = modifiedJson['_links'] as Map<String, dynamic>? ?? {};
@@ -529,7 +538,7 @@ class IssueRepositoryImpl implements IssueRepository {
           links['priority'] = links['priority'] ?? {};
           modifiedJson['_links'] = links;
         }
-        
+
         // Update status in _links if provided
         if (status != null) {
           final links = modifiedJson['_links'] as Map<String, dynamic>? ?? {};
@@ -537,7 +546,7 @@ class IssueRepositoryImpl implements IssueRepository {
           links['status'] = links['status'] ?? {};
           modifiedJson['_links'] = links;
         }
-        
+
         // Update lockVersion
         modifiedJson['lockVersion'] = lockVersion;
 
@@ -826,9 +835,7 @@ class IssueRepositoryImpl implements IssueRepository {
   ///
   /// Replaces entities in the list with their locally modified versions
   /// if they have pending sync status
-  Future<void> _applyPendingModifications(
-    List<IssueEntity> entities,
-  ) async {
+  Future<void> _applyPendingModifications(List<IssueEntity> entities) async {
     try {
       // Get list of issue IDs with pending modifications
       final pendingIds = await localDataSource.getIssuesWithPendingSync();
@@ -837,11 +844,15 @@ class IssueRepositoryImpl implements IssueRepository {
         return; // No pending modifications
       }
 
-      logger.info('Applying pending modifications for ${pendingIds.length} issues');
+      logger.info(
+        'Applying pending modifications for ${pendingIds.length} issues',
+      );
 
       // For each pending issue, replace the entity with the modified version
       for (final issueId in pendingIds) {
-        final pendingJson = await localDataSource.getIssueWithPendingSync(issueId);
+        final pendingJson = await localDataSource.getIssueWithPendingSync(
+          issueId,
+        );
         if (pendingJson != null) {
           // Convert to entity
           final modifiedEntity = IssueModel.fromJson(pendingJson).toEntity();
@@ -877,5 +888,71 @@ class IssueRepositoryImpl implements IssueRepository {
       case IssueStatus.rejected:
         return 5;
     }
+  }
+
+  @override
+  Future<Either<Failure, List<PriorityEntity>>> getPriorities() async {
+    try {
+      final prioritiesJson = await remoteDataSource.getPriorities();
+      final priorities = prioritiesJson.map((json) {
+        final id = json['id'] as int;
+        final name = json['name'] as String? ?? '';
+        final href = json['_links']?['self']?['href'] as String?;
+
+        // Extract color from API response
+        String? colorHex;
+        final color = json['color'];
+        if (color != null) {
+          if (color is String) {
+            colorHex = color.startsWith('#') ? color : '#$color';
+          } else if (color is Map<String, dynamic>) {
+            colorHex =
+                color['hexcode'] as String? ??
+                color['hexCode'] as String? ??
+                color['hex_code'] as String?;
+            if (colorHex != null && !colorHex.startsWith('#')) {
+              colorHex = '#$colorHex';
+            }
+          }
+        }
+
+        // Map name to PriorityLevel enum
+        final priorityLevel = _mapPriorityNameToEnum(name);
+
+        return PriorityEntity(
+          id: id,
+          name: name,
+          href: href,
+          colorHex: colorHex,
+          priorityLevel: priorityLevel,
+        );
+      }).toList();
+
+      return Right(priorities);
+    } on ServerFailure catch (e) {
+      return Left(e);
+    } on NetworkFailure catch (e) {
+      return Left(e);
+    } catch (e) {
+      logger.severe('Unexpected error getting priorities: $e');
+      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+    }
+  }
+
+  /// Map priority name from API to PriorityLevel enum
+  PriorityLevel _mapPriorityNameToEnum(String name) {
+    final lowerName = name.toLowerCase();
+    if (lowerName.contains('low')) {
+      return PriorityLevel.low;
+    } else if (lowerName.contains('normal') || lowerName.contains('medium')) {
+      return PriorityLevel.normal;
+    } else if (lowerName.contains('high')) {
+      return PriorityLevel.high;
+    } else if (lowerName.contains('immediate') ||
+        lowerName.contains('critical')) {
+      return PriorityLevel.immediate;
+    }
+    // Default to normal if name doesn't match
+    return PriorityLevel.normal;
   }
 }

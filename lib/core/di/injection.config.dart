@@ -55,6 +55,8 @@ import 'package:siren_app/features/issues/domain/usecases/get_issue_by_id_uc.dar
     as _i216;
 import 'package:siren_app/features/issues/domain/usecases/get_issues_uc.dart'
     as _i695;
+import 'package:siren_app/features/issues/domain/usecases/get_priorities_uc.dart'
+    as _i744;
 import 'package:siren_app/features/issues/domain/usecases/get_statuses_for_type_uc.dart'
     as _i720;
 import 'package:siren_app/features/issues/domain/usecases/get_work_package_type_uc.dart'
@@ -167,6 +169,9 @@ _i174.GetIt init(
       logger: gh<_i831.Logger>(),
     ),
   );
+  gh.lazySingleton<_i744.GetPrioritiesUseCase>(
+    () => _i744.GetPrioritiesUseCase(gh<_i885.IssueRepository>()),
+  );
   gh.lazySingleton<_i228.AddAttachmentUseCase>(
     () => _i228.AddAttachmentUseCase(gh<_i885.IssueRepository>()),
   );
@@ -206,20 +211,22 @@ _i174.GetIt init(
     () =>
         _i714.SetWorkPackageTypeUseCase(gh<_i229.WorkPackageTypeRepository>()),
   );
-  gh.lazySingleton<_i695.GetIssuesUseCase>(
-    () => _i695.GetIssuesUseCase(
-      gh<_i885.IssueRepository>(),
-      gh<_i589.GetWorkPackageTypeUseCase>(),
-    ),
-  );
   gh.factory<_i435.IssueDetailCubit>(
     () => _i435.IssueDetailCubit(
       getIssueByIdUseCase: gh<_i216.GetIssueByIdUseCase>(),
       getAttachmentsUseCase: gh<_i277.GetAttachmentsUseCase>(),
       updateIssueUseCase: gh<_i812.UpdateIssueUseCase>(),
       addAttachmentUseCase: gh<_i228.AddAttachmentUseCase>(),
+      getStatusesForTypeUseCase: gh<_i720.GetStatusesForTypeUseCase>(),
+      getPrioritiesUseCase: gh<_i744.GetPrioritiesUseCase>(),
       connectivityService: gh<_i811.ConnectivityService>(),
       logger: gh<_i831.Logger>(),
+    ),
+  );
+  gh.lazySingleton<_i695.GetIssuesUseCase>(
+    () => _i695.GetIssuesUseCase(
+      gh<_i885.IssueRepository>(),
+      gh<_i589.GetWorkPackageTypeUseCase>(),
     ),
   );
   gh.factory<_i849.IssuesListCubit>(

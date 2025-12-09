@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/priority_entity.dart';
 
 /// Repository interface for Issue management
 ///
@@ -83,4 +84,9 @@ abstract class IssueRepository {
   /// Removes pending modifications and restores issue from cache
   /// Returns restored IssueEntity on success
   Future<Either<Failure, IssueEntity>> discardLocalChanges(int issueId);
+
+  /// Get all available priorities from OpenProject
+  ///
+  /// Returns list of PriorityEntity with colors from API
+  Future<Either<Failure, List<PriorityEntity>>> getPriorities();
 }

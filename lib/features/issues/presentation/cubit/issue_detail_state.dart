@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/priority_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/status_entity.dart';
 
 abstract class IssueDetailState extends Equatable {
   const IssueDetailState();
@@ -60,6 +62,10 @@ class IssueDetailEditing extends IssueDetailState {
   final String? editedDescription;
   final PriorityLevel editedPriority;
   final IssueStatus editedStatus;
+  final List<StatusEntity> availableStatuses;
+  final List<PriorityEntity> availablePriorities;
+  final bool isLoadingStatuses;
+  final bool isLoadingPriorities;
 
   const IssueDetailEditing({
     required this.issue,
@@ -68,6 +74,10 @@ class IssueDetailEditing extends IssueDetailState {
     this.editedDescription,
     required this.editedPriority,
     required this.editedStatus,
+    this.availableStatuses = const [],
+    this.availablePriorities = const [],
+    this.isLoadingStatuses = false,
+    this.isLoadingPriorities = false,
   });
 
   @override
@@ -78,6 +88,10 @@ class IssueDetailEditing extends IssueDetailState {
     editedDescription,
     editedPriority,
     editedStatus,
+    availableStatuses,
+    availablePriorities,
+    isLoadingStatuses,
+    isLoadingPriorities,
   ];
 
   IssueDetailEditing copyWith({
@@ -87,6 +101,10 @@ class IssueDetailEditing extends IssueDetailState {
     String? editedDescription,
     PriorityLevel? editedPriority,
     IssueStatus? editedStatus,
+    List<StatusEntity>? availableStatuses,
+    List<PriorityEntity>? availablePriorities,
+    bool? isLoadingStatuses,
+    bool? isLoadingPriorities,
   }) {
     return IssueDetailEditing(
       issue: issue ?? this.issue,
@@ -95,6 +113,10 @@ class IssueDetailEditing extends IssueDetailState {
       editedDescription: editedDescription ?? this.editedDescription,
       editedPriority: editedPriority ?? this.editedPriority,
       editedStatus: editedStatus ?? this.editedStatus,
+      availableStatuses: availableStatuses ?? this.availableStatuses,
+      availablePriorities: availablePriorities ?? this.availablePriorities,
+      isLoadingStatuses: isLoadingStatuses ?? this.isLoadingStatuses,
+      isLoadingPriorities: isLoadingPriorities ?? this.isLoadingPriorities,
     );
   }
 }
@@ -106,6 +128,8 @@ class IssueDetailSaving extends IssueDetailState {
   final String? editedDescription;
   final PriorityLevel editedPriority;
   final IssueStatus editedStatus;
+  final List<StatusEntity> availableStatuses;
+  final List<PriorityEntity> availablePriorities;
 
   const IssueDetailSaving({
     required this.issue,
@@ -114,6 +138,8 @@ class IssueDetailSaving extends IssueDetailState {
     this.editedDescription,
     required this.editedPriority,
     required this.editedStatus,
+    this.availableStatuses = const [],
+    this.availablePriorities = const [],
   });
 
   @override
@@ -124,6 +150,8 @@ class IssueDetailSaving extends IssueDetailState {
     editedDescription,
     editedPriority,
     editedStatus,
+    availableStatuses,
+    availablePriorities,
   ];
 }
 

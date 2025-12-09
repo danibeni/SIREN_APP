@@ -4,11 +4,11 @@ import 'package:siren_app/core/di/injection.dart' as injection;
 import 'package:siren_app/core/theme/app_colors.dart';
 import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/priority_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/status_entity.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_state.dart';
 import 'package:siren_app/features/issues/presentation/widgets/attachment_list_item.dart';
-import 'package:siren_app/features/issues/presentation/widgets/priority_display.dart';
-import 'package:siren_app/features/issues/presentation/widgets/status_display.dart';
 
 class IssueDetailPage extends StatelessWidget {
   final int issueId;
@@ -20,157 +20,211 @@ class IssueDetailPage extends StatelessWidget {
     return BlocProvider(
       create: (context) =>
           injection.getIt<IssueDetailCubit>()..loadIssue(issueId),
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Issue Details')),
-        body: BlocListener<IssueDetailCubit, IssueDetailState>(
-          listener: (context, state) {
-            // Show success message when save completes
-            if (state is IssueDetailSaveSuccess) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.wasOffline
-                        ? 'Changes saved locally. Sync when online.'
-                        : 'Issue updated successfully!',
-                  ),
-                  backgroundColor: state.wasOffline
-                      ? Colors.orange
-                      : Colors.green,
-                ),
-              );
-            }
-          },
-          child: BlocBuilder<IssueDetailCubit, IssueDetailState>(
-            builder: (context, state) {
-              if (state is IssueDetailLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+      child: BlocBuilder<IssueDetailCubit, IssueDetailState>(
+        builder: (context, state) {
+          // Get issue for AppBar equipment display
+          final issue = state is IssueDetailLoaded
+              ? state.issue
+              : state is IssueDetailSaveSuccess
+              ? state.issue
+              : state is IssueDetailEditing
+              ? state.issue
+              : state is IssueDetailSaving
+              ? state.issue
+              : null;
 
-              if (state is IssueDetailError) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: AppColors.error,
-                      ),
-                      const SizedBox(height: 16),
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Issue Details'),
+              actions: issue != null
+                  ? [
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: Text(
-                          state.message,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: AppColors.textPrimary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: () {
-                          context.read<IssueDetailCubit>().loadIssue(issueId);
-                        },
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              if (state is IssueDetailLoaded ||
-                  state is IssueDetailSaveSuccess) {
-                final issue = state is IssueDetailLoaded
-                    ? state.issue
-                    : (state as IssueDetailSaveSuccess).issue;
-                final attachments = state is IssueDetailLoaded
-                    ? state.attachments
-                    : (state as IssueDetailSaveSuccess).attachments;
-                final isLoadingAttachments =
-                    state is IssueDetailLoaded && state.isLoadingAttachments;
-
-                return _DetailView(
-                  issue: issue,
-                  attachments: attachments,
-                  isLoadingAttachments: isLoadingAttachments,
-                );
-              }
-
-              if (state is IssueDetailEditing || state is IssueDetailSaving) {
-                return _EditView(
-                  state: state,
-                  isSaving: state is IssueDetailSaving,
-                );
-              }
-
-              return const SizedBox.shrink();
-            },
-          ),
-        ),
-        floatingActionButton: BlocBuilder<IssueDetailCubit, IssueDetailState>(
-          builder: (context, state) {
-            // Show Edit FAB in read-only mode
-            if (state is IssueDetailLoaded || state is IssueDetailSaveSuccess) {
-              return FloatingActionButton.extended(
-                onPressed: () {
-                  context.read<IssueDetailCubit>().enterEditMode();
-                },
-                icon: const Icon(Icons.edit),
-                label: const Text('Edit'),
-                backgroundColor: AppColors.primaryBlue,
-              );
-            }
-
-            // Show Save/Cancel FABs in edit mode
-            if (state is IssueDetailEditing || state is IssueDetailSaving) {
-              final isSaving = state is IssueDetailSaving;
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Cancel button
-                  FloatingActionButton(
-                    heroTag: 'cancel',
-                    onPressed: isSaving
-                        ? null
-                        : () {
-                            context.read<IssueDetailCubit>().cancelEdit();
-                          },
-                    backgroundColor: AppColors.error,
-                    child: const Icon(Icons.close),
-                  ),
-                  const SizedBox(width: 16),
-                  // Save button
-                  FloatingActionButton.extended(
-                    heroTag: 'save',
-                    onPressed: isSaving
-                        ? null
-                        : () {
-                            context.read<IssueDetailCubit>().saveChanges();
-                          },
-                    icon: isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.precision_manufacturing,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              issue.equipmentName ??
+                                  'Equipment ${issue.equipment}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
                               ),
                             ),
-                          )
-                        : const Icon(Icons.save),
-                    label: Text(isSaving ? 'Saving...' : 'Save'),
-                    backgroundColor: AppColors.primaryBlue,
-                  ),
-                ],
-              );
-            }
+                          ],
+                        ),
+                      ),
+                    ]
+                  : null,
+            ),
+            body: BlocListener<IssueDetailCubit, IssueDetailState>(
+              listener: (context, state) {
+                // Show success message when save completes
+                if (state is IssueDetailSaveSuccess) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        state.wasOffline
+                            ? 'Changes saved locally. Sync when online.'
+                            : 'Issue updated successfully!',
+                      ),
+                      backgroundColor: state.wasOffline
+                          ? Colors.orange
+                          : Colors.green,
+                    ),
+                  );
+                }
+              },
+              child: BlocBuilder<IssueDetailCubit, IssueDetailState>(
+                builder: (context, state) {
+                  if (state is IssueDetailLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-            return const SizedBox.shrink();
-          },
-        ),
+                  if (state is IssueDetailError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: AppColors.error,
+                          ),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32),
+                            child: Text(
+                              state.message,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: AppColors.textPrimary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () {
+                              context.read<IssueDetailCubit>().loadIssue(
+                                issueId,
+                              );
+                            },
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  if (state is IssueDetailLoaded ||
+                      state is IssueDetailSaveSuccess) {
+                    final issue = state is IssueDetailLoaded
+                        ? state.issue
+                        : (state as IssueDetailSaveSuccess).issue;
+                    final attachments = state is IssueDetailLoaded
+                        ? state.attachments
+                        : (state as IssueDetailSaveSuccess).attachments;
+                    final isLoadingAttachments =
+                        state is IssueDetailLoaded &&
+                        state.isLoadingAttachments;
+
+                    return _DetailView(
+                      issue: issue,
+                      attachments: attachments,
+                      isLoadingAttachments: isLoadingAttachments,
+                    );
+                  }
+
+                  if (state is IssueDetailEditing ||
+                      state is IssueDetailSaving) {
+                    return _EditView(
+                      state: state,
+                      isSaving: state is IssueDetailSaving,
+                    );
+                  }
+
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+            floatingActionButton:
+                BlocBuilder<IssueDetailCubit, IssueDetailState>(
+                  builder: (context, state) {
+                    // Show Edit FAB in read-only mode
+                    if (state is IssueDetailLoaded ||
+                        state is IssueDetailSaveSuccess) {
+                      return FloatingActionButton.extended(
+                        onPressed: () {
+                          context.read<IssueDetailCubit>().enterEditMode();
+                        },
+                        icon: const Icon(Icons.edit),
+                        label: const Text('Edit'),
+                        backgroundColor: AppColors.primaryBlue,
+                      );
+                    }
+
+                    // Show Save/Cancel FABs in edit mode
+                    if (state is IssueDetailEditing ||
+                        state is IssueDetailSaving) {
+                      final isSaving = state is IssueDetailSaving;
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          // Cancel button
+                          FloatingActionButton(
+                            heroTag: 'cancel',
+                            onPressed: isSaving
+                                ? null
+                                : () {
+                                    context
+                                        .read<IssueDetailCubit>()
+                                        .cancelEdit();
+                                  },
+                            backgroundColor: AppColors.error,
+                            child: const Icon(Icons.close),
+                          ),
+                          const SizedBox(width: 16),
+                          // Save button
+                          FloatingActionButton.extended(
+                            heroTag: 'save',
+                            onPressed: isSaving
+                                ? null
+                                : () {
+                                    context
+                                        .read<IssueDetailCubit>()
+                                        .saveChanges();
+                                  },
+                            icon: isSaving
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(Icons.save),
+                            label: Text(isSaving ? 'Saving...' : 'Save'),
+                            backgroundColor: AppColors.primaryBlue,
+                          ),
+                        ],
+                      );
+                    }
+
+                    return const SizedBox.shrink();
+                  },
+                ),
+          );
+        },
       ),
     );
   }
@@ -186,6 +240,94 @@ class _DetailView extends StatelessWidget {
     this.attachments = const [],
     this.isLoadingAttachments = false,
   });
+
+  /// Parse color from hex string
+  Color _parseColor(String? colorHex) {
+    if (colorHex == null || colorHex.isEmpty) {
+      return AppColors.textSecondary;
+    }
+    try {
+      // Remove # if present
+      final hex = colorHex.replaceAll('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (e) {
+      return AppColors.textSecondary;
+    }
+  }
+
+  /// Build status display with circle + text (same format as edit mode)
+  Widget _buildStatusDisplay({
+    required String statusName,
+    String? statusColorHex,
+  }) {
+    final color = _parseColor(statusColorHex);
+
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
+        color: AppColors.background,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 16,
+            height: 16,
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          Expanded(
+            child: Text(
+              statusName,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build priority display with circle + text (same format as edit mode)
+  Widget _buildPriorityDisplay({
+    required String priorityName,
+    String? priorityColorHex,
+  }) {
+    final color = _parseColor(priorityColorHex);
+
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
+        color: AppColors.background,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 16,
+            height: 16,
+            margin: const EdgeInsets.only(right: 12),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          Expanded(
+            child: Text(
+              priorityName,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -233,86 +375,6 @@ class _DetailView extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Status & Priority Card
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            margin: EdgeInsets.zero,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.info_outline,
-                              size: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'STATUS',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textSecondary,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        StatusDisplay(
-                          statusName: issue.statusName ?? 'Unknown',
-                          statusColorHex: issue.statusColorHex,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.flag_outlined,
-                              size: 16,
-                              color: AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'PRIORITY',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textSecondary,
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        PriorityDisplay(
-                          priorityName: issue.priorityName ?? 'Unknown',
-                          priorityColorHex: issue.priorityColorHex,
                         ),
                       ],
                     ),
@@ -376,6 +438,89 @@ class _DetailView extends StatelessWidget {
                         ),
                       ),
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Status & Priority Card (same format as edit mode)
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'STATUS & PRIORITY',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Status',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildStatusDisplay(
+                              statusName: issue.statusName ?? 'Unknown',
+                              statusColorHex: issue.statusColorHex,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Priority',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _buildPriorityDisplay(
+                              priorityName: issue.priorityName ?? 'Unknown',
+                              priorityColorHex: issue.priorityColorHex,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -509,12 +654,133 @@ class _EditViewState extends State<_EditView> {
     }
   }
 
+  PriorityLevel get editedPriority {
+    if (widget.state is IssueDetailEditing) {
+      return (widget.state as IssueDetailEditing).editedPriority;
+    } else {
+      return (widget.state as IssueDetailSaving).editedPriority;
+    }
+  }
+
+  IssueStatus get editedStatus {
+    if (widget.state is IssueDetailEditing) {
+      return (widget.state as IssueDetailEditing).editedStatus;
+    } else {
+      return (widget.state as IssueDetailSaving).editedStatus;
+    }
+  }
+
   String? get editedDescription {
     if (widget.state is IssueDetailEditing) {
       return (widget.state as IssueDetailEditing).editedDescription;
     } else {
       return (widget.state as IssueDetailSaving).editedDescription;
     }
+  }
+
+  List<StatusEntity> get availableStatuses {
+    if (widget.state is IssueDetailEditing) {
+      return (widget.state as IssueDetailEditing).availableStatuses;
+    } else if (widget.state is IssueDetailSaving) {
+      return (widget.state as IssueDetailSaving).availableStatuses;
+    }
+    return const [];
+  }
+
+  List<PriorityEntity> get availablePriorities {
+    if (widget.state is IssueDetailEditing) {
+      return (widget.state as IssueDetailEditing).availablePriorities;
+    } else if (widget.state is IssueDetailSaving) {
+      return (widget.state as IssueDetailSaving).availablePriorities;
+    }
+    return const [];
+  }
+
+  bool get isLoadingStatuses {
+    if (widget.state is IssueDetailEditing) {
+      return (widget.state as IssueDetailEditing).isLoadingStatuses;
+    }
+    return false;
+  }
+
+  bool get isLoadingPriorities {
+    if (widget.state is IssueDetailEditing) {
+      return (widget.state as IssueDetailEditing).isLoadingPriorities;
+    }
+    return false;
+  }
+
+  /// Map StatusEntity name to IssueStatus enum
+  /// Uses same logic as IssueModel._mapNameToStatus
+  IssueStatus? _mapStatusNameToEnum(String name) {
+    if (name.isEmpty) return null;
+    final lowerName = name.toLowerCase().trim();
+
+    // Match common status names
+    if (lowerName == 'new' || lowerName.contains('new')) {
+      return IssueStatus.newStatus;
+    } else if (lowerName == 'in progress' ||
+        lowerName == 'in-progress' ||
+        lowerName.contains('progress') ||
+        lowerName == 'open' ||
+        lowerName.contains('open')) {
+      return IssueStatus.inProgress;
+    } else if (lowerName == 'on hold' ||
+        lowerName == 'on-hold' ||
+        lowerName.contains('hold') ||
+        lowerName == 'waiting' ||
+        lowerName.contains('waiting')) {
+      return IssueStatus.onHold;
+    } else if (lowerName == 'closed' ||
+        lowerName.contains('closed') ||
+        lowerName == 'resolved' ||
+        lowerName.contains('resolved')) {
+      return IssueStatus.closed;
+    } else if (lowerName == 'rejected' || lowerName.contains('reject')) {
+      return IssueStatus.rejected;
+    }
+
+    // Default fallback
+    return IssueStatus.newStatus;
+  }
+
+  /// Map IssueStatus enum to StatusEntity by name
+  StatusEntity? _findStatusEntity(IssueStatus status) {
+    if (availableStatuses.isEmpty) {
+      return null;
+    }
+
+    final statusName = switch (status) {
+      IssueStatus.newStatus => 'new',
+      IssueStatus.inProgress => 'in progress',
+      IssueStatus.onHold => 'on hold',
+      IssueStatus.closed => 'closed',
+      IssueStatus.rejected => 'rejected',
+    };
+
+    try {
+      return availableStatuses.firstWhere(
+        (s) => s.name.toLowerCase().contains(statusName),
+        orElse: () => availableStatuses.first,
+      );
+    } catch (e) {
+      // If no match found, return first available or null
+      return availableStatuses.isNotEmpty ? availableStatuses.first : null;
+    }
+  }
+
+  /// Map PriorityLevel enum to PriorityEntity
+  PriorityEntity? _findPriorityEntity(PriorityLevel priority) {
+    return availablePriorities.firstWhere(
+      (p) => p.priorityLevel == priority,
+      orElse: () => availablePriorities.isNotEmpty
+          ? availablePriorities.first
+          : PriorityEntity(
+              id: 0,
+              name: priority.toString(),
+              priorityLevel: priority,
+            ),
+    );
   }
 
   @override
@@ -681,100 +947,7 @@ class _EditViewState extends State<_EditView> {
           ),
           const SizedBox(height: 16),
 
-          // Priority & Status Display (Read-only for MVP)
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Status and Priority',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Status:',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            StatusDisplay(
-                              statusName: issue.statusName ?? 'Unknown',
-                              statusColorHex: issue.statusColorHex,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Priority:',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            PriorityDisplay(
-                              priorityName: issue.priorityName ?? 'Unknown',
-                              priorityColorHex: issue.priorityColorHex,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.amber),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.info_outline, size: 16, color: Colors.amber),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Status and Priority editing will be available in a future update',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Equipment Display (Read-only)
+          // Priority & Status Dropdowns (Editable)
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(
@@ -788,13 +961,13 @@ class _EditViewState extends State<_EditView> {
                   const Row(
                     children: [
                       Icon(
-                        Icons.precision_manufacturing,
+                        Icons.info_outline,
                         size: 16,
                         color: AppColors.textSecondary,
                       ),
                       SizedBox(width: 8),
                       Text(
-                        'EQUIPMENT',
+                        'STATUS & PRIORITY *',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -802,60 +975,67 @@ class _EditViewState extends State<_EditView> {
                           letterSpacing: 1.2,
                         ),
                       ),
-                      Spacer(),
-                      Icon(
-                        Icons.lock,
-                        size: 14,
-                        color: AppColors.textSecondary,
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Status *',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (isLoadingStatuses)
+                              const SizedBox(
+                                height: 48,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              )
+                            else
+                              _buildStatusDropdown(),
+                          ],
+                        ),
                       ),
-                      SizedBox(width: 4),
-                      Text(
-                        'READ-ONLY',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textSecondary,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Priority *',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            if (isLoadingPriorities)
+                              const SizedBox(
+                                height: 48,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              )
+                            else
+                              _buildPriorityDropdown(),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.background.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.build,
-                          color: AppColors.textSecondary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            issue.equipmentName ??
-                                'Equipment ${issue.equipment}',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '⚠️ Equipment cannot be changed from mobile app',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                      fontStyle: FontStyle.italic,
-                    ),
                   ),
                 ],
               ),
@@ -865,5 +1045,153 @@ class _EditViewState extends State<_EditView> {
         ],
       ),
     );
+  }
+
+  Widget _buildStatusDropdown() {
+    // If no statuses available yet, show a placeholder
+    if (availableStatuses.isEmpty) {
+      return Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.border),
+          borderRadius: BorderRadius.circular(12),
+          color: AppColors.background,
+        ),
+        child: const Text(
+          'No statuses available',
+          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+        ),
+      );
+    }
+
+    final currentStatusEntity = _findStatusEntity(editedStatus);
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
+        color: AppColors.background,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<StatusEntity>(
+          value: currentStatusEntity,
+          isExpanded: true,
+          isDense: true,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          items: availableStatuses.map((status) {
+            return DropdownMenuItem<StatusEntity>(
+              value: status,
+              child: Row(
+                children: [
+                  if (status.colorHex != null)
+                    Container(
+                      width: 16,
+                      height: 16,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        color: _parseColor(status.colorHex!),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  Expanded(
+                    child: Text(
+                      status.name,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: widget.isSaving
+              ? null
+              : (StatusEntity? newStatus) {
+                  if (newStatus != null) {
+                    final mappedStatus = _mapStatusNameToEnum(newStatus.name);
+                    if (mappedStatus != null) {
+                      context.read<IssueDetailCubit>().updateStatus(
+                        mappedStatus,
+                      );
+                    }
+                  }
+                },
+          hint: Text(
+            currentStatusEntity?.name ?? 'Select Status',
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPriorityDropdown() {
+    final currentPriorityEntity = _findPriorityEntity(editedPriority);
+    final selectedPriorityName =
+        currentPriorityEntity?.name ?? 'Select Priority';
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(12),
+        color: AppColors.background,
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<PriorityEntity>(
+          value: currentPriorityEntity,
+          isExpanded: true,
+          isDense: true,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          items: availablePriorities.map((priority) {
+            return DropdownMenuItem<PriorityEntity>(
+              value: priority,
+              child: Row(
+                children: [
+                  if (priority.colorHex != null)
+                    Container(
+                      width: 16,
+                      height: 16,
+                      margin: const EdgeInsets.only(right: 12),
+                      decoration: BoxDecoration(
+                        color: _parseColor(priority.colorHex!),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  Expanded(
+                    child: Text(
+                      priority.name,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: widget.isSaving
+              ? null
+              : (PriorityEntity? newPriority) {
+                  if (newPriority != null) {
+                    context.read<IssueDetailCubit>().updatePriority(
+                      newPriority.priorityLevel,
+                    );
+                  }
+                },
+          hint: Text(
+            selectedPriorityName,
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _parseColor(String colorHex) {
+    try {
+      // Remove # if present
+      final hex = colorHex.replaceAll('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (e) {
+      return AppColors.textSecondary;
+    }
   }
 }

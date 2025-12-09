@@ -106,10 +106,10 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Header
-                  const Icon(
-                    Icons.settings_remote,
-                    size: 80,
-                    color: AppColors.primaryBlue,
+                  Image.asset(
+                    'assets/icons/siren_icon_mdpi.png',
+                    height: 96,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 24),
                   Text(

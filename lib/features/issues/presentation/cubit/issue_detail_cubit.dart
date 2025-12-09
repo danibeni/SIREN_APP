@@ -8,6 +8,8 @@ import 'package:siren_app/features/issues/domain/usecases/add_attachment_params.
 import 'package:siren_app/features/issues/domain/usecases/add_attachment_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_attachments_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_issue_by_id_uc.dart';
+import 'package:siren_app/features/issues/domain/usecases/get_priorities_uc.dart';
+import 'package:siren_app/features/issues/domain/usecases/get_statuses_for_type_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/update_issue_params.dart';
 import 'package:siren_app/features/issues/domain/usecases/update_issue_uc.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_state.dart';
@@ -18,6 +20,8 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
   final GetAttachmentsUseCase getAttachmentsUseCase;
   final UpdateIssueUseCase updateIssueUseCase;
   final AddAttachmentUseCase addAttachmentUseCase;
+  final GetStatusesForTypeUseCase getStatusesForTypeUseCase;
+  final GetPrioritiesUseCase getPrioritiesUseCase;
   final ConnectivityService connectivityService;
   final Logger logger;
 
@@ -26,6 +30,8 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
     required this.getAttachmentsUseCase,
     required this.updateIssueUseCase,
     required this.addAttachmentUseCase,
+    required this.getStatusesForTypeUseCase,
+    required this.getPrioritiesUseCase,
     required this.connectivityService,
     required this.logger,
   }) : super(const IssueDetailInitial());
@@ -101,9 +107,88 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
           editedDescription: currentState.issue.description,
           editedPriority: currentState.issue.priorityLevel,
           editedStatus: currentState.issue.status,
+          isLoadingStatuses: true,
+          isLoadingPriorities: true,
         ),
       );
+      // Load available statuses and priorities
+      _loadAvailableStatuses();
+      _loadAvailablePriorities();
     }
+  }
+
+  /// Load available statuses for the configured Work Package Type
+  Future<void> _loadAvailableStatuses() async {
+    final result = await getStatusesForTypeUseCase();
+
+    // Get current state right before emitting to ensure we have the latest
+    final currentState = state;
+    if (currentState is! IssueDetailEditing) return;
+
+    result.fold(
+      (failure) {
+        logger.warning('Failed to load statuses: ${failure.message}');
+        // Get state again to ensure we have the latest
+        final latestState = state;
+        if (latestState is IssueDetailEditing) {
+          emit(
+            latestState.copyWith(
+              isLoadingStatuses: false,
+              availableStatuses: const [],
+            ),
+          );
+        }
+      },
+      (statuses) {
+        // Get state again to ensure we have the latest
+        final latestState = state;
+        if (latestState is IssueDetailEditing) {
+          emit(
+            latestState.copyWith(
+              isLoadingStatuses: false,
+              availableStatuses: statuses,
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  /// Load available priorities from API
+  Future<void> _loadAvailablePriorities() async {
+    final result = await getPrioritiesUseCase();
+
+    // Get current state right before emitting to ensure we have the latest
+    final currentState = state;
+    if (currentState is! IssueDetailEditing) return;
+
+    result.fold(
+      (failure) {
+        logger.warning('Failed to load priorities: ${failure.message}');
+        // Get state again to ensure we have the latest
+        final latestState = state;
+        if (latestState is IssueDetailEditing) {
+          emit(
+            latestState.copyWith(
+              isLoadingPriorities: false,
+              availablePriorities: const [],
+            ),
+          );
+        }
+      },
+      (priorities) {
+        // Get state again to ensure we have the latest
+        final latestState = state;
+        if (latestState is IssueDetailEditing) {
+          emit(
+            latestState.copyWith(
+              isLoadingPriorities: false,
+              availablePriorities: priorities,
+            ),
+          );
+        }
+      },
+    );
   }
 
   /// Update edited subject

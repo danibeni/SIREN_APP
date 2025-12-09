@@ -112,6 +112,9 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         [sortBy, sortDirection],
       ]);
 
+      // Include status and priority to get their colors dynamically
+      queryParams['include'] = 'status,priority';
+
       final response = await dio.get(
         '/work_packages',
         queryParameters: queryParams,
@@ -131,7 +134,10 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
   Future<Map<String, dynamic>> getIssueById(int id) async {
     try {
       final dio = await _getDio();
-      final response = await dio.get('/work_packages/$id');
+      final response = await dio.get(
+        '/work_packages/$id',
+        queryParameters: const {'include': 'status,priority'},
+      );
 
       return response.data as Map<String, dynamic>;
     } catch (e) {
@@ -318,7 +324,11 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         };
       }
 
-      final response = await dio.patch('/work_packages/$id', data: payload);
+      final response = await dio.patch(
+        '/work_packages/$id',
+        data: payload,
+        queryParameters: const {'include': 'status,priority'},
+      );
 
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
