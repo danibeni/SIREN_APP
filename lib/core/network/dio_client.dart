@@ -33,8 +33,10 @@ class DioClient {
         baseUrl: apiBaseUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
+        // Don't set Content-Type here - let interceptor handle it
+        // Content-Type will be set to application/hal+json for JSON requests
+        // and multipart/form-data for FormData (handled automatically by Dio)
         headers: {
-          'Content-Type': 'application/hal+json',
           'Accept': 'application/hal+json',
         },
       ),

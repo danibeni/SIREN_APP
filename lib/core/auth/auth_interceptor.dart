@@ -19,7 +19,11 @@ class AuthInterceptor extends Interceptor {
         options.headers['Authorization'] = 'Bearer $accessToken';
       }
 
-      options.headers['Content-Type'] = 'application/hal+json';
+      // Only set Content-Type if not FormData (multipart)
+      // Dio automatically sets multipart/form-data with boundary for FormData
+      if (options.data is! FormData) {
+        options.headers['Content-Type'] = 'application/hal+json';
+      }
       options.headers['Accept'] = 'application/hal+json';
 
       handler.next(options);

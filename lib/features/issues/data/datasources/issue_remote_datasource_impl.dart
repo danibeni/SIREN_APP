@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
@@ -374,10 +375,32 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
     try {
       final dio = await _getDio();
 
+      // Verify file exists before attempting upload
+      final file = File(filePath);
+      if (!await file.exists()) {
+        throw ServerException('File not found: $filePath');
+      }
+
+      logger.info(
+        'Uploading attachment: $fileName (${await file.length()} bytes) to issue $issueId',
+      );
+
       // Build multipart form data according to OpenProject API v3
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(filePath, filename: fileName),
+      // OpenProject requires two parts:
+      // 1. 'metadata' part with JSON containing fileName (required) and description (optional)
+      // 2. 'file' part with the actual file binary data
+      final metadataJson = {
+        'fileName': fileName,
         if (description != null) 'description': description,
+      };
+
+      final formData = FormData.fromMap({
+        'metadata': MultipartFile.fromString(
+          jsonEncode(metadataJson),
+          filename: null,
+          contentType: null, // Let Dio set Content-Type automatically
+        ),
+        'file': await MultipartFile.fromFile(filePath, filename: fileName),
       });
 
       final response = await dio.post(
@@ -385,10 +408,32 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         data: formData,
       );
 
+      logger.info('Attachment uploaded successfully: ${response.statusCode}');
       return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      logger.severe(
+        'DioException adding attachment to issue $issueId: '
+        '${e.response?.statusCode} - ${e.response?.statusMessage}',
+      );
+      logger.severe('Response data: ${e.response?.data}');
+      logger.severe('Request path: ${e.requestOptions.path}');
+
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        throw NetworkException('Network error: ${e.message}');
+      } else {
+        final errorMessage = _extractErrorMessage(e);
+        throw ServerException('Failed to add attachment: $errorMessage');
+      }
     } catch (e) {
-      logger.severe('Error adding attachment to issue $issueId: $e');
-      throw ServerFailure('Failed to add attachment: ${e.toString()}');
+      // Re-throw if already an exception
+      if (e is AppException) {
+        rethrow;
+      }
+      logger.severe('Unexpected error adding attachment to issue $issueId: $e');
+      throw ServerException('Unexpected error: ${e.toString()}');
     }
   }
 
