@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart' as injection;
@@ -710,6 +713,15 @@ class _EditViewState extends State<_EditView> {
     return false;
   }
 
+  List<AttachmentEntity> get attachments {
+    if (widget.state is IssueDetailEditing) {
+      return (widget.state as IssueDetailEditing).attachments;
+    } else if (widget.state is IssueDetailSaving) {
+      return (widget.state as IssueDetailSaving).attachments;
+    }
+    return const [];
+  }
+
   /// Map StatusEntity name to IssueStatus enum
   /// Uses same logic as IssueModel._mapNameToStatus
   IssueStatus? _mapStatusNameToEnum(String name) {
@@ -744,12 +756,56 @@ class _EditViewState extends State<_EditView> {
     return IssueStatus.newStatus;
   }
 
-  /// Map IssueStatus enum to StatusEntity by name
+  /// Find StatusEntity by matching the current issue's status ID or name
+  ///
+  /// Priority order:
+  /// 1. Match by statusId (most precise)
+  /// 2. Match by statusName (handles statuses like "Workaround" not in enum)
+  /// 3. Fallback to enum-based matching
   StatusEntity? _findStatusEntity(IssueStatus status) {
     if (availableStatuses.isEmpty) {
       return null;
     }
 
+    // First priority: Match by status ID (most accurate)
+    if (issue.statusId != null) {
+      try {
+        final matched = availableStatuses.firstWhere(
+          (s) => s.id == issue.statusId,
+        );
+        return matched;
+      } catch (e) {
+        // ID not found in available statuses, continue to name matching
+      }
+    }
+
+    // Second priority: Match by actual statusName from the issue
+    // This handles statuses like "Workaround" that may not map to the enum
+    if (issue.statusName != null && issue.statusName!.isNotEmpty) {
+      final currentStatusName = issue.statusName!.toLowerCase().trim();
+      try {
+        // Try exact match first
+        var matched = availableStatuses.where(
+          (s) => s.name.toLowerCase().trim() == currentStatusName,
+        );
+        if (matched.isNotEmpty) {
+          return matched.first;
+        }
+
+        // Try partial match (contains)
+        matched = availableStatuses.where(
+          (s) => s.name.toLowerCase().contains(currentStatusName) ||
+              currentStatusName.contains(s.name.toLowerCase()),
+        );
+        if (matched.isNotEmpty) {
+          return matched.first;
+        }
+      } catch (e) {
+        // Continue to enum-based fallback
+      }
+    }
+
+    // Fallback: Try to match using enum mapping
     final statusName = switch (status) {
       IssueStatus.newStatus => 'new',
       IssueStatus.inProgress => 'in progress',
@@ -764,7 +820,7 @@ class _EditViewState extends State<_EditView> {
         orElse: () => availableStatuses.first,
       );
     } catch (e) {
-      // If no match found, return first available or null
+      // If still no match found, return first available or null
       return availableStatuses.isNotEmpty ? availableStatuses.first : null;
     }
   }
@@ -1041,6 +1097,110 @@ class _EditViewState extends State<_EditView> {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+
+          // Attachments Card (always visible in edit mode)
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.attach_file,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'ATTACHMENTS',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.lightBlue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.lightBlue),
+                        ),
+                        child: Text(
+                          '${attachments.length}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryBlue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (attachments.isNotEmpty)
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: attachments.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 8),
+                      itemBuilder: (context, index) {
+                        final attachment = attachments[index];
+                        return AttachmentListItem(
+                          fileName: attachment.fileName,
+                          mimeType: attachment.contentType,
+                          downloadUrl: attachment.downloadUrl,
+                          localFilePath: attachment.localFilePath,
+                        );
+                      },
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Text(
+                        'No attachments yet.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  // Add Attachment Button (only in edit mode)
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: widget.isSaving
+                          ? null
+                          : () => _showAddAttachmentDialog(context),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Attachment'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        side: const BorderSide(color: AppColors.primaryBlue),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 80), // Space for FAB
         ],
       ),
@@ -1192,6 +1352,202 @@ class _EditViewState extends State<_EditView> {
       return Color(int.parse('FF$hex', radix: 16));
     } catch (e) {
       return AppColors.textSecondary;
+    }
+  }
+
+  /// Show dialog to select attachment source (file picker)
+  Future<void> _showAddAttachmentDialog(BuildContext context) async {
+    // Show bottom sheet with options
+    final result = await showModalBottomSheet<FilePickerResult?>(
+      context: context,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.insert_drive_file),
+              title: const Text('Select File'),
+              subtitle: const Text('Choose a file from device'),
+              onTap: () async {
+                try {
+                  final pickerResult = await FilePicker.platform.pickFiles(
+                    type: FileType.any,
+                    allowMultiple: false,
+                  );
+                  if (sheetContext.mounted) {
+                    Navigator.of(sheetContext).pop(pickerResult);
+                  }
+                } catch (e) {
+                  // Handle any errors from file picker
+                  if (sheetContext.mounted) {
+                    Navigator.of(sheetContext).pop();
+                    ScaffoldMessenger.of(sheetContext).showSnackBar(
+                      SnackBar(
+                        content: Text('Error selecting file: ${e.toString()}'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.image),
+              title: const Text('Select Image'),
+              subtitle: const Text('Choose an image from gallery'),
+              onTap: () async {
+                try {
+                  final pickerResult = await FilePicker.platform.pickFiles(
+                    type: FileType.image,
+                    allowMultiple: false,
+                  );
+                  if (sheetContext.mounted) {
+                    Navigator.of(sheetContext).pop(pickerResult);
+                  }
+                } catch (e) {
+                  // Handle any errors from file picker
+                  if (sheetContext.mounted) {
+                    Navigator.of(sheetContext).pop();
+                    ScaffoldMessenger.of(sheetContext).showSnackBar(
+                      SnackBar(
+                        content: Text('Error selecting image: ${e.toString()}'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.cancel),
+              title: const Text('Cancel'),
+              onTap: () {
+                if (sheetContext.mounted) {
+                  Navigator.of(sheetContext).pop();
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Check if user cancelled or no file was selected
+    if (result == null || result.files.isEmpty) {
+      return;
+    }
+
+    try {
+      final pickedFile = result.files.single;
+      if (pickedFile.path == null || pickedFile.path!.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('File path is not available'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+
+      final file = File(pickedFile.path!);
+      final fileName = pickedFile.name;
+
+      if (!await file.exists()) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('File not found'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Show loading indicator
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                SizedBox(width: 16),
+                Text('Uploading attachment...'),
+              ],
+            ),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Call cubit to add attachment
+      if (!context.mounted) return;
+      
+      final cubit = context.read<IssueDetailCubit>();
+      final attachmentCountBefore = attachments.length;
+
+      // Call addAttachment and wait for completion
+      await cubit.addAttachment(
+        filePath: file.path,
+        fileName: fileName,
+      );
+
+      // Check if attachment was added successfully
+      if (!context.mounted) return;
+      
+      final currentState = cubit.state;
+      if (currentState is IssueDetailEditing) {
+        final attachmentCountAfter = currentState.attachments.length;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        
+        if (attachmentCountAfter > attachmentCountBefore) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Attachment added successfully'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        } else {
+          // Error occurred (cubit logs it)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to add attachment. Please try again.'),
+              backgroundColor: AppColors.error,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      } else {
+        // State changed unexpectedly
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to add attachment. Please try again.'),
+            backgroundColor: AppColors.error,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Handle any unexpected errors
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error processing file: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 }

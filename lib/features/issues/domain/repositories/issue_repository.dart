@@ -3,6 +3,7 @@ import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/priority_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/status_entity.dart';
 
 /// Repository interface for Issue management
 ///
@@ -89,4 +90,14 @@ abstract class IssueRepository {
   ///
   /// Returns list of PriorityEntity with colors from API
   Future<Either<Failure, List<PriorityEntity>>> getPriorities();
+
+  /// Get available statuses for a specific work package
+  ///
+  /// Uses the work package form endpoint to retrieve statuses available
+  /// for the specific type and current state of the work package.
+  /// Returns list of StatusEntity filtered by workflow rules.
+  Future<Either<Failure, List<StatusEntity>>> getAvailableStatusesForIssue({
+    required int workPackageId,
+    required int lockVersion,
+  });
 }

@@ -49,6 +49,8 @@ import 'package:siren_app/features/issues/domain/usecases/discard_local_changes_
     as _i914;
 import 'package:siren_app/features/issues/domain/usecases/get_attachments_uc.dart'
     as _i277;
+import 'package:siren_app/features/issues/domain/usecases/get_available_statuses_for_issue_uc.dart'
+    as _i307;
 import 'package:siren_app/features/issues/domain/usecases/get_available_types_uc.dart'
     as _i85;
 import 'package:siren_app/features/issues/domain/usecases/get_issue_by_id_uc.dart'
@@ -169,6 +171,10 @@ _i174.GetIt init(
       logger: gh<_i831.Logger>(),
     ),
   );
+  gh.lazySingleton<_i307.GetAvailableStatusesForIssueUseCase>(
+    () =>
+        _i307.GetAvailableStatusesForIssueUseCase(gh<_i885.IssueRepository>()),
+  );
   gh.lazySingleton<_i744.GetPrioritiesUseCase>(
     () => _i744.GetPrioritiesUseCase(gh<_i885.IssueRepository>()),
   );
@@ -211,18 +217,6 @@ _i174.GetIt init(
     () =>
         _i714.SetWorkPackageTypeUseCase(gh<_i229.WorkPackageTypeRepository>()),
   );
-  gh.factory<_i435.IssueDetailCubit>(
-    () => _i435.IssueDetailCubit(
-      getIssueByIdUseCase: gh<_i216.GetIssueByIdUseCase>(),
-      getAttachmentsUseCase: gh<_i277.GetAttachmentsUseCase>(),
-      updateIssueUseCase: gh<_i812.UpdateIssueUseCase>(),
-      addAttachmentUseCase: gh<_i228.AddAttachmentUseCase>(),
-      getStatusesForTypeUseCase: gh<_i720.GetStatusesForTypeUseCase>(),
-      getPrioritiesUseCase: gh<_i744.GetPrioritiesUseCase>(),
-      connectivityService: gh<_i811.ConnectivityService>(),
-      logger: gh<_i831.Logger>(),
-    ),
-  );
   gh.lazySingleton<_i695.GetIssuesUseCase>(
     () => _i695.GetIssuesUseCase(
       gh<_i885.IssueRepository>(),
@@ -256,6 +250,19 @@ _i174.GetIt init(
     () => _i719.EditIssueCubit(
       gh<_i216.GetIssueByIdUseCase>(),
       gh<_i812.UpdateIssueUseCase>(),
+    ),
+  );
+  gh.factory<_i435.IssueDetailCubit>(
+    () => _i435.IssueDetailCubit(
+      getIssueByIdUseCase: gh<_i216.GetIssueByIdUseCase>(),
+      getAttachmentsUseCase: gh<_i277.GetAttachmentsUseCase>(),
+      updateIssueUseCase: gh<_i812.UpdateIssueUseCase>(),
+      addAttachmentUseCase: gh<_i228.AddAttachmentUseCase>(),
+      getAvailableStatusesForIssueUseCase:
+          gh<_i307.GetAvailableStatusesForIssueUseCase>(),
+      getPrioritiesUseCase: gh<_i744.GetPrioritiesUseCase>(),
+      connectivityService: gh<_i811.ConnectivityService>(),
+      logger: gh<_i831.Logger>(),
     ),
   );
   return getIt;

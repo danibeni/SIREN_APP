@@ -10,11 +10,13 @@ import 'package:siren_app/core/network/connectivity_service.dart';
 import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/priority_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/status_entity.dart';
 import 'package:siren_app/features/issues/domain/repositories/issue_repository.dart';
 import '../datasources/issue_local_datasource.dart';
 import '../datasources/issue_remote_datasource.dart';
 import '../models/attachment_model.dart';
 import '../models/issue_model.dart';
+import '../models/status_model.dart';
 
 /// Implementation of IssueRepository
 ///
@@ -954,5 +956,153 @@ class IssueRepositoryImpl implements IssueRepository {
     }
     // Default to normal if name doesn't match
     return PriorityLevel.normal;
+  }
+
+  @override
+  Future<Either<Failure, List<StatusEntity>>> getAvailableStatusesForIssue({
+    required int workPackageId,
+    required int lockVersion,
+  }) async {
+    try {
+      // Get form endpoint to retrieve schema with available statuses
+      final formResponse = await remoteDataSource.getWorkPackageForm(
+        workPackageId: workPackageId,
+        lockVersion: lockVersion,
+      );
+
+      logger.info(
+        'Form response structure for work package $workPackageId: ${formResponse.keys}',
+      );
+
+      // Try to extract available statuses from schema
+      // The schema may contain status options based on workflow rules
+      final embedded = formResponse['_embedded'] as Map<String, dynamic>?;
+      logger.info('Embedded keys: ${embedded?.keys}');
+
+      final schema = embedded?['schema'] as Map<String, dynamic>?;
+      logger.info('Schema keys: ${schema?.keys}');
+
+      // Check if schema has status field with available options
+      final statusSchema = schema?['status'] as Map<String, dynamic>?;
+      logger.info(
+        'Status schema structure: ${statusSchema?.keys}, availableValues: ${statusSchema?['availableValues']}, allowedValues: ${statusSchema?['allowedValues']}, values: ${statusSchema?['values']}',
+      );
+
+      // OpenProject schema may have availableValues or allowedValues or values
+      // for status field indicating which statuses are allowed for this type
+      final availableValues = statusSchema?['availableValues'] as List<dynamic>? ??
+          statusSchema?['allowedValues'] as List<dynamic>? ??
+          statusSchema?['values'] as List<dynamic>?;
+
+      // Also check for options object that might contain availableValues
+      final options = statusSchema?['options'] as Map<String, dynamic>?;
+      final optionsValues = options?['availableValues'] as List<dynamic>? ??
+          options?['allowedValues'] as List<dynamic>? ??
+          options?['values'] as List<dynamic>?;
+
+      final allAvailableValues = availableValues ?? optionsValues;
+
+      if (allAvailableValues != null && allAvailableValues.isNotEmpty) {
+        logger.info(
+          'Found ${allAvailableValues.length} available status values in schema',
+        );
+
+        // Extract status IDs from available values
+        // Each value may be a href string or an object with href/id
+        final statusIds = <int>[];
+        final statusHrefs = <String>[];
+
+        for (final value in allAvailableValues) {
+          if (value is Map<String, dynamic>) {
+            final href = value['href'] as String?;
+            if (href != null) {
+              statusHrefs.add(href);
+              // Extract ID from href (e.g., /api/v3/statuses/1 -> 1)
+              final idMatch = RegExp(r'/statuses/(\d+)').firstMatch(href);
+              if (idMatch != null) {
+                final id = int.tryParse(idMatch.group(1)!);
+                if (id != null) {
+                  statusIds.add(id);
+                  logger.info('Extracted status ID $id from href: $href');
+                }
+              }
+            } else {
+              final id = value['id'] as int?;
+              if (id != null) {
+                statusIds.add(id);
+                logger.info('Extracted status ID $id from value object');
+              }
+            }
+          } else if (value is String) {
+            // Value is a href string
+            statusHrefs.add(value);
+            final idMatch = RegExp(r'/statuses/(\d+)').firstMatch(value);
+            if (idMatch != null) {
+              final id = int.tryParse(idMatch.group(1)!);
+              if (id != null) {
+                statusIds.add(id);
+                logger.info('Extracted status ID $id from href string: $value');
+              }
+            }
+          }
+        }
+
+        // Get all statuses and filter by available IDs
+        if (statusIds.isNotEmpty) {
+          logger.info(
+            'Filtering statuses by IDs: $statusIds for work package $workPackageId',
+          );
+          final allStatusesJson = await remoteDataSource.getStatuses();
+          final filteredStatuses = allStatusesJson
+              .where((status) => statusIds.contains(status['id'] as int?))
+              .map((json) => StatusModel.fromJson(json).toEntity())
+              .toList();
+
+          logger.info(
+            'Filtered ${filteredStatuses.length} statuses from schema (IDs: ${filteredStatuses.map((s) => s.id).toList()}) for work package $workPackageId',
+          );
+          return Right(filteredStatuses);
+        } else {
+          logger.warning(
+            'Found availableValues in schema but could not extract status IDs',
+          );
+        }
+      }
+
+      // Fallback: If schema doesn't provide status options, return all statuses
+      // This maintains current behavior but logs a warning
+      logger.warning(
+        'Schema does not contain status options for work package $workPackageId, using all statuses. Schema structure: ${schema?.toString()}',
+      );
+
+      final allStatusesJson = await remoteDataSource.getStatuses();
+      final allStatuses = allStatusesJson
+          .map((json) => StatusModel.fromJson(json).toEntity())
+          .toList();
+
+      logger.info(
+        'Returning all ${allStatuses.length} statuses (fallback) for work package $workPackageId',
+      );
+      return Right(allStatuses);
+    } on ServerFailure catch (e) {
+      // If form endpoint fails, fallback to all statuses
+      logger.warning(
+        'Failed to get form for work package $workPackageId: ${e.message}, using all statuses',
+      );
+      try {
+        final allStatusesJson = await remoteDataSource.getStatuses();
+        final allStatuses = allStatusesJson
+            .map((json) => StatusModel.fromJson(json).toEntity())
+            .toList();
+        return Right(allStatuses);
+      } catch (fallbackError) {
+        return Left(ServerFailure(e.message));
+      }
+    } on NetworkFailure catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (e) {
+      logger.severe('Unexpected error getting available statuses: $e');
+      return Left(UnexpectedFailure('Unexpected error: ${e.toString()}'));
+    }
   }
 }

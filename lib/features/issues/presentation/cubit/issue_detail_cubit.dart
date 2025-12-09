@@ -7,9 +7,9 @@ import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'package:siren_app/features/issues/domain/usecases/add_attachment_params.dart';
 import 'package:siren_app/features/issues/domain/usecases/add_attachment_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_attachments_uc.dart';
+import 'package:siren_app/features/issues/domain/usecases/get_available_statuses_for_issue_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_issue_by_id_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_priorities_uc.dart';
-import 'package:siren_app/features/issues/domain/usecases/get_statuses_for_type_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/update_issue_params.dart';
 import 'package:siren_app/features/issues/domain/usecases/update_issue_uc.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issue_detail_state.dart';
@@ -20,7 +20,7 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
   final GetAttachmentsUseCase getAttachmentsUseCase;
   final UpdateIssueUseCase updateIssueUseCase;
   final AddAttachmentUseCase addAttachmentUseCase;
-  final GetStatusesForTypeUseCase getStatusesForTypeUseCase;
+  final GetAvailableStatusesForIssueUseCase getAvailableStatusesForIssueUseCase;
   final GetPrioritiesUseCase getPrioritiesUseCase;
   final ConnectivityService connectivityService;
   final Logger logger;
@@ -30,7 +30,7 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
     required this.getAttachmentsUseCase,
     required this.updateIssueUseCase,
     required this.addAttachmentUseCase,
-    required this.getStatusesForTypeUseCase,
+    required this.getAvailableStatusesForIssueUseCase,
     required this.getPrioritiesUseCase,
     required this.connectivityService,
     required this.logger,
@@ -117,39 +117,56 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
     }
   }
 
-  /// Load available statuses for the configured Work Package Type
+  /// Load available statuses for the specific work package
+  ///
+  /// Uses the work package form endpoint to get statuses available for the
+  /// specific type and current state of the work package, filtered by workflow rules.
   Future<void> _loadAvailableStatuses() async {
-    final result = await getStatusesForTypeUseCase();
-
-    // Get current state right before emitting to ensure we have the latest
+    // Get current state to access issue ID and lockVersion
     final currentState = state;
     if (currentState is! IssueDetailEditing) return;
+
+    final issue = currentState.issue;
+    if (issue.id == null) {
+      logger.warning('Cannot load statuses: issue ID is null');
+      emit(
+        currentState.copyWith(
+          isLoadingStatuses: false,
+          availableStatuses: const [],
+        ),
+      );
+      return;
+    }
+
+    final result = await getAvailableStatusesForIssueUseCase(
+      workPackageId: issue.id!,
+      lockVersion: issue.lockVersion,
+    );
+
+    // Get current state right before emitting to ensure we have the latest
+    final latestState = state;
+    if (latestState is! IssueDetailEditing) return;
 
     result.fold(
       (failure) {
         logger.warning('Failed to load statuses: ${failure.message}');
-        // Get state again to ensure we have the latest
-        final latestState = state;
-        if (latestState is IssueDetailEditing) {
-          emit(
-            latestState.copyWith(
-              isLoadingStatuses: false,
-              availableStatuses: const [],
-            ),
-          );
-        }
+        emit(
+          latestState.copyWith(
+            isLoadingStatuses: false,
+            availableStatuses: const [],
+          ),
+        );
       },
       (statuses) {
-        // Get state again to ensure we have the latest
-        final latestState = state;
-        if (latestState is IssueDetailEditing) {
-          emit(
-            latestState.copyWith(
-              isLoadingStatuses: false,
-              availableStatuses: statuses,
-            ),
-          );
-        }
+        logger.info(
+          'Loaded ${statuses.length} available statuses for work package ${issue.id}',
+        );
+        emit(
+          latestState.copyWith(
+            isLoadingStatuses: false,
+            availableStatuses: statuses,
+          ),
+        );
       },
     );
   }

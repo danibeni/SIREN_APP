@@ -55,6 +55,10 @@ dependencies:
   # Open local files (handles FileProvider automatically on Android)
   open_filex: ^4.6.0
 
+  # File and image picking
+  file_picker: ^8.1.2
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

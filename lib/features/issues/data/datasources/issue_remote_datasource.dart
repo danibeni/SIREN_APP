@@ -112,4 +112,14 @@ abstract class IssueRemoteDataSource {
   /// Includes metadata: fileName, fileSize, contentType, createdAt
   /// HATEOAS links: downloadLocation, delete (if permitted), author
   Future<List<Map<String, dynamic>>> getAttachments(int issueId);
+
+  /// Get work package form to retrieve available statuses for the specific type
+  ///
+  /// Calls POST /api/v3/work_packages/{id}/form to get schema with available
+  /// statuses based on the work package's type and current state.
+  /// Returns form response with schema containing available status options.
+  Future<Map<String, dynamic>> getWorkPackageForm({
+    required int workPackageId,
+    required int lockVersion,
+  });
 }

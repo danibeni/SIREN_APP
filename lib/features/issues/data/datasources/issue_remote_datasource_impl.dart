@@ -662,4 +662,42 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
       throw ServerFailure('Failed to fetch attachments: ${e.toString()}');
     }
   }
+
+  @override
+  Future<Map<String, dynamic>> getWorkPackageForm({
+    required int workPackageId,
+    required int lockVersion,
+  }) async {
+    try {
+      final dio = await _getDio();
+
+      // Call form endpoint to get schema with available statuses
+      // The form endpoint returns information about available transitions
+      // and valid values for the work package's current type and state
+      final response = await dio.post(
+        '/work_packages/$workPackageId/form',
+        data: {'lockVersion': lockVersion},
+      );
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      logger.severe(
+        'Error fetching form for work package $workPackageId: $e',
+      );
+
+      if (e.response?.statusCode == 404) {
+        throw ServerFailure('Work package not found');
+      } else if (e.response?.statusCode == 409) {
+        throw ConflictException('Work package has been modified');
+      } else if (e.response?.statusCode == 401) {
+        throw NetworkFailure('Authentication required');
+      } else {
+        final errorMessage = _extractErrorMessage(e);
+        throw ServerFailure('Failed to fetch form: $errorMessage');
+      }
+    } catch (e) {
+      logger.severe('Unexpected error fetching form: $e');
+      throw ServerFailure('Failed to fetch form: ${e.toString()}');
+    }
+  }
 }

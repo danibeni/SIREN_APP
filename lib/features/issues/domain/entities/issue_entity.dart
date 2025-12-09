@@ -29,6 +29,7 @@ class IssueEntity extends Equatable {
   final PriorityLevel priorityLevel;
   final IssueStatus status;
   final String? statusName;
+  final int? statusId; // OpenProject status ID for precise matching
   final String? statusColorHex;
   final String? priorityName;
   final String? priorityColorHex;
@@ -53,6 +54,7 @@ class IssueEntity extends Equatable {
     required this.priorityLevel,
     required this.status,
     this.statusName,
+    this.statusId,
     this.statusColorHex,
     this.priorityName,
     this.priorityColorHex,
@@ -82,6 +84,7 @@ class IssueEntity extends Equatable {
     int? updatedById,
     String? updatedByName,
     String? statusName,
+    int? statusId,
     String? statusColorHex,
     String? priorityName,
     String? priorityColorHex,
@@ -101,6 +104,7 @@ class IssueEntity extends Equatable {
       priorityLevel: priorityLevel ?? this.priorityLevel,
       status: status ?? this.status,
       statusName: statusName ?? this.statusName,
+      statusId: statusId ?? this.statusId,
       statusColorHex: statusColorHex ?? this.statusColorHex,
       priorityName: priorityName ?? this.priorityName,
       priorityColorHex: priorityColorHex ?? this.priorityColorHex,
@@ -127,6 +131,7 @@ class IssueEntity extends Equatable {
     priorityLevel,
     status,
     statusName,
+    statusId,
     statusColorHex,
     priorityName,
     priorityColorHex,
