@@ -128,10 +128,10 @@ flutter_launcher_icons:
   remove_alpha_ios: true
 
 flutter_native_splash:
-  color: "#ffffff"
-  image: "assets/icons/siren_app_launcher.png"
+  color: "#5C6BC0"
+  image: "assets/icons/siren_icon_mdpi.png"
   android: true
   ios: true
   android_12:
-    image: "assets/icons/siren_app_launcher.png"
-    icon_background_color: "#ffffff"
+    image: "assets/icons/siren_icon_mdpi.png"
+    icon_background_color: "#5C6BC0"
