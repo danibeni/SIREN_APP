@@ -1,27 +1,292 @@
 # SIREN
 
+<div align="center">
+
 **System for Issue Reporting and Engineering Notification**
 
-SIREN is a Flutter mobile application designed to facilitate access, modification, and registration of technical issues on a local OpenProject server. The application enables field technicians to manage issues directly from their mobile devices, without requiring computer access, simplifying system interaction and limiting required data to the essentials for issue management.
+[![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?logo=flutter&logoColor=white)](https://flutter.dev/)
+[![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart&logoColor=white)](https://dart.dev/)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web%20%7C%20Desktop-lightgrey)](https://flutter.dev/)
+[![Status](https://img.shields.io/badge/Status-MVP%20Complete-success)](https://github.com/danibeni/SIREN_APP)
 
-## Description
+*A Flutter multiplatform mobile application for unified management of technical issues affecting critical infrastructure at an astronomical observatory.*
 
-SIREN is a mobile tool that enables:
+</div>
 
-- **Access** to existing issues from a local OpenProject server
-- **Modify** existing issues (title, description, priority, status)
-- **Register** new issues with essential fields:
-  - **Title** (Subject): Descriptive title of the issue
-  - **Description** (Description): Optional detailed description
-  - **Priority** (Priority Level): Priority level (Low, Normal, High, Immediate)
-  - **Status**: Current status of the issue (New, In Progress, Closed, etc.)
-  - **Equipment**: Infrastructure, equipment, or project to which the issue belongs
-  - **Group**: Responsible group or department (if the user belongs to more than one group/department)
-- **Attachments**: Add relevant documents for the issue, photos, or images/diagrams
+---
 
-The application is optimized for mobile devices, providing an intuitive and efficient interface that enables quick and easy issue management.
+## 📱 Screenshots
 
-## Installation
+<div align="center">
+
+### Issue List Screen
+
+![Issue List Screen](assets/screenshots/issue_list_screen.png)
+
+*Main interface showing issues with search, filters, and status indicators*
+
+---
+
+### Server Configuration Screen
+
+![Server Configuration Screen](assets/screenshots/server_config_screen.png)
+
+*Initial setup screen for configuring OpenProject server URL and OAuth2 authentication*
+
+> **Note**: If screenshots don't display, ensure the image files exist in `assets/screenshots/`. See `assets/screenshots/README.md` for instructions.
+
+</div>
+
+---
+
+## ✨ Key Features
+
+### 🔐 Secure Authentication
+- **OAuth2 + PKCE** authentication flow for enhanced security
+- Automatic token refresh mechanism
+- Secure credential storage using `flutter_secure_storage`
+- Per-user authentication with granular access control
+
+### 📋 Issue Management
+- **Create** new technical issues with essential fields
+- **View** complete issue details with attachments
+- **Edit** existing issues (title, description, priority, status)
+- **Search** and **filter** issues by multiple criteria
+- Real-time synchronization with OpenProject server
+
+### 🎯 Smart Filtering & Search
+- Multi-criteria filtering (Status, Equipment, Priority, Group)
+- Real-time text search in titles and descriptions
+- Combined filter logic (AND) for precise results
+- Dynamic status loading based on Work Package Type
+
+### 📎 Attachment Support
+- Add photos and documents when creating/editing issues
+- View existing attachments with file type icons
+- Open attachments with system default applications
+- Optimized API integration (single request for issue + attachments)
+
+### 🔄 Offline Capability (MVP)
+- Local cache for issue list (approximately 3 screenfuls)
+- Offline viewing of cached issues and details
+- Manual synchronization for offline modifications
+- Status cache for offline access
+
+### 🌍 Multi-platform Support
+- **iOS** - Native iOS application
+- **Android** - Native Android application
+- **Web** - Web support for development and testing
+- **Desktop** - Windows, macOS, and Linux support
+
+### 🎨 Modern UI/UX
+- Material Design 3 components
+- Mobile-first, intuitive interface
+- Optimized for smartphone screens
+- Real-time validation and feedback
+- Loading states and error handling
+
+---
+
+## 🏗️ Architecture
+
+SIREN follows **Clean Architecture** principles with strict layer separation, ensuring maintainability, testability, and scalability.
+
+### Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph "Presentation Layer"
+        UI[UI Widgets & Pages]
+        BLOC[Bloc/Cubit State Management]
+    end
+    
+    subgraph "Domain Layer"
+        UC[Use Cases]
+        ENT[Entities]
+        REPO_INT[Repository Interfaces]
+    end
+    
+    subgraph "Data Layer"
+        REPO_IMPL[Repository Implementations]
+        DS_REMOTE[Remote Data Source]
+        DS_LOCAL[Local Data Source]
+        MODELS[Models/DTOs]
+    end
+    
+    subgraph "External"
+        API[OpenProject REST API v3]
+        STORAGE[Secure Storage]
+        CACHE[Local Cache]
+    end
+    
+    UI --> BLOC
+    BLOC --> UC
+    UC --> REPO_INT
+    REPO_INT --> REPO_IMPL
+    REPO_IMPL --> DS_REMOTE
+    REPO_IMPL --> DS_LOCAL
+    DS_REMOTE --> API
+    DS_LOCAL --> CACHE
+    DS_REMOTE --> STORAGE
+    DS_LOCAL --> STORAGE
+    
+    style UI fill:#aed6f1,stroke:#3498db,stroke-width:2px
+    style BLOC fill:#aed6f1,stroke:#3498db,stroke-width:2px
+    style UC fill:#f9e79f,stroke:#f1c40f,stroke-width:2px
+    style ENT fill:#f9e79f,stroke:#f1c40f,stroke-width:2px
+    style REPO_INT fill:#f9e79f,stroke:#f1c40f,stroke-width:2px
+    style REPO_IMPL fill:#d5dbdb,stroke:#7f8c8d,stroke-width:2px
+    style DS_REMOTE fill:#d5dbdb,stroke:#7f8c8d,stroke-width:2px
+    style DS_LOCAL fill:#d5dbdb,stroke:#7f8c8d,stroke-width:2px
+    style MODELS fill:#d5dbdb,stroke:#7f8c8d,stroke-width:2px
+```
+
+### Key Principles
+
+- **Domain Layer**: Pure Dart, business logic without Flutter dependencies
+- **Dependency Injection**: Modular DI using `get_it` with `injectable` code generation
+- **State Management**: Bloc/Cubit pattern with `flutter_bloc`
+- **Separation of Concerns**: Clear boundaries between features and core services
+- **SOLID Principles**: Strict adherence to SOLID principles throughout
+
+### Project Structure
+
+```
+/lib
+├── /core                    # Core infrastructure
+│   ├── /auth                # Authentication services
+│   ├── /config              # Configuration management
+│   ├── /di                  # Dependency injection
+│   ├── /error               # Error handling & failures
+│   ├── /i18n                # Internationalization
+│   ├── /network             # Network configuration
+│   └── /theme               # App theming
+│
+├── /features                # Feature modules
+│   ├── /config              # Configuration feature
+│   │   └── /presentation
+│   │       ├── /pages       # Settings, Server Config
+│   │       └── /cubit       # State management
+│   │
+│   └── /issues              # Issue management feature
+│       ├── /data            # Data layer
+│       │   ├── /datasources # Remote & Local data sources
+│       │   ├── /models      # DTOs and models
+│       │   └── /repositories # Repository implementations
+│       │
+│       ├── /domain          # Domain layer (Pure Dart)
+│       │   ├── /entities    # Business entities
+│       │   ├── /repositories # Repository interfaces
+│       │   └── /usecases    # Business use cases
+│       │
+│       └── /presentation    # Presentation layer
+│           ├── /pages       # UI pages
+│           ├── /widgets     # Reusable widgets
+│           └── /bloc        # State management
+│
+└── main.dart                # Application entry point
+```
+
+---
+
+## 🔄 Application Flow
+
+### User Flow Diagram
+
+```mermaid
+flowchart TD
+    START([App Launch]) --> INIT{Initialized?}
+    INIT -->|No| CONFIG[Server Configuration]
+    INIT -->|Yes| AUTH{Authenticated?}
+    
+    CONFIG --> OAUTH[OAuth2 Authentication]
+    OAUTH --> AUTH
+    
+    AUTH -->|No| CONFIG
+    AUTH -->|Yes| LIST[Issue List]
+    
+    LIST --> SEARCH[Search & Filter]
+    LIST --> CREATE[Create Issue]
+    LIST --> DETAIL[View Issue Details]
+    
+    CREATE --> VALIDATE{Valid?}
+    VALIDATE -->|No| CREATE
+    VALIDATE -->|Yes| SAVE[Save to Server]
+    SAVE --> LIST
+    
+    DETAIL --> EDIT[Edit Mode]
+    DETAIL --> ATTACH[View Attachments]
+    
+    EDIT --> SAVE_EDIT[Save Changes]
+    EDIT --> CANCEL[Cancel]
+    SAVE_EDIT --> LIST
+    CANCEL --> DETAIL
+    
+    LIST --> SETTINGS[Settings]
+    SETTINGS --> LOGOUT[Logout]
+    LOGOUT --> CONFIG
+```
+
+### OpenProject Integration Flow
+
+```mermaid
+sequenceDiagram
+    participant App as SIREN App
+    participant Auth as Auth Service
+    participant API as OpenProject API
+    participant Cache as Local Cache
+    
+    Note over App,Cache: Authentication Flow
+    App->>Auth: Initiate OAuth2 + PKCE
+    Auth->>API: Authorization Request
+    API-->>Auth: Authorization Code
+    Auth->>API: Exchange Code for Tokens
+    API-->>Auth: Access Token + Refresh Token
+    Auth->>Cache: Store Tokens Securely
+    
+    Note over App,Cache: Issue Management Flow
+    App->>Auth: Get Access Token
+    Auth->>Auth: Check Token Validity
+    alt Token Expired
+        Auth->>API: Refresh Token
+        API-->>Auth: New Access Token
+    end
+    Auth-->>App: Access Token
+    
+    App->>API: GET /api/v3/work_packages
+    API-->>App: Issue List (HAL+JSON)
+    App->>Cache: Cache Issues Locally
+    
+    alt Offline Mode
+        App->>Cache: Get Cached Issues
+        Cache-->>App: Cached Data
+    end
+    
+    App->>API: POST /api/v3/work_packages
+    API-->>App: Created Issue
+    App->>Cache: Update Cache
+```
+
+---
+
+## 🛠️ Technology Stack
+
+| Category | Technology | Purpose |
+|----------|-----------|---------|
+| **Framework** | Flutter 3.0+ | Cross-platform UI framework |
+| **Language** | Dart 3.0+ | Programming language |
+| **State Management** | flutter_bloc | Predictable state management |
+| **Dependency Injection** | get_it + injectable | Modular DI with code generation |
+| **HTTP Client** | dio | REST API communication |
+| **Secure Storage** | flutter_secure_storage | Secure credential storage |
+| **Localization** | flutter_localizations | Multi-language support |
+| **Testing** | flutter_test, mockito | Unit and widget testing |
+| **Code Generation** | build_runner | DI and serialization code generation |
+
+---
+
+## 📦 Installation
 
 ### Prerequisites
 
@@ -66,17 +331,6 @@ The application is optimized for mobile devices, providing an intuitive and effi
    flutter devices
    ```
 
-## Multi-platform Support
-
-SIREN is developed with **Flutter**, providing native support for multiple platforms:
-
-- **Android**: Compatible with Android devices (minimum version as per configuration)
-- **iOS**: Compatible with iPhone and iPad devices (minimum version as per configuration)
-- **Web**: Web support (optional, for development and testing)
-- **Desktop**: Support for Windows, macOS, and Linux (optional)
-
-The application uses a single codebase for all platforms, ensuring consistency in user experience and facilitating maintenance.
-
 ### Network Configuration for Testing
 
 **⚠️ Important: Network Configuration for Emulators**
@@ -95,11 +349,13 @@ When testing with an Android emulator, you cannot use `http://localhost:9999` be
 
 3. **iOS Simulator**: Can use `http://localhost:9999` directly (no special IP needed)
 
-## Authentication System: OAuth2 + PKCE
+---
+
+## 🔐 Authentication System: OAuth2 + PKCE
 
 SIREN uses **OAuth2 with PKCE** (Proof Key for Code Exchange) to authenticate with OpenProject. This system is superior to a simple API Key for the following reasons:
 
-### Why is OAuth2 + PKCE Better than an API Key?
+### Why OAuth2 + PKCE?
 
 1. **Enhanced Security**:
    - **No secret storage**: Mobile applications cannot securely store a `client_secret`. PKCE eliminates this need.
@@ -120,8 +376,6 @@ SIREN uses **OAuth2 with PKCE** (Proof Key for Code Exchange) to authenticate wi
    - **Secure sessions**: Sessions are managed securely with access and refresh tokens.
 
 ### OAuth2 + PKCE Authentication Flow
-
-The following diagram illustrates the complete authentication flow:
 
 ```mermaid
 sequenceDiagram
@@ -215,37 +469,9 @@ To configure OpenProject to work with SIREN:
 
 After completing these steps, your OpenProject server is ready to handle authentication requests from the SIREN mobile application.
 
-## Multi-language Support
+---
 
-SIREN is prepared for multi-language support with a complete i18n structure:
-
-### Supported Languages
-
-- **Spanish** (es): Primary language
-- **English** (en): Secondary language
-
-### Internationalization Structure
-
-The application uses ARB (Application Resource Bundle) files for localization:
-
-```
-/lib/core/i18n/
-├── l10n/
-│   ├── app_es.arb    # Spanish resources
-│   └── app_en.arb    # English resources
-├── localization_service.dart
-└── localization_repository.dart
-```
-
-### Language Change
-
-Language change is managed through the localization service, allowing users to select their preferred language. The configuration is persisted and applied throughout the application.
-
-**Note**: Complete multi-language implementation is in development (Post-MVP). The structure is prepared and ARB files are available for translating all interface strings.
-
-## Available Screens
-
-SIREN includes the following main screens:
+## 📱 Available Screens
 
 ### 1. Initialization Screen (`AppInitializationPage`)
 
@@ -392,103 +618,9 @@ SIREN includes the following main screens:
 - **Navigation Confirmation**: If the user attempts to navigate back with unsaved changes, a confirmation dialog is shown
 - **Optimistic Locking**: Uses `lockVersion` to prevent concurrent modification conflicts
 
-### 7. Issue Edit Screen (`EditIssuePage`)
+---
 
-**Note**: This screen may be integrated into `IssueDetailPage` in edit mode, depending on the implementation.
-
-## Server Configuration and Work Package Type
-
-### OpenProject Server Configuration
-
-The application allows flexible configuration of the OpenProject server URL:
-
-1. **Initial Configuration**: On first launch, the server URL is requested
-2. **Modification**: The URL can be modified from the Settings screen
-3. **Secure Storage**: The URL is stored securely using `flutter_secure_storage`
-4. **Validation**: URL format is validated before storage (protocol, domain, optional port)
-
-### Work Package Type Selection
-
-OpenProject uses "Work Packages" as a generic term for different types of elements (Issues, Tasks, Milestones, etc.). SIREN allows selecting which Work Package type to display:
-
-#### Type Configuration
-
-1. **Access**: From the Settings screen (`SettingsPage`)
-2. **Options**: List of types available in the OpenProject server
-3. **Default Value**: "Issue"
-4. **Storage**: Stored securely using `flutter_secure_storage`
-
-#### Behavior
-
-- **Automatic Filtering**: All queries to the OpenProject API automatically include a filter by the selected type
-- **Status Update**: When changing the type:
-  - Statuses (statuses) in cache are invalidated
-  - Available statuses for the new type are loaded from OpenProject
-  - Statuses are stored in local cache with their associated colors
-- **List Update**: The issue list automatically updates to show only work packages of the selected type
-- **Dynamic Resolution**: The type name is dynamically resolved to its corresponding ID in OpenProject (no hardcoded IDs are used)
-
-#### Dynamic Statuses
-
-Statuses are loaded dynamically according to the Work Package type:
-
-- **Load by Type**: Each Work Package type can have different available statuses
-- **Colors from API**: Status colors are obtained from OpenProject API (`color.hexcode` or `hexCode`)
-- **Local Cache**: Statuses are stored in local cache for offline use
-- **Update**: Statuses are updated when:
-  - The Work Package type is changed
-  - The issue list is updated (pull to refresh)
-
-#### Usage Example
-
-1. User selects "Issue" as Work Package type
-2. Application loads available statuses for "Issue" from OpenProject
-3. List shows only work packages of type "Issue"
-4. When creating a new issue, type "Issue" is used
-5. When changing to "Task", the list updates to show only "Tasks" and corresponding statuses are loaded
-
-## Architecture
-
-SIREN follows **Clean Architecture** principles with strict layer separation:
-
-```
-Presentation Layer (UI/State Management)
-    ↓
-Domain Layer (Business Logic/Entities/Use Cases)
-    ↓
-Data Layer (Repositories/Data Sources/Models)
-```
-
-### Key Principles
-
-- **Domain Layer**: Pure Dart, business logic without Flutter dependencies
-- **Dependency Injection**: Modular DI using `get_it` with feature-based modules
-- **State Management**: Bloc/Cubit pattern with `flutter_bloc`
-- **Separation of Concerns**: Clear boundaries between features and core services
-
-### Project Structure
-
-```
-/lib
-├── /core              # Core infrastructure (DI, errors, auth, network, config, i18n)
-├── /features          # Feature modules (issues, future features)
-│   └── /issues
-│       ├── /data      # Data sources, models, repository implementations
-│       ├── /domain    # Entities, repository interfaces, use cases
-│       └── /presentation  # UI, Bloc/Cubit, pages, widgets
-└── main.dart          # Application entry point
-```
-
-## Technical Stack
-
-- **Framework**: Flutter / Dart
-- **State Management**: Bloc/Cubit (`flutter_bloc`)
-- **Dependency Injection**: `get_it` with modular injection modules
-- **HTTP Client**: `dio` for API communication
-- **Secure Storage**: `flutter_secure_storage` for credentials
-- **Testing**: `flutter_test`, `mockito`/`mocktail` for mocking
-
-## API Integration
+## 🔌 API Integration
 
 ### OpenProject REST API v3
 
@@ -499,28 +631,66 @@ Data Layer (Repositories/Data Sources/Models)
 
 ### Key Endpoints
 
-- `GET /api/v3/work_packages` - List issues with filters and pagination
-- `GET /api/v3/work_packages/{id}` - Get single issue
-- `POST /api/v3/work_packages` - Create new issue
-- `PATCH /api/v3/work_packages/{id}` - Update issue
-- `POST /api/v3/work_packages/{id}/attachments` - Add attachments
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `GET` | `/api/v3/work_packages` | List issues with filters and pagination |
+| `GET` | `/api/v3/work_packages/{id}` | Get single issue |
+| `POST` | `/api/v3/work_packages` | Create new issue |
+| `PATCH` | `/api/v3/work_packages/{id}` | Update issue |
+| `POST` | `/api/v3/work_packages/{id}/attachments` | Add attachments |
+| `GET` | `/api/v3/statuses` | Get available statuses |
+| `GET` | `/api/v3/priorities` | Get priority levels |
+| `GET` | `/api/v3/projects` | Get projects (equipment) |
+| `GET` | `/api/v3/groups` | Get user groups |
 
 ### HATEOAS Discovery
 
 OpenProject API uses HATEOAS. The app discovers available actions and resources dynamically via `_links` in API responses.
 
-## Issue Fields
+### Issue Fields
 
-| Field             | Required | Description                                    |
-|-------------------|----------|------------------------------------------------|
-| Title (Subject)   | Yes      | Free text issue title                          |
-| Description       | No       | Optional detailed description                  |
-| Equipment         | Yes      | OpenProject project (filtered by selected group) |
-| Group/Department  | Yes      | Single group selection (auto-selected if user belongs to one group) |
-| Priority Level    | Yes      | Low, Normal, High, Immediate                   |
-| Status            | No       | New, In Progress, Closed (auto-set to "New" on creation) |
+| Field | Required | Description |
+|-------|----------|-------------|
+| Title (Subject) | Yes | Free text issue title |
+| Description | No | Optional detailed description |
+| Equipment | Yes | OpenProject project (filtered by selected group) |
+| Group/Department | Yes | Single group selection (auto-selected if user belongs to one group) |
+| Priority Level | Yes | Low, Normal, High, Immediate |
+| Status | No | New, In Progress, Closed (auto-set to "New" on creation) |
 
-## Development
+---
+
+## 🌍 Multi-language Support
+
+SIREN is prepared for multi-language support with a complete i18n structure:
+
+### Supported Languages
+
+- **Spanish** (es): Primary language
+- **English** (en): Secondary language
+
+### Internationalization Structure
+
+The application uses ARB (Application Resource Bundle) files for localization:
+
+```
+/lib/core/i18n/
+├── l10n/
+│   ├── app_es.arb    # Spanish resources
+│   └── app_en.arb    # English resources
+├── localization_service.dart
+└── localization_repository.dart
+```
+
+### Language Change
+
+Language change is managed through the localization service, allowing users to select their preferred language. The configuration is persisted and applied throughout the application.
+
+**Note**: Complete multi-language implementation is in development (Post-MVP). The structure is prepared and ARB files are available for translating all interface strings.
+
+---
+
+## 🧪 Development
 
 ### Running Tests
 
@@ -552,32 +722,95 @@ flutter format .
 3. **Presentation Layer**: Create Bloc/Cubit → Build UI widgets → Connect to use cases
 4. **DI Registration**: Create feature module and register dependencies
 
-## Future Roadmap
+---
 
-- **Offline Capability**: Local database integration for offline issue creation
+## 📊 Project Status
+
+### Completed Features (MVP)
+
+✅ **Phase 1: Setup / Foundational**
+- Clean Architecture structure
+- Dependency Injection system
+- Error handling infrastructure
+- OAuth2 + PKCE authentication
+
+✅ **Phase 2: Configuration and Testing**
+- Server URL configuration
+- OAuth2 authentication flow
+- Settings screen with logout
+- Testing infrastructure
+
+✅ **Phase 3: Quick Issue Registration**
+- Issue creation form
+- Field validation
+- Dynamic group/equipment filtering
+- Priority selection
+
+✅ **Phase 4: Issue Management**
+- Issue list with filtering
+- Issue detail view
+- Issue editing
+- Attachment support
+- Offline cache (MVP)
+- Status management
+
+✅ **Phase 5: Search and Filtering**
+- Text search
+- Multi-criteria filtering
+- Real-time search
+
+### In Progress / Planned
+
+🔄 **Phase 6: Architectural Preparation (Post-MVP)**
+- Complete i18n implementation
+- Offline-first architecture design
+- AI integration preparation
+- Voice commands architecture
+
+📋 **Phase 7: Offline Issue Management (Post-MVP)**
+- Full offline support
+- Local database integration
+- Conflict resolution
+- Automatic synchronization
+
+---
+
+## 🗺️ Future Roadmap
+
+- **Offline Capability**: Full local database integration for offline issue creation and modification
 - **Multi-language Support**: Complete Spanish/English localization
 - **AI Integration**: Automated categorization and predictive features
 - **Voice Commands**: Hands-free issue registration for field technicians
+- **Enhanced Analytics**: Issue tracking and reporting features
 
-## Contributing
+---
+
+## 🤝 Contributing
 
 1. Follow Clean Architecture principles strictly
 2. Write tests for new use cases and critical business logic
 3. Run `flutter analyze` before committing
 4. Use GitHub CLI (`gh`) for repository operations
 
-## Documentation
+---
+
+## 📚 Documentation
 
 - **OpenProject API**: [OpenProject REST API v3 Documentation](https://www.openproject.org/docs/api/)
 - **Flutter Framework**: [Flutter Documentation](https://flutter.dev/)
+- **Project Documentation**: See `/docs` directory for detailed technical documentation
 
-## Success Criteria
+---
+
+## ✅ Success Criteria
 
 - **Usability**: Users can register a new issue in less than one minute
 - **Adoption**: 90% of new technical issues reported via SIREN in first month
 - **Business Impact**: Reduced MTTR in critical systems
 
-## License
+---
+
+## 📄 License
 
 This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
 
@@ -598,7 +831,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ```
 
-## Author
+---
+
+## 👤 Author
 
 **Daniel Benitez** - danibeni.dev@gmail.com
 
