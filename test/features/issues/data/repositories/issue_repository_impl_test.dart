@@ -321,11 +321,12 @@ void main() {
 
           when(
             () => mockDataSource.getIssues(
-              status: any(named: 'status'),
+              statusIds: any(named: 'statusIds'),
+              priorityIds: any(named: 'priorityIds'),
               equipmentId: any(named: 'equipmentId'),
-              priorityLevel: any(named: 'priorityLevel'),
               groupId: any(named: 'groupId'),
               typeId: any(named: 'typeId'),
+              searchTerms: any(named: 'searchTerms'),
               offset: any(named: 'offset'),
               pageSize: any(named: 'pageSize'),
               sortBy: any(named: 'sortBy'),
@@ -363,11 +364,12 @@ void main() {
         // Given
         when(
           () => mockDataSource.getIssues(
-            status: any(named: 'status'),
+            statusIds: any(named: 'statusIds'),
+            priorityIds: any(named: 'priorityIds'),
             equipmentId: any(named: 'equipmentId'),
-            priorityLevel: any(named: 'priorityLevel'),
             groupId: any(named: 'groupId'),
             typeId: any(named: 'typeId'),
+            searchTerms: any(named: 'searchTerms'),
             offset: any(named: 'offset'),
             pageSize: any(named: 'pageSize'),
             sortBy: any(named: 'sortBy'),
@@ -403,11 +405,12 @@ void main() {
         // Given
         when(
           () => mockDataSource.getIssues(
-            status: any(named: 'status'),
+            statusIds: any(named: 'statusIds'),
+            priorityIds: any(named: 'priorityIds'),
             equipmentId: any(named: 'equipmentId'),
-            priorityLevel: any(named: 'priorityLevel'),
             groupId: any(named: 'groupId'),
             typeId: any(named: 'typeId'),
+            searchTerms: any(named: 'searchTerms'),
             offset: any(named: 'offset'),
             pageSize: any(named: 'pageSize'),
             sortBy: any(named: 'sortBy'),

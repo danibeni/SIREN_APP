@@ -794,7 +794,8 @@ class _EditViewState extends State<_EditView> {
 
         // Try partial match (contains)
         matched = availableStatuses.where(
-          (s) => s.name.toLowerCase().contains(currentStatusName) ||
+          (s) =>
+              s.name.toLowerCase().contains(currentStatusName) ||
               currentStatusName.contains(s.name.toLowerCase()),
         );
         if (matched.isNotEmpty) {
@@ -1489,24 +1490,21 @@ class _EditViewState extends State<_EditView> {
 
       // Call cubit to add attachment
       if (!context.mounted) return;
-      
+
       final cubit = context.read<IssueDetailCubit>();
       final attachmentCountBefore = attachments.length;
 
       // Call addAttachment and wait for completion
-      await cubit.addAttachment(
-        filePath: file.path,
-        fileName: fileName,
-      );
+      await cubit.addAttachment(filePath: file.path, fileName: fileName);
 
       // Check if attachment was added successfully
       if (!context.mounted) return;
-      
+
       final currentState = cubit.state;
       if (currentState is IssueDetailEditing) {
         final attachmentCountAfter = currentState.attachments.length;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        
+
         if (attachmentCountAfter > attachmentCountBefore) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

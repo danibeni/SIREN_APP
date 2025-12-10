@@ -17,11 +17,19 @@ abstract class IssueRepository {
   ///
   /// [workPackageType] - REQUIRED: Work Package Type name from Settings (default: "Issue")
   /// This filter is always applied to ensure only work packages of the configured type are retrieved
+  ///
+  /// [statusIds] - Optional list of status IDs to filter by (multi-select)
+  /// [priorityIds] - Optional list of priority IDs to filter by (multi-select)
+  /// [equipmentId] - Optional equipment/project ID to filter by (single-select)
+  /// [groupId] - Optional group ID to filter by (single-select)
+  /// [searchTerms] - Optional text search terms to search in Subject and Description
+  /// All filters are combined with AND logic
   Future<Either<Failure, List<IssueEntity>>> getIssues({
-    IssueStatus? status,
+    List<int>? statusIds,
+    List<int>? priorityIds,
     int? equipmentId,
-    PriorityLevel? priorityLevel,
     int? groupId,
+    String? searchTerms,
     required String workPackageType,
   });
 

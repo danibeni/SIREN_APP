@@ -219,19 +219,14 @@ class IssueRepositoryImpl implements IssueRepository {
 
   @override
   Future<Either<Failure, List<IssueEntity>>> getIssues({
-    IssueStatus? status,
+    List<int>? statusIds,
+    List<int>? priorityIds,
     int? equipmentId,
-    PriorityLevel? priorityLevel,
     int? groupId,
+    String? searchTerms,
     required String workPackageType,
   }) async {
     try {
-      // Map IssueStatus to API status ID
-      int? statusId;
-      if (status != null) {
-        statusId = _mapStatusToId(status);
-      }
-
       // Resolve Work Package Type name to ID
       // Get all available types from OpenProject (global types, not project-specific)
       int? typeId;
@@ -296,13 +291,14 @@ class IssueRepositoryImpl implements IssueRepository {
         }
       } else {
         try {
-          // Try to fetch from server
+          // Try to fetch from server with filters
           responseList = await remoteDataSource.getIssues(
-            status: statusId,
+            statusIds: statusIds,
+            priorityIds: priorityIds,
             equipmentId: equipmentId,
-            priorityLevel: priorityLevel,
             groupId: groupId,
             typeId: typeId,
+            searchTerms: searchTerms,
           );
 
           // Cache the fetched issues (limited to 3 screenfuls)
@@ -990,13 +986,15 @@ class IssueRepositoryImpl implements IssueRepository {
 
       // OpenProject schema may have availableValues or allowedValues or values
       // for status field indicating which statuses are allowed for this type
-      final availableValues = statusSchema?['availableValues'] as List<dynamic>? ??
+      final availableValues =
+          statusSchema?['availableValues'] as List<dynamic>? ??
           statusSchema?['allowedValues'] as List<dynamic>? ??
           statusSchema?['values'] as List<dynamic>?;
 
       // Also check for options object that might contain availableValues
       final options = statusSchema?['options'] as Map<String, dynamic>?;
-      final optionsValues = options?['availableValues'] as List<dynamic>? ??
+      final optionsValues =
+          options?['availableValues'] as List<dynamic>? ??
           options?['allowedValues'] as List<dynamic>? ??
           options?['values'] as List<dynamic>?;
 

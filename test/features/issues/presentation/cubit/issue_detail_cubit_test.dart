@@ -36,7 +36,8 @@ void main() {
   late MockGetAttachmentsUseCase mockGetAttachmentsUseCase;
   late MockUpdateIssueUseCase mockUpdateIssueUseCase;
   late MockAddAttachmentUseCase mockAddAttachmentUseCase;
-  late MockGetAvailableStatusesForIssueUseCase mockGetAvailableStatusesForIssueUseCase;
+  late MockGetAvailableStatusesForIssueUseCase
+  mockGetAvailableStatusesForIssueUseCase;
   late MockGetPrioritiesUseCase mockGetPrioritiesUseCase;
   late MockConnectivityService mockConnectivityService;
   late Logger logger;
@@ -46,7 +47,8 @@ void main() {
     mockGetAttachmentsUseCase = MockGetAttachmentsUseCase();
     mockUpdateIssueUseCase = MockUpdateIssueUseCase();
     mockAddAttachmentUseCase = MockAddAttachmentUseCase();
-    mockGetAvailableStatusesForIssueUseCase = MockGetAvailableStatusesForIssueUseCase();
+    mockGetAvailableStatusesForIssueUseCase =
+        MockGetAvailableStatusesForIssueUseCase();
     mockGetPrioritiesUseCase = MockGetPrioritiesUseCase();
     mockConnectivityService = MockConnectivityService();
     logger = Logger('IssueDetailCubit');
@@ -55,7 +57,8 @@ void main() {
       getAttachmentsUseCase: mockGetAttachmentsUseCase,
       updateIssueUseCase: mockUpdateIssueUseCase,
       addAttachmentUseCase: mockAddAttachmentUseCase,
-      getAvailableStatusesForIssueUseCase: mockGetAvailableStatusesForIssueUseCase,
+      getAvailableStatusesForIssueUseCase:
+          mockGetAvailableStatusesForIssueUseCase,
       getPrioritiesUseCase: mockGetPrioritiesUseCase,
       connectivityService: mockConnectivityService,
       logger: logger,
