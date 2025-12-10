@@ -107,10 +107,14 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
     });
   }
 
-  void _applyFilters() {
+  void _applyFilters({bool isClearing = false}) {
     widget.onApplyFilters(
-      statusIds: _selectedStatusIds.isEmpty ? null : _selectedStatusIds,
-      priorityIds: _selectedPriorityIds.isEmpty ? null : _selectedPriorityIds,
+      statusIds: isClearing
+          ? <int>[] // Pass empty list to indicate clear
+          : (_selectedStatusIds.isEmpty ? null : _selectedStatusIds),
+      priorityIds: isClearing
+          ? <int>[] // Pass empty list to indicate clear
+          : (_selectedPriorityIds.isEmpty ? null : _selectedPriorityIds),
       equipmentId: _selectedEquipmentId,
       groupId: _selectedGroupId,
     );
@@ -124,6 +128,8 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
       _selectedEquipmentId = null;
       _selectedGroupId = null;
     });
+    // Apply cleared filters immediately with clearing flag
+    _applyFilters(isClearing: true);
   }
 
   @override

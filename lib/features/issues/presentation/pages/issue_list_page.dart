@@ -354,11 +354,16 @@ void _showFilterSheet(BuildContext context) {
               int? equipmentId,
               int? groupId,
             }) {
+              // Determine which filters should be cleared
+              // Empty lists mean clear, null means don't change
+              // For single-value filters, null + previous value means clear
               cubit.loadIssues(
-                statusIds: statusIds,
-                priorityIds: priorityIds,
+                statusIds: statusIds, // Empty list [] means clear, null means don't change
+                priorityIds: priorityIds, // Empty list [] means clear, null means don't change
                 equipmentId: equipmentId,
                 groupId: groupId,
+                clearEquipment: equipmentId == null && cubit.equipmentId != null,
+                clearGroup: groupId == null && cubit.groupId != null,
               );
             },
       ),

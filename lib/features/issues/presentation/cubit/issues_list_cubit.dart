@@ -42,15 +42,30 @@ class IssuesListCubit extends Cubit<IssuesListState> {
     int? equipmentId,
     int? groupId,
     String? searchTerms,
+    bool clearEquipment = false,
+    bool clearGroup = false,
   }) async {
     // Update filter state - only update provided filters, preserve others
-    // Use a special marker to distinguish "set to null" from "don't change"
-    if (statusIds != null) _statusIds = statusIds.isEmpty ? null : statusIds;
+    // null means "don't change", empty list means "clear", non-empty list means "set"
+    if (statusIds != null) {
+      // Empty list explicitly means clear, null means don't change
+      _statusIds = statusIds.isEmpty ? null : statusIds;
+    }
     if (priorityIds != null) {
+      // Empty list explicitly means clear, null means don't change
       _priorityIds = priorityIds.isEmpty ? null : priorityIds;
     }
-    if (equipmentId != null) _equipmentId = equipmentId;
-    if (groupId != null) _groupId = groupId;
+    // For single-value filters, use clear flags to distinguish "clear" from "don't change"
+    if (clearEquipment) {
+      _equipmentId = null;
+    } else if (equipmentId != null) {
+      _equipmentId = equipmentId;
+    }
+    if (clearGroup) {
+      _groupId = null;
+    } else if (groupId != null) {
+      _groupId = groupId;
+    }
     // For search terms: empty string means clear search, null means don't change
     if (searchTerms != null) {
       _searchTerms = searchTerms.isEmpty ? null : searchTerms;
