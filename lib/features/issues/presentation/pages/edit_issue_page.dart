@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:siren_app/core/i18n/generated/app_localizations.dart';
 import 'package:siren_app/core/di/injection.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
 import 'package:siren_app/core/widgets/gradient_app_bar.dart';
@@ -42,8 +43,8 @@ class _EditIssueView extends StatelessWidget {
         listener: (context, state) {
           if (state is EditIssueSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Issue updated successfully'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!.issueUpdatedSuccessfully),
                 backgroundColor: AppColors.success,
               ),
             );
@@ -187,7 +188,7 @@ class _EditIssueFormState extends State<_EditIssueForm> {
                     onPressed: widget.isSaving
                         ? null
                         : () => Navigator.pop(context),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context)!.commonCancel),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
@@ -196,7 +197,7 @@ class _EditIssueFormState extends State<_EditIssueForm> {
                       backgroundColor: AppColors.primaryBlue,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Save'),
+                    child: Text(AppLocalizations.of(context)!.commonSave),
                   ),
                 ],
               ),

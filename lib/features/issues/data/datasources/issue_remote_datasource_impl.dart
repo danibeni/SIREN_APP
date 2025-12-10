@@ -97,19 +97,21 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
       }
 
       // Single-select equipment/project filter
+      // If equipmentId is provided, use it (most specific filter)
+      // If only groupId is provided, resolve projects for that group
+      // Priority: equipmentId > groupId (equipment is more specific than group)
       if (equipmentId != null) {
+        // Equipment filter takes priority - use it directly
         filterList.add({
           'project': {
             'operator': '=',
             'values': [equipmentId.toString()],
           },
         });
-      }
-
-      // Group filter: resolve projects for the selected group, then filter by project
-      // OpenProject does not expose a direct group filter for work packages, so we
-      // scope the query to the projects (equipment) that belong to the group.
-      if (groupId != null) {
+      } else if (groupId != null) {
+        // Group filter: resolve projects for the selected group, then filter by project
+        // OpenProject does not expose a direct group filter for work packages, so we
+        // scope the query to the projects (equipment) that belong to the group.
         try {
           final projects = await getProjectsByGroup(groupId);
           final projectIds = projects

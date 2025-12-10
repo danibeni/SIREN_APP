@@ -1,16 +1,22 @@
 import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:siren_app/core/auth/auth_service.dart';
 import 'package:siren_app/core/di/di_container.dart';
 import 'package:siren_app/core/di/injection.dart' as injection;
+import 'package:siren_app/core/i18n/localization_service.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/features/config/presentation/cubit/localization_cubit.dart';
+import 'package:siren_app/features/config/presentation/cubit/localization_state.dart';
 import 'package:siren_app/features/config/presentation/pages/app_initialization_page.dart';
 import 'package:siren_app/features/config/presentation/pages/server_config_page.dart';
 import 'package:siren_app/features/config/presentation/pages/settings_page.dart';
 import 'package:siren_app/features/issues/presentation/pages/issue_detail_page.dart';
 import 'package:siren_app/features/issues/presentation/pages/issue_form_page.dart';
 import 'package:siren_app/features/issues/presentation/pages/issue_list_page.dart';
+import 'package:siren_app/core/i18n/generated/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,10 +34,15 @@ class SirenApp extends StatefulWidget {
 class _SirenAppState extends State<SirenApp> {
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
+  late LocalizationCubit _localizationCubit;
+  late LocalizationService _localizationService;
 
   @override
   void initState() {
     super.initState();
+    _localizationCubit = injection.getIt<LocalizationCubit>();
+    _localizationService = injection.getIt<LocalizationService>();
+    _localizationCubit.load();
     _initDeepLinks();
   }
 
@@ -77,60 +88,77 @@ class _SirenAppState extends State<SirenApp> {
       brightness: Brightness.light,
     );
 
-    return MaterialApp(
-      title: 'SIREN',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: colorScheme,
-        scaffoldBackgroundColor: AppColors.background,
-        useMaterial3: true,
-        appBarTheme: AppBarTheme(
-          centerTitle: true,
-          elevation: 2,
-          shadowColor: AppColors.primaryBlue.withOpacity(0.3),
-          backgroundColor: AppColors.primaryBlue,
-          foregroundColor: Colors.white,
-          titleTextStyle: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.5,
-            color: Colors.white,
-          ),
-          toolbarHeight: 56,
-        ),
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          filled: true,
-          fillColor: AppColors.surface,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primaryButton,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+    return BlocProvider.value(
+      value: _localizationCubit,
+      child: BlocBuilder<LocalizationCubit, LocalizationState>(
+        bloc: _localizationCubit,
+        builder: (context, localizationState) {
+          return MaterialApp(
+            key: ValueKey(localizationState.locale.languageCode),
+            title: 'SIREN',
+            debugShowCheckedModeBanner: false,
+            locale: localizationState.locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: _localizationService.supportedLocales,
+            theme: ThemeData(
+              colorScheme: colorScheme,
+              scaffoldBackgroundColor: AppColors.background,
+              useMaterial3: true,
+              appBarTheme: AppBarTheme(
+                centerTitle: true,
+                elevation: 2,
+                shadowColor: AppColors.primaryBlue.withOpacity(0.3),
+                backgroundColor: AppColors.primaryBlue,
+                foregroundColor: Colors.white,
+                titleTextStyle: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                  color: Colors.white,
+                ),
+                toolbarHeight: 56,
+              ),
+              inputDecorationTheme: const InputDecorationTheme(
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                filled: true,
+                fillColor: AppColors.surface,
+              ),
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryButton,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
+          home: const AppInitializationPage(),
+          routes: {
+            '/config': (context) => const ServerConfigPage(),
+            '/settings': (context) => const SettingsPage(),
+            '/home': (context) => const IssueListPage(),
+            '/issues': (context) => const IssueListPage(),
+            '/create-issue': (context) => const IssueFormPage(),
+          },
+          onGenerateRoute: (settings) {
+            if (settings.name == '/issue-detail') {
+              final issueId = settings.arguments as int;
+              return MaterialPageRoute(
+                builder: (context) => IssueDetailPage(issueId: issueId),
+              );
+            }
+            return null;
+          },
+        );
+        },
       ),
-      home: const AppInitializationPage(),
-      routes: {
-        '/config': (context) => const ServerConfigPage(),
-        '/settings': (context) => const SettingsPage(),
-        '/home': (context) => const IssueListPage(),
-        '/issues': (context) => const IssueListPage(),
-        '/create-issue': (context) => const IssueFormPage(),
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/issue-detail') {
-          final issueId = settings.arguments as int;
-          return MaterialPageRoute(
-            builder: (context) => IssueDetailPage(issueId: issueId),
-          );
-        }
-        return null;
-      },
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
+import 'package:siren_app/core/i18n/generated/app_localizations.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
 import '../cubit/app_initialization_cubit.dart';
 import '../cubit/app_initialization_state.dart';
@@ -33,26 +34,26 @@ class AppInitializationPage extends StatelessWidget {
                   height: 120,
                 ),
                 const SizedBox(height: 24),
-                const Text(
-                  'SIREN',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.appInitTitle,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primaryBlue,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'System for Issue Reporting\nand Engineering Notification',
+                Text(
+                  AppLocalizations.of(context)!.appInitTagline,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 32),
                 const CircularProgressIndicator(color: AppColors.primaryBlue),
                 const SizedBox(height: 16),
-                const Text(
-                  'Initializing...',
-                  style: TextStyle(color: AppColors.textSecondary),
+                Text(
+                  AppLocalizations.of(context)!.initializing,
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
               ],
             ),

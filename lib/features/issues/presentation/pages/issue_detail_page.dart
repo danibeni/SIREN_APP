@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart' as injection;
+import 'package:siren_app/core/i18n/generated/app_localizations.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
 import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
@@ -39,7 +40,7 @@ class IssueDetailPage extends StatelessWidget {
 
           return Scaffold(
             appBar: GradientAppBar(
-              title: 'Issue Details',
+              title: AppLocalizations.of(context)!.issueDetailTitle,
               actions: issue != null
                   ? [
                       Padding(
@@ -120,7 +121,7 @@ class IssueDetailPage extends StatelessWidget {
                                 issueId,
                               );
                             },
-                            child: const Text('Retry'),
+                            child: Text(AppLocalizations.of(context)!.commonRetry),
                           ),
                         ],
                       ),
@@ -169,7 +170,7 @@ class IssueDetailPage extends StatelessWidget {
                           context.read<IssueDetailCubit>().enterEditMode();
                         },
                         icon: const Icon(Icons.edit),
-                        label: const Text('Edit'),
+                        label: Text(AppLocalizations.of(context)!.commonEdit),
                         backgroundColor: AppColors.primaryBlue,
                       );
                     }
@@ -217,7 +218,11 @@ class IssueDetailPage extends StatelessWidget {
                                     ),
                                   )
                                 : const Icon(Icons.save),
-                            label: Text(isSaving ? 'Saving...' : 'Save'),
+                            label: Text(
+                              isSaving
+                                  ? AppLocalizations.of(context)!.commonSaving
+                                  : AppLocalizations.of(context)!.commonSave,
+                            ),
                             backgroundColor: AppColors.primaryBlue,
                           ),
                         ],
@@ -363,7 +368,7 @@ class _DetailView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'SUBJECT',
+                          AppLocalizations.of(context)!.issueDetailSubject,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -410,7 +415,7 @@ class _DetailView extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'DESCRIPTION',
+                        AppLocalizations.of(context)!.issueDetailDescription,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -461,16 +466,16 @@ class _DetailView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.info_outline,
                         size: 16,
                         color: AppColors.textSecondary,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'STATUS & PRIORITY',
+                        AppLocalizations.of(context)!.issueDetailStatusPriority,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -487,9 +492,9 @@ class _DetailView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Status',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)!.issueDetailStatus,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
@@ -508,9 +513,9 @@ class _DetailView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Priority',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)!.issueDetailPriority,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
@@ -553,7 +558,7 @@ class _DetailView extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'ATTACHMENTS',
+                        AppLocalizations.of(context)!.issueDetailAttachments,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -851,10 +856,10 @@ class _EditViewState extends State<_EditView> {
               children: [
                 const Icon(Icons.edit, color: AppColors.primaryBlue, size: 20),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Edit Mode - Modify fields below',
-                    style: TextStyle(
+                    AppLocalizations.of(context)!.issueDetailEditMode,
+                    style: const TextStyle(
                       color: AppColors.primaryBlue,
                       fontWeight: FontWeight.w600,
                     ),
@@ -882,16 +887,16 @@ class _EditViewState extends State<_EditView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.title,
                         size: 16,
                         color: AppColors.textSecondary,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'SUBJECT *',
+                        AppLocalizations.of(context)!.issueDetailSubjectRequired,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -935,16 +940,16 @@ class _EditViewState extends State<_EditView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.description_outlined,
                         size: 16,
                         color: AppColors.textSecondary,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'DESCRIPTION',
+                        AppLocalizations.of(context)!.issueDetailDescription,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -991,16 +996,16 @@ class _EditViewState extends State<_EditView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.info_outline,
                         size: 16,
                         color: AppColors.textSecondary,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'STATUS & PRIORITY *',
+                        AppLocalizations.of(context)!.issueDetailStatusPriorityRequired,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -1017,9 +1022,9 @@ class _EditViewState extends State<_EditView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Status *',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)!.issueDetailStatusRequired,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
@@ -1045,9 +1050,9 @@ class _EditViewState extends State<_EditView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Priority *',
-                              style: TextStyle(
+                            Text(
+                              AppLocalizations.of(context)!.issueDetailPriorityRequired,
+                              style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.textPrimary,
@@ -1096,7 +1101,7 @@ class _EditViewState extends State<_EditView> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'ATTACHMENTS',
+                        AppLocalizations.of(context)!.issueDetailAttachments,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -1164,7 +1169,7 @@ class _EditViewState extends State<_EditView> {
                           ? null
                           : () => _showAddAttachmentDialog(context),
                       icon: const Icon(Icons.add),
-                      label: const Text('Add Attachment'),
+                      label: Text(AppLocalizations.of(context)!.issueAddAttachment),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -1341,8 +1346,8 @@ class _EditViewState extends State<_EditView> {
           children: [
             ListTile(
               leading: const Icon(Icons.insert_drive_file),
-              title: const Text('Select File'),
-              subtitle: const Text('Choose a file from device'),
+              title: Text(AppLocalizations.of(context)!.issueSelectFile),
+              subtitle: Text(AppLocalizations.of(context)!.issueSelectFileSubtitle),
               onTap: () async {
                 try {
                   final pickerResult = await FilePicker.platform.pickFiles(
@@ -1358,7 +1363,10 @@ class _EditViewState extends State<_EditView> {
                     Navigator.of(sheetContext).pop();
                     ScaffoldMessenger.of(sheetContext).showSnackBar(
                       SnackBar(
-                        content: Text('Error selecting file: ${e.toString()}'),
+                        content: Text(
+                          AppLocalizations.of(context)!
+                              .issueErrorSelectingFile(e.toString()),
+                        ),
                         backgroundColor: AppColors.error,
                       ),
                     );
@@ -1368,8 +1376,8 @@ class _EditViewState extends State<_EditView> {
             ),
             ListTile(
               leading: const Icon(Icons.image),
-              title: const Text('Select Image'),
-              subtitle: const Text('Choose an image from gallery'),
+              title: Text(AppLocalizations.of(context)!.issueSelectImage),
+              subtitle: Text(AppLocalizations.of(context)!.issueSelectImageSubtitle),
               onTap: () async {
                 try {
                   final pickerResult = await FilePicker.platform.pickFiles(
@@ -1385,7 +1393,10 @@ class _EditViewState extends State<_EditView> {
                     Navigator.of(sheetContext).pop();
                     ScaffoldMessenger.of(sheetContext).showSnackBar(
                       SnackBar(
-                        content: Text('Error selecting image: ${e.toString()}'),
+                        content: Text(
+                          AppLocalizations.of(context)!
+                              .issueErrorSelectingImage(e.toString()),
+                        ),
                         backgroundColor: AppColors.error,
                       ),
                     );
@@ -1396,7 +1407,7 @@ class _EditViewState extends State<_EditView> {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.cancel),
-              title: const Text('Cancel'),
+              title: Text(AppLocalizations.of(context)!.commonCancel),
               onTap: () {
                 if (sheetContext.mounted) {
                   Navigator.of(sheetContext).pop();
@@ -1418,8 +1429,10 @@ class _EditViewState extends State<_EditView> {
       if (pickedFile.path == null || pickedFile.path!.isEmpty) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('File path is not available'),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.issueFilePathNotAvailable,
+              ),
               backgroundColor: AppColors.error,
             ),
           );
@@ -1433,8 +1446,8 @@ class _EditViewState extends State<_EditView> {
       if (!await file.exists()) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('File not found'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.issueFileNotFound),
               backgroundColor: AppColors.error,
             ),
           );
@@ -1445,7 +1458,7 @@ class _EditViewState extends State<_EditView> {
       // Show loading indicator
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
                 SizedBox(
@@ -1454,7 +1467,7 @@ class _EditViewState extends State<_EditView> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 SizedBox(width: 16),
-                Text('Uploading attachment...'),
+                Text(AppLocalizations.of(context)!.issueUploadingAttachment),
               ],
             ),
             duration: Duration(seconds: 2),
@@ -1481,8 +1494,10 @@ class _EditViewState extends State<_EditView> {
 
         if (attachmentCountAfter > attachmentCountBefore) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Attachment added successfully'),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.issueAttachmentAddedSuccessfully,
+              ),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
@@ -1490,8 +1505,10 @@ class _EditViewState extends State<_EditView> {
         } else {
           // Error occurred (cubit logs it)
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Failed to add attachment. Please try again.'),
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.issueAttachmentFailed,
+              ),
               backgroundColor: AppColors.error,
               duration: Duration(seconds: 3),
             ),
@@ -1514,7 +1531,10 @@ class _EditViewState extends State<_EditView> {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error processing file: ${e.toString()}'),
+            content: Text(
+              AppLocalizations.of(context)!
+                  .issueErrorProcessingFile(e.toString()),
+            ),
             backgroundColor: AppColors.error,
             duration: const Duration(seconds: 3),
           ),

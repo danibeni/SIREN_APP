@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:siren_app/core/i18n/generated/app_localizations.dart';
 import 'package:siren_app/features/issues/presentation/widgets/file_type_icon.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -66,9 +67,12 @@ class AttachmentListItem extends StatelessWidget {
           // File doesn't exist, fall through to download URL
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Cached file not found. Trying to download...'),
-                duration: Duration(seconds: 2),
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context)!
+                      .issueAttachmentCachedFileNotFound,
+                ),
+                duration: const Duration(seconds: 2),
               ),
             );
           }
@@ -78,7 +82,10 @@ class AttachmentListItem extends StatelessWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error opening cached file: $e'),
+              content: Text(
+                AppLocalizations.of(context)!
+                    .issueAttachmentErrorOpeningCached(e.toString()),
+              ),
               duration: const Duration(seconds: 2),
             ),
           );
@@ -118,7 +125,14 @@ class AttachmentListItem extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error opening file: $e')));
+        ).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!
+                  .issueAttachmentErrorOpeningFile(e.toString()),
+            ),
+          ),
+        );
       }
     }
   }
