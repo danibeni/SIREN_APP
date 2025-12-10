@@ -66,6 +66,7 @@ abstract class IssueRemoteDataSource {
     String? description,
     PriorityLevel? priorityLevel,
     IssueStatus? status,
+    String? statusHref,
   });
 
   /// Add attachment to a work package

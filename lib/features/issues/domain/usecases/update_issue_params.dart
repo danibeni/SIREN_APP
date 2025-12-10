@@ -1,4 +1,5 @@
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/status_entity.dart';
 
 /// Parameters for updating an existing issue
 ///
@@ -11,6 +12,7 @@ class UpdateIssueParams {
   final String? description;
   final PriorityLevel? priorityLevel;
   final IssueStatus? status;
+  final StatusEntity? statusEntity;
 
   const UpdateIssueParams({
     required this.id,
@@ -19,5 +21,6 @@ class UpdateIssueParams {
     this.description,
     this.priorityLevel,
     this.status,
+    this.statusEntity,
   });
 }

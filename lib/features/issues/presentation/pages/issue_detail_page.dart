@@ -674,6 +674,15 @@ class _EditViewState extends State<_EditView> {
     }
   }
 
+  StatusEntity? get editedStatusEntity {
+    if (widget.state is IssueDetailEditing) {
+      return (widget.state as IssueDetailEditing).editedStatusEntity;
+    } else if (widget.state is IssueDetailSaving) {
+      return (widget.state as IssueDetailSaving).editedStatusEntity;
+    }
+    return null;
+  }
+
   String? get editedDescription {
     if (widget.state is IssueDetailEditing) {
       return (widget.state as IssueDetailEditing).editedDescription;
@@ -721,40 +730,6 @@ class _EditViewState extends State<_EditView> {
       return (widget.state as IssueDetailSaving).attachments;
     }
     return const [];
-  }
-
-  /// Map StatusEntity name to IssueStatus enum
-  /// Uses same logic as IssueModel._mapNameToStatus
-  IssueStatus? _mapStatusNameToEnum(String name) {
-    if (name.isEmpty) return null;
-    final lowerName = name.toLowerCase().trim();
-
-    // Match common status names
-    if (lowerName == 'new' || lowerName.contains('new')) {
-      return IssueStatus.newStatus;
-    } else if (lowerName == 'in progress' ||
-        lowerName == 'in-progress' ||
-        lowerName.contains('progress') ||
-        lowerName == 'open' ||
-        lowerName.contains('open')) {
-      return IssueStatus.inProgress;
-    } else if (lowerName == 'on hold' ||
-        lowerName == 'on-hold' ||
-        lowerName.contains('hold') ||
-        lowerName == 'waiting' ||
-        lowerName.contains('waiting')) {
-      return IssueStatus.onHold;
-    } else if (lowerName == 'closed' ||
-        lowerName.contains('closed') ||
-        lowerName == 'resolved' ||
-        lowerName.contains('resolved')) {
-      return IssueStatus.closed;
-    } else if (lowerName == 'rejected' || lowerName.contains('reject')) {
-      return IssueStatus.rejected;
-    }
-
-    // Default fallback
-    return IssueStatus.newStatus;
   }
 
   /// Find StatusEntity by matching the current issue's status ID or name
@@ -1227,7 +1202,8 @@ class _EditViewState extends State<_EditView> {
       );
     }
 
-    final currentStatusEntity = _findStatusEntity(editedStatus);
+    final currentStatusEntity =
+        editedStatusEntity ?? _findStatusEntity(editedStatus);
 
     return Container(
       decoration: BoxDecoration(
@@ -1270,12 +1246,9 @@ class _EditViewState extends State<_EditView> {
               ? null
               : (StatusEntity? newStatus) {
                   if (newStatus != null) {
-                    final mappedStatus = _mapStatusNameToEnum(newStatus.name);
-                    if (mappedStatus != null) {
-                      context.read<IssueDetailCubit>().updateStatus(
-                        mappedStatus,
-                      );
-                    }
+                    context
+                        .read<IssueDetailCubit>()
+                        .updateSelectedStatus(newStatus);
                   }
                 },
           hint: Text(

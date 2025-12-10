@@ -62,6 +62,7 @@ class IssueDetailEditing extends IssueDetailState {
   final String? editedDescription;
   final PriorityLevel editedPriority;
   final IssueStatus editedStatus;
+  final StatusEntity? editedStatusEntity;
   final List<StatusEntity> availableStatuses;
   final List<PriorityEntity> availablePriorities;
   final bool isLoadingStatuses;
@@ -74,6 +75,7 @@ class IssueDetailEditing extends IssueDetailState {
     this.editedDescription,
     required this.editedPriority,
     required this.editedStatus,
+    this.editedStatusEntity,
     this.availableStatuses = const [],
     this.availablePriorities = const [],
     this.isLoadingStatuses = false,
@@ -88,6 +90,7 @@ class IssueDetailEditing extends IssueDetailState {
     editedDescription,
     editedPriority,
     editedStatus,
+    editedStatusEntity,
     availableStatuses,
     availablePriorities,
     isLoadingStatuses,
@@ -101,6 +104,7 @@ class IssueDetailEditing extends IssueDetailState {
     String? editedDescription,
     PriorityLevel? editedPriority,
     IssueStatus? editedStatus,
+    StatusEntity? editedStatusEntity,
     List<StatusEntity>? availableStatuses,
     List<PriorityEntity>? availablePriorities,
     bool? isLoadingStatuses,
@@ -113,6 +117,7 @@ class IssueDetailEditing extends IssueDetailState {
       editedDescription: editedDescription ?? this.editedDescription,
       editedPriority: editedPriority ?? this.editedPriority,
       editedStatus: editedStatus ?? this.editedStatus,
+      editedStatusEntity: editedStatusEntity ?? this.editedStatusEntity,
       availableStatuses: availableStatuses ?? this.availableStatuses,
       availablePriorities: availablePriorities ?? this.availablePriorities,
       isLoadingStatuses: isLoadingStatuses ?? this.isLoadingStatuses,
@@ -128,6 +133,7 @@ class IssueDetailSaving extends IssueDetailState {
   final String? editedDescription;
   final PriorityLevel editedPriority;
   final IssueStatus editedStatus;
+  final StatusEntity? editedStatusEntity;
   final List<StatusEntity> availableStatuses;
   final List<PriorityEntity> availablePriorities;
 
@@ -138,6 +144,7 @@ class IssueDetailSaving extends IssueDetailState {
     this.editedDescription,
     required this.editedPriority,
     required this.editedStatus,
+    this.editedStatusEntity,
     this.availableStatuses = const [],
     this.availablePriorities = const [],
   });
@@ -150,6 +157,7 @@ class IssueDetailSaving extends IssueDetailState {
     editedDescription,
     editedPriority,
     editedStatus,
+    editedStatusEntity,
     availableStatuses,
     availablePriorities,
   ];
