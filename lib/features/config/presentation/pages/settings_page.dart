@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import 'package:siren_app/features/issues/presentation/cubit/work_package_type_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/work_package_type_state.dart';
 import '../cubit/server_config_cubit.dart';
@@ -61,7 +62,7 @@ class _SettingsViewState extends State<_SettingsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings'), elevation: 0),
+      appBar: const GradientAppBar(title: 'Settings'),
       body: BlocConsumer<ServerConfigCubit, ServerConfigState>(
         listener: (context, state) {
           if (state is ServerConfigSuccess) {

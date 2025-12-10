@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart' as injection;
 import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/priority_entity.dart';
@@ -37,8 +38,8 @@ class IssueDetailPage extends StatelessWidget {
               : null;
 
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('Issue Details'),
+            appBar: GradientAppBar(
+              title: 'Issue Details',
               actions: issue != null
                   ? [
                       Padding(

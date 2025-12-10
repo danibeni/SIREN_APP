@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'package:siren_app/features/issues/presentation/cubit/edit_issue_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/edit_issue_state.dart';
@@ -34,10 +35,8 @@ class _EditIssueView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Issue'),
-        backgroundColor: AppColors.primaryBlue,
-        foregroundColor: Colors.white,
+      appBar: const GradientAppBar(
+        title: 'Edit Issue',
       ),
       body: BlocConsumer<EditIssueCubit, EditIssueState>(
         listener: (context, state) {
