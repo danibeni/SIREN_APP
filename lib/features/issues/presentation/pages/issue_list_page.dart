@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import 'package:siren_app/features/issues/domain/entities/status_entity.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issues_list_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issues_list_state.dart';
@@ -49,8 +50,8 @@ class _IssueListView extends StatelessWidget {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('SIREN: Issue Reporting'),
+        appBar: GradientAppBar(
+          title: 'SIREN: Issue Reporting',
           actions: [
             BlocBuilder<IssuesListCubit, IssuesListState>(
               builder: (context, state) {

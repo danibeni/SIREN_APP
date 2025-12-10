@@ -84,11 +84,19 @@ class _SirenAppState extends State<SirenApp> {
         colorScheme: colorScheme,
         scaffoldBackgroundColor: AppColors.background,
         useMaterial3: true,
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           centerTitle: true,
-          elevation: 0,
+          elevation: 2,
+          shadowColor: AppColors.primaryBlue.withOpacity(0.3),
           backgroundColor: AppColors.primaryBlue,
           foregroundColor: Colors.white,
+          titleTextStyle: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+            color: Colors.white,
+          ),
+          toolbarHeight: 56,
         ),
         inputDecorationTheme: const InputDecorationTheme(
           border: OutlineInputBorder(),

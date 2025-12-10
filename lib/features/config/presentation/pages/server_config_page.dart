@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import '../cubit/server_config_cubit.dart';
 import '../cubit/server_config_state.dart';
 
@@ -52,7 +53,7 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Server Configuration'), elevation: 0),
+      appBar: const GradientAppBar(title: 'Server Configuration'),
       body: BlocConsumer<ServerConfigCubit, ServerConfigState>(
         listener: (context, state) {
           if (state is ServerConfigLoaded) {

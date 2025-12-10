@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart' as injection;
 import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import '../bloc/create_issue_cubit.dart';
 import '../bloc/create_issue_state.dart';
@@ -34,11 +35,8 @@ class _IssueFormView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Create Issue'),
-        backgroundColor: AppColors.primaryBlue,
-        foregroundColor: Colors.white,
-        elevation: 0,
+      appBar: const GradientAppBar(
+        title: 'Create Issue',
       ),
       body: BlocConsumer<CreateIssueCubit, CreateIssueState>(
         listener: _handleStateChanges,
