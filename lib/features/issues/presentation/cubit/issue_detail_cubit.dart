@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/core/network/connectivity_service.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/status_entity.dart';
 import 'package:siren_app/features/issues/domain/usecases/add_attachment_params.dart';
 import 'package:siren_app/features/issues/domain/usecases/add_attachment_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_attachments_uc.dart';
@@ -107,6 +108,7 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
           editedDescription: currentState.issue.description,
           editedPriority: currentState.issue.priorityLevel,
           editedStatus: currentState.issue.status,
+          editedStatusEntity: null,
           isLoadingStatuses: true,
           isLoadingPriorities: true,
         ),
@@ -161,10 +163,20 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
         logger.info(
           'Loaded ${statuses.length} available statuses for work package ${issue.id}',
         );
+        final matchedStatus = _matchStatusEntity(
+          issue,
+          statuses,
+          currentState.editedStatus,
+        );
+        final mappedEnum = matchedStatus != null
+            ? _mapStatusNameToEnum(matchedStatus.name)
+            : currentState.editedStatus;
         emit(
           latestState.copyWith(
             isLoadingStatuses: false,
             availableStatuses: statuses,
+            editedStatusEntity: matchedStatus ?? latestState.editedStatusEntity,
+            editedStatus: mappedEnum,
           ),
         );
       },
@@ -208,6 +220,68 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
     );
   }
 
+  IssueStatus _mapStatusNameToEnum(String name) {
+    final lowerName = name.toLowerCase().trim();
+    if (lowerName.contains('rejected') || lowerName.contains('rechaz')) {
+      return IssueStatus.rejected;
+    } else if (lowerName.contains('closed') ||
+        lowerName.contains('cerrad') ||
+        lowerName.contains('resolved')) {
+      return IssueStatus.closed;
+    } else if (lowerName.contains('hold') || lowerName.contains('esper')) {
+      return IssueStatus.onHold;
+    } else if (lowerName.contains('progress') ||
+        lowerName.contains('curso') ||
+        lowerName.contains('open')) {
+      return IssueStatus.inProgress;
+    }
+    return IssueStatus.newStatus;
+  }
+
+  StatusEntity? _matchStatusEntity(
+    IssueEntity issue,
+    List<StatusEntity> statuses,
+    IssueStatus fallback,
+  ) {
+    // Try by ID first
+    if (issue.statusId != null) {
+      final byId = statuses.where((s) => s.id == issue.statusId);
+      if (byId.isNotEmpty) return byId.first;
+    }
+
+    // Try by statusName
+    if (issue.statusName != null && issue.statusName!.isNotEmpty) {
+      final target = issue.statusName!.toLowerCase().trim();
+      final exact = statuses.where(
+        (s) => s.name.toLowerCase().trim() == target,
+      );
+      if (exact.isNotEmpty) return exact.first;
+
+      final partial = statuses.where(
+        (s) =>
+            s.name.toLowerCase().contains(target) ||
+            target.contains(s.name.toLowerCase()),
+      );
+      if (partial.isNotEmpty) return partial.first;
+    }
+
+    // Fallback to enum name match
+    final fallbackName = switch (fallback) {
+      IssueStatus.newStatus => 'new',
+      IssueStatus.inProgress => 'progress',
+      IssueStatus.onHold => 'hold',
+      IssueStatus.closed => 'closed',
+      IssueStatus.rejected => 'rejected',
+    };
+
+    final byEnum = statuses.where(
+      (s) => s.name.toLowerCase().contains(fallbackName),
+    );
+    if (byEnum.isNotEmpty) return byEnum.first;
+
+    return statuses.isNotEmpty ? statuses.first : null;
+  }
+
   /// Update edited subject
   void updateSubject(String subject) {
     final currentState = state;
@@ -232,11 +306,17 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
     }
   }
 
-  /// Update edited status
-  void updateStatus(IssueStatus status) {
+  /// Update edited status using selected StatusEntity
+  void updateSelectedStatus(StatusEntity status) {
     final currentState = state;
     if (currentState is IssueDetailEditing) {
-      emit(currentState.copyWith(editedStatus: status));
+      final mapped = _mapStatusNameToEnum(status.name);
+      emit(
+        currentState.copyWith(
+          editedStatus: mapped,
+          editedStatusEntity: status,
+        ),
+      );
     }
   }
 
@@ -253,6 +333,7 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
         editedDescription: currentState.editedDescription,
         editedPriority: currentState.editedPriority,
         editedStatus: currentState.editedStatus,
+        editedStatusEntity: currentState.editedStatusEntity,
       ),
     );
 
@@ -266,6 +347,7 @@ class IssueDetailCubit extends Cubit<IssueDetailState> {
       description: currentState.editedDescription,
       priorityLevel: currentState.editedPriority,
       status: currentState.editedStatus,
+      statusEntity: currentState.editedStatusEntity,
     );
 
     final result = await updateIssueUseCase(params);

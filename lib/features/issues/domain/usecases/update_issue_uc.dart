@@ -36,6 +36,7 @@ class UpdateIssueUseCase {
       description: params.description,
       priorityLevel: params.priorityLevel,
       status: params.status,
+      statusEntity: params.statusEntity,
     );
   }
 }

@@ -106,10 +106,33 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         });
       }
 
-      // Single-select group filter (via project membership)
+      // Group filter: resolve projects for the selected group, then filter by project
+      // OpenProject does not expose a direct group filter for work packages, so we
+      // scope the query to the projects (equipment) that belong to the group.
       if (groupId != null) {
-        // Note: OpenProject filters groups via project membership
-        // This may require additional logic depending on API capabilities
+        try {
+          final projects = await getProjectsByGroup(groupId);
+          final projectIds = projects
+              .map((p) => p['id'] as int?)
+              .whereType<int>()
+              .toList();
+          if (projectIds.isNotEmpty) {
+            filterList.add({
+              'project': {
+                'operator': '=',
+                'values': projectIds.map((id) => id.toString()).toList(),
+              },
+            });
+          } else {
+            logger.info(
+              'Group $groupId has no projects; skipping project filter for group',
+            );
+          }
+        } catch (e) {
+          logger.warning(
+            'Failed to resolve projects for group $groupId, proceeding without group filter: $e',
+          );
+        }
       }
 
       // Text search using subjectOrId filter (searches in Subject and ID)
@@ -371,10 +394,12 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
     String? description,
     PriorityLevel? priorityLevel,
     IssueStatus? status,
+    String? statusHref,
   }) async {
     try {
       final dio = await _getDio();
       final payload = <String, dynamic>{'lockVersion': lockVersion};
+      final links = <String, dynamic>{};
 
       if (subject != null) {
         payload['subject'] = subject;
@@ -385,18 +410,19 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
       }
 
       if (priorityLevel != null) {
-        payload['_links'] = {
-          'priority': {
-            'href': '/api/v3/priorities/${_mapPriorityToId(priorityLevel)}',
-          },
+        links['priority'] = {
+          'href': '/api/v3/priorities/${_mapPriorityToId(priorityLevel)}',
         };
       }
 
-      if (status != null) {
-        payload['_links'] = {
-          ...(payload['_links'] as Map<String, dynamic>? ?? {}),
-          'status': {'href': '/api/v3/statuses/${_mapStatusToId(status)}'},
-        };
+      if (statusHref != null) {
+        links['status'] = {'href': statusHref};
+      } else if (status != null) {
+        links['status'] = {'href': '/api/v3/statuses/${_mapStatusToId(status)}'};
+      }
+
+      if (links.isNotEmpty) {
+        payload['_links'] = links;
       }
 
       final response = await dio.patch(

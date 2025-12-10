@@ -62,6 +62,7 @@ abstract class IssueRepository {
     String? description,
     PriorityLevel? priorityLevel,
     IssueStatus? status,
+    StatusEntity? statusEntity,
   });
 
   /// Add attachment to an issue

@@ -455,9 +455,11 @@ class IssueRepositoryImpl implements IssueRepository {
     String? description,
     PriorityLevel? priorityLevel,
     IssueStatus? status,
+    StatusEntity? statusEntity,
   }) async {
     // Check connectivity
     final isOnline = await connectivityService.isConnected();
+    final resolvedStatusHref = _buildStatusHref(statusEntity);
 
     if (isOnline) {
       // Online: Update immediately on server
@@ -469,6 +471,7 @@ class IssueRepositoryImpl implements IssueRepository {
           description: description,
           priorityLevel: priorityLevel,
           status: status,
+          statusHref: resolvedStatusHref,
         );
 
         final model = IssueModel.fromJson(responseMap);
@@ -538,10 +541,11 @@ class IssueRepositoryImpl implements IssueRepository {
         }
 
         // Update status in _links if provided
-        if (status != null) {
+        if (status != null || resolvedStatusHref != null) {
           final links = modifiedJson['_links'] as Map<String, dynamic>? ?? {};
-          // Keep existing status link structure, just mark that it changed
-          links['status'] = links['status'] ?? {};
+          links['status'] = {
+            'href': resolvedStatusHref ?? links['status']?['href'],
+          };
           modifiedJson['_links'] = links;
         }
 
@@ -769,6 +773,10 @@ class IssueRepositoryImpl implements IssueRepository {
       final pendingModel = IssueModel.fromJson(pendingIssueJson);
 
       // Upload changes to server
+      final pendingLinks =
+          pendingIssueJson['_links'] as Map<String, dynamic>? ?? {};
+      final pendingStatusHref =
+          (pendingLinks['status'] as Map<String, dynamic>?)?['href'] as String?;
       final responseMap = await remoteDataSource.updateIssue(
         id: issueId,
         lockVersion: pendingModel.lockVersion,
@@ -776,6 +784,7 @@ class IssueRepositoryImpl implements IssueRepository {
         description: pendingModel.description,
         priorityLevel: pendingModel.priorityLevel,
         status: pendingModel.status,
+        statusHref: pendingStatusHref,
       );
 
       final updatedModel = IssueModel.fromJson(responseMap);
@@ -873,21 +882,6 @@ class IssueRepositoryImpl implements IssueRepository {
     }
   }
 
-  int _mapStatusToId(IssueStatus status) {
-    switch (status) {
-      case IssueStatus.newStatus:
-        return 1;
-      case IssueStatus.inProgress:
-        return 2;
-      case IssueStatus.onHold:
-        return 3;
-      case IssueStatus.closed:
-        return 4;
-      case IssueStatus.rejected:
-        return 5;
-    }
-  }
-
   @override
   Future<Either<Failure, List<PriorityEntity>>> getPriorities() async {
     try {
@@ -952,6 +946,18 @@ class IssueRepositoryImpl implements IssueRepository {
     }
     // Default to normal if name doesn't match
     return PriorityLevel.normal;
+  }
+
+  /// Build status href from StatusEntity using HATEOAS link
+  String? _buildStatusHref(StatusEntity? status) {
+    if (status == null) return null;
+    if (status.href != null && status.href!.isNotEmpty) {
+      return status.href;
+    }
+    if (status.id > 0) {
+      return '/api/v3/statuses/${status.id}';
+    }
+    return null;
   }
 
   @override
