@@ -1,27 +1,292 @@
 # SIREN
 
+<div align="center">
+
 **System for Issue Reporting and Engineering Notification**
 
-SIREN es una aplicación móvil Flutter diseñada para facilitar el acceso, modificación y registro de incidencias técnicas en un servidor local de OpenProject. La aplicación permite a los técnicos de campo gestionar incidencias directamente desde sus dispositivos móviles, sin necesidad de acceso a un ordenador, simplificando la interacción con el sistema y limitando los datos requeridos a los esenciales para la gestión de incidencias.
+[![Flutter](https://img.shields.io/badge/Flutter-3.0+-02569B?logo=flutter&logoColor=white)](https://flutter.dev/)
+[![Dart](https://img.shields.io/badge/Dart-3.0+-0175C2?logo=dart&logoColor=white)](https://dart.dev/)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web%20%7C%20Desktop-lightgrey)](https://flutter.dev/)
+[![Status](https://img.shields.io/badge/Status-MVP%20Complete-success)](https://github.com/danibeni/SIREN_APP)
 
-## Descripción
+*Una aplicación móvil Flutter multiplataforma para la gestión unificada de incidencias técnicas que afectan a la infraestructura crítica de un observatorio astronómico.*
 
-SIREN es una herramienta móvil que permite:
+</div>
 
-- **Acceder** a incidencias existentes desde un servidor local de OpenProject
-- **Modificar** incidencias existentes (título, descripción, prioridad, estado)
-- **Registrar** nuevas incidencias con los campos esenciales:
-  - **Título** (Subject): Título descriptivo de la incidencia
-  - **Descripción** (Description): Descripción detallada opcional
-  - **Prioridad** (Priority Level): Nivel de prioridad (Baja, Normal, Alta, Inmediata)
-  - **Estado** (Status): Estado actual de la incidencia (Nuevo, En Progreso, Cerrado, etc.)
-  - **Equipo** (Equipment): Infraestructura, equipo o proyecto al que pertenece la incidencia
-  - **Grupo** (Group): Grupo o departamento responsable (si el usuario pertenece a más de un grupo/departamento)
-- **Adjuntos**: Añadir documentos de interés para la incidencia, fotos o imágenes/diagramas
+---
 
-La aplicación está optimizada para dispositivos móviles, proporcionando una interfaz intuitiva y eficiente que permite gestionar incidencias de forma rápida y sencilla.
+## 📱 Capturas de Pantalla
 
-## Instalación
+<div align="center">
+
+### Pantalla de Lista de Incidencias
+
+![Pantalla de Lista de Incidencias](assets/screenshots/issue_list_screen.png)
+
+*Interfaz principal mostrando incidencias con búsqueda, filtros e indicadores de estado*
+
+---
+
+### Pantalla de Configuración del Servidor
+
+![Pantalla de Configuración del Servidor](assets/screenshots/server_config_screen.png)
+
+*Pantalla de configuración inicial para configurar la URL del servidor OpenProject y autenticación OAuth2*
+
+> **Nota**: Si las capturas de pantalla no se muestran, asegúrate de que los archivos de imagen existan en `assets/screenshots/`. Consulta `assets/screenshots/README.md` para instrucciones.
+
+</div>
+
+---
+
+## ✨ Características Principales
+
+### 🔐 Autenticación Segura
+- Flujo de autenticación **OAuth2 + PKCE** para mayor seguridad
+- Mecanismo de renovación automática de tokens
+- Almacenamiento seguro de credenciales usando `flutter_secure_storage`
+- Autenticación por usuario con control de acceso granular
+
+### 📋 Gestión de Incidencias
+- **Crear** nuevas incidencias técnicas con campos esenciales
+- **Ver** detalles completos de incidencias con adjuntos
+- **Editar** incidencias existentes (título, descripción, prioridad, estado)
+- **Buscar** y **filtrar** incidencias por múltiples criterios
+- Sincronización en tiempo real con el servidor OpenProject
+
+### 🎯 Filtrado y Búsqueda Inteligente
+- Filtrado multi-criterio (Estado, Equipo, Prioridad, Grupo)
+- Búsqueda de texto en tiempo real en títulos y descripciones
+- Lógica de filtros combinados (AND) para resultados precisos
+- Carga dinámica de estados basada en el Tipo de Work Package
+
+### 📎 Soporte de Adjuntos
+- Añadir fotos y documentos al crear/editar incidencias
+- Ver adjuntos existentes con iconos de tipo de archivo
+- Abrir adjuntos con aplicaciones predeterminadas del sistema
+- Integración optimizada con API (una sola petición para incidencia + adjuntos)
+
+### 🔄 Capacidad Offline (MVP)
+- Caché local para lista de incidencias (aproximadamente 3 pantallas)
+- Visualización offline de incidencias y detalles en caché
+- Sincronización manual para modificaciones offline
+- Caché de estados para acceso offline
+
+### 🌍 Soporte Multiplataforma
+- **iOS** - Aplicación nativa iOS
+- **Android** - Aplicación nativa Android
+- **Web** - Soporte web para desarrollo y pruebas
+- **Desktop** - Soporte para Windows, macOS y Linux
+
+### 🎨 UI/UX Moderna
+- Componentes Material Design 3
+- Interfaz intuitiva optimizada para móviles
+- Optimizada para pantallas de smartphones
+- Validación y retroalimentación en tiempo real
+- Estados de carga y manejo de errores
+
+---
+
+## 🏗️ Arquitectura
+
+SIREN sigue principios de **Arquitectura Limpia (Clean Architecture)** con separación estricta de capas, garantizando mantenibilidad, testeabilidad y escalabilidad.
+
+### Diagrama de Arquitectura
+
+```mermaid
+graph TB
+    subgraph "Presentation Layer"
+        UI[UI Widgets & Pages]
+        BLOC[Bloc/Cubit State Management]
+    end
+    
+    subgraph "Domain Layer"
+        UC[Use Cases]
+        ENT[Entities]
+        REPO_INT[Repository Interfaces]
+    end
+    
+    subgraph "Data Layer"
+        REPO_IMPL[Repository Implementations]
+        DS_REMOTE[Remote Data Source]
+        DS_LOCAL[Local Data Source]
+        MODELS[Models/DTOs]
+    end
+    
+    subgraph "External"
+        API[OpenProject REST API v3]
+        STORAGE[Secure Storage]
+        CACHE[Local Cache]
+    end
+    
+    UI --> BLOC
+    BLOC --> UC
+    UC --> REPO_INT
+    REPO_INT --> REPO_IMPL
+    REPO_IMPL --> DS_REMOTE
+    REPO_IMPL --> DS_LOCAL
+    DS_REMOTE --> API
+    DS_LOCAL --> CACHE
+    DS_REMOTE --> STORAGE
+    DS_LOCAL --> STORAGE
+    
+    style UI fill:#aed6f1,stroke:#3498db,stroke-width:2px
+    style BLOC fill:#aed6f1,stroke:#3498db,stroke-width:2px
+    style UC fill:#f9e79f,stroke:#f1c40f,stroke-width:2px
+    style ENT fill:#f9e79f,stroke:#f1c40f,stroke-width:2px
+    style REPO_INT fill:#f9e79f,stroke:#f1c40f,stroke-width:2px
+    style REPO_IMPL fill:#d5dbdb,stroke:#7f8c8d,stroke-width:2px
+    style DS_REMOTE fill:#d5dbdb,stroke:#7f8c8d,stroke-width:2px
+    style DS_LOCAL fill:#d5dbdb,stroke:#7f8c8d,stroke-width:2px
+    style MODELS fill:#d5dbdb,stroke:#7f8c8d,stroke-width:2px
+```
+
+### Principios Clave
+
+- **Capa de Dominio**: Dart puro, lógica de negocio sin dependencias de Flutter
+- **Inyección de Dependencias**: DI modular usando `get_it` con generación de código `injectable`
+- **Gestión de Estado**: Patrón Bloc/Cubit con `flutter_bloc`
+- **Separación de Responsabilidades**: Límites claros entre características y servicios core
+- **Principios SOLID**: Adherencia estricta a principios SOLID en todo el código
+
+### Estructura del Proyecto
+
+```
+/lib
+├── /core                    # Infraestructura core
+│   ├── /auth                # Servicios de autenticación
+│   ├── /config              # Gestión de configuración
+│   ├── /di                  # Inyección de dependencias
+│   ├── /error               # Manejo de errores y fallos
+│   ├── /i18n                # Internacionalización
+│   ├── /network             # Configuración de red
+│   └── /theme               # Temas de la aplicación
+│
+├── /features                # Módulos de características
+│   ├── /config              # Característica de configuración
+│   │   └── /presentation
+│   │       ├── /pages       # Settings, Server Config
+│   │       └── /cubit       # Gestión de estado
+│   │
+│   └── /issues              # Característica de gestión de incidencias
+│       ├── /data            # Capa de datos
+│       │   ├── /datasources # Fuentes de datos remotas y locales
+│       │   ├── /models      # DTOs y modelos
+│       │   └── /repositories # Implementaciones de repositorios
+│       │
+│       ├── /domain          # Capa de dominio (Pure Dart)
+│       │   ├── /entities    # Entidades de negocio
+│       │   ├── /repositories # Interfaces de repositorios
+│       │   └── /usecases    # Casos de uso de negocio
+│       │
+│       └── /presentation    # Capa de presentación
+│           ├── /pages       # Páginas UI
+│           ├── /widgets     # Widgets reutilizables
+│           └── /bloc        # Gestión de estado
+│
+└── main.dart                # Punto de entrada de la aplicación
+```
+
+---
+
+## 🔄 Flujo de la Aplicación
+
+### Diagrama de Flujo de Usuario
+
+```mermaid
+flowchart TD
+    START([Inicio de App]) --> INIT{¿Inicializada?}
+    INIT -->|No| CONFIG[Configuración del Servidor]
+    INIT -->|Sí| AUTH{¿Autenticada?}
+    
+    CONFIG --> OAUTH[Autenticación OAuth2]
+    OAUTH --> AUTH
+    
+    AUTH -->|No| CONFIG
+    AUTH -->|Sí| LIST[Lista de Incidencias]
+    
+    LIST --> SEARCH[Búsqueda y Filtrado]
+    LIST --> CREATE[Crear Incidencia]
+    LIST --> DETAIL[Ver Detalles de Incidencia]
+    
+    CREATE --> VALIDATE{¿Válida?}
+    VALIDATE -->|No| CREATE
+    VALIDATE -->|Sí| SAVE[Guardar en Servidor]
+    SAVE --> LIST
+    
+    DETAIL --> EDIT[Modo Edición]
+    DETAIL --> ATTACH[Ver Adjuntos]
+    
+    EDIT --> SAVE_EDIT[Guardar Cambios]
+    EDIT --> CANCEL[Cancelar]
+    SAVE_EDIT --> LIST
+    CANCEL --> DETAIL
+    
+    LIST --> SETTINGS[Configuración]
+    SETTINGS --> LOGOUT[Cerrar Sesión]
+    LOGOUT --> CONFIG
+```
+
+### Flujo de Integración con OpenProject
+
+```mermaid
+sequenceDiagram
+    participant App as SIREN App
+    participant Auth as Auth Service
+    participant API as OpenProject API
+    participant Cache as Local Cache
+    
+    Note over App,Cache: Flujo de Autenticación
+    App->>Auth: Inicia OAuth2 + PKCE
+    Auth->>API: Solicitud de Autorización
+    API-->>Auth: Código de Autorización
+    Auth->>API: Intercambia Código por Tokens
+    API-->>Auth: Access Token + Refresh Token
+    Auth->>Cache: Almacena Tokens de Forma Segura
+    
+    Note over App,Cache: Flujo de Gestión de Incidencias
+    App->>Auth: Obtener Access Token
+    Auth->>Auth: Verificar Validez del Token
+    alt Token Expirado
+        Auth->>API: Refresh Token
+        API-->>Auth: Nuevo Access Token
+    end
+    Auth-->>App: Access Token
+    
+    App->>API: GET /api/v3/work_packages
+    API-->>App: Lista de Incidencias (HAL+JSON)
+    App->>Cache: Cachear Incidencias Localmente
+    
+    alt Modo Offline
+        App->>Cache: Obtener Incidencias en Caché
+        Cache-->>App: Datos en Caché
+    end
+    
+    App->>API: POST /api/v3/work_packages
+    API-->>App: Incidencia Creada
+    App->>Cache: Actualizar Caché
+```
+
+---
+
+## 🛠️ Stack Tecnológico
+
+| Categoría | Tecnología | Propósito |
+|----------|-----------|---------|
+| **Framework** | Flutter 3.0+ | Framework UI multiplataforma |
+| **Lenguaje** | Dart 3.0+ | Lenguaje de programación |
+| **Gestión de Estado** | flutter_bloc | Gestión de estado predecible |
+| **Inyección de Dependencias** | get_it + injectable | DI modular con generación de código |
+| **Cliente HTTP** | dio | Comunicación API REST |
+| **Almacenamiento Seguro** | flutter_secure_storage | Almacenamiento seguro de credenciales |
+| **Localización** | flutter_localizations | Soporte multi-idioma |
+| **Testing** | flutter_test, mockito | Testing unitario y de widgets |
+| **Generación de Código** | build_runner | Generación de código DI y serialización |
+
+---
+
+## 📦 Instalación
 
 ### Requisitos Previos
 
@@ -66,17 +331,6 @@ La aplicación está optimizada para dispositivos móviles, proporcionando una i
    flutter devices
    ```
 
-## Soporte Multiplataforma
-
-SIREN está desarrollada con **Flutter**, lo que proporciona soporte nativo para múltiples plataformas:
-
-- **Android**: Compatible con dispositivos Android (versión mínima según configuración)
-- **iOS**: Compatible con dispositivos iPhone e iPad (versión mínima según configuración)
-- **Web**: Soporte web (opcional, para desarrollo y pruebas)
-- **Desktop**: Soporte para Windows, macOS y Linux (opcional)
-
-La aplicación utiliza un único código base para todas las plataformas, garantizando consistencia en la experiencia de usuario y facilitando el mantenimiento.
-
 ### Configuración de Red para Pruebas
 
 **⚠️ Importante: Configuración de Red para Emuladores**
@@ -95,7 +349,9 @@ Cuando se prueba con un emulador Android, no se puede usar `http://localhost:999
 
 3. **Simulador iOS**: Puede usar `http://localhost:9999` directamente (no se necesita IP especial)
 
-## Sistema de Autenticación: OAuth2 + PKCE
+---
+
+## 🔐 Sistema de Autenticación: OAuth2 + PKCE
 
 SIREN utiliza **OAuth2 con PKCE** (Proof Key for Code Exchange) para autenticarse con OpenProject. Este sistema es superior a una simple API Key por las siguientes razones:
 
@@ -120,8 +376,6 @@ SIREN utiliza **OAuth2 con PKCE** (Proof Key for Code Exchange) para autenticars
    - **Sesiones seguras**: Las sesiones se gestionan de forma segura con tokens de acceso y renovación.
 
 ### Flujo de Autenticación OAuth2 + PKCE
-
-El siguiente diagrama ilustra el flujo completo de autenticación:
 
 ```mermaid
 sequenceDiagram
@@ -215,37 +469,9 @@ Para configurar OpenProject para trabajar con SIREN:
 
 Después de completar estos pasos, tu servidor OpenProject está listo para manejar solicitudes de autenticación desde la aplicación móvil SIREN.
 
-## Soporte Multi-idioma
+---
 
-SIREN está preparada para soporte multi-idioma con estructura i18n completa:
-
-### Idiomas Soportados
-
-- **Español** (es): Idioma principal
-- **Inglés** (en): Idioma secundario
-
-### Estructura de Internacionalización
-
-La aplicación utiliza archivos ARB (Application Resource Bundle) para la localización:
-
-```
-/lib/core/i18n/
-├── l10n/
-│   ├── app_es.arb    # Recursos en español
-│   └── app_en.arb    # Recursos en inglés
-├── localization_service.dart
-└── localization_repository.dart
-```
-
-### Cambio de Idioma
-
-El cambio de idioma se gestiona a través del servicio de localización, permitiendo a los usuarios seleccionar su idioma preferido. La configuración se persiste y se aplica en toda la aplicación.
-
-**Nota**: La implementación completa de multi-idioma está en desarrollo (Post-MVP). La estructura está preparada y los archivos ARB están disponibles para la traducción de todas las cadenas de la interfaz.
-
-## Pantallas Disponibles
-
-SIREN incluye las siguientes pantallas principales:
+## 📱 Pantallas Disponibles
 
 ### 1. Pantalla de Inicialización (`AppInitializationPage`)
 
@@ -392,103 +618,9 @@ SIREN incluye las siguientes pantallas principales:
 - **Confirmación de Navegación**: Si el usuario intenta navegar hacia atrás con cambios sin guardar, se muestra un diálogo de confirmación
 - **Optimistic Locking**: Utiliza `lockVersion` para prevenir conflictos de modificación concurrente
 
-### 7. Pantalla de Edición de Incidencia (`EditIssuePage`)
+---
 
-**Nota**: Esta pantalla puede estar integrada en `IssueDetailPage` en modo de edición, dependiendo de la implementación.
-
-## Configuración del Servidor y Tipo de Work Package
-
-### Configuración del Servidor OpenProject
-
-La aplicación permite configurar la URL del servidor OpenProject de forma flexible:
-
-1. **Configuración Inicial**: Al iniciar la aplicación por primera vez, se solicita la URL del servidor
-2. **Modificación**: La URL puede modificarse desde la pantalla de Configuración
-3. **Almacenamiento Seguro**: La URL se almacena de forma segura usando `flutter_secure_storage`
-4. **Validación**: Se valida el formato de la URL antes de almacenarla (protocolo, dominio, puerto opcional)
-
-### Selección del Tipo de Work Package
-
-OpenProject utiliza "Work Packages" como término genérico para diferentes tipos de elementos (Issues, Tasks, Milestones, etc.). SIREN permite seleccionar qué tipo de Work Package mostrar:
-
-#### Configuración del Tipo
-
-1. **Acceso**: Desde la pantalla de Configuración (`SettingsPage`)
-2. **Opciones**: Lista de tipos disponibles en el servidor OpenProject
-3. **Valor por Defecto**: "Issue" (Incidencia)
-4. **Almacenamiento**: Se almacena de forma segura usando `flutter_secure_storage`
-
-#### Comportamiento
-
-- **Filtrado Automático**: Todas las consultas a la API de OpenProject incluyen automáticamente un filtro por el tipo seleccionado
-- **Actualización de Estados**: Al cambiar el tipo:
-  - Se invalidan los estados (statuses) en caché
-  - Se cargan los estados disponibles para el nuevo tipo desde OpenProject
-  - Los estados se almacenan en caché local con sus colores asociados
-- **Actualización de Lista**: La lista de incidencias se actualiza automáticamente para mostrar solo work packages del tipo seleccionado
-- **Resolución Dinámica**: El nombre del tipo se resuelve dinámicamente a su ID correspondiente en OpenProject (no se usan IDs hardcodeados)
-
-#### Estados Dinámicos
-
-Los estados (statuses) se cargan dinámicamente según el tipo de Work Package:
-
-- **Carga por Tipo**: Cada tipo de Work Package puede tener diferentes estados disponibles
-- **Colores desde API**: Los colores de los estados se obtienen desde OpenProject API (`color.hexcode` o `hexCode`)
-- **Caché Local**: Los estados se almacenan en caché local para uso offline
-- **Actualización**: Los estados se actualizan cuando:
-  - Se cambia el tipo de Work Package
-  - Se actualiza la lista de incidencias (pull to refresh)
-
-#### Ejemplo de Uso
-
-1. Usuario selecciona "Issue" como tipo de Work Package
-2. La aplicación carga los estados disponibles para "Issue" desde OpenProject
-3. La lista muestra solo work packages de tipo "Issue"
-4. Al crear una nueva incidencia, se usa el tipo "Issue"
-5. Al cambiar a "Task", la lista se actualiza para mostrar solo "Tasks" y se cargan los estados correspondientes
-
-## Arquitectura
-
-SIREN sigue principios de **Clean Architecture** con separación estricta de capas:
-
-```
-Presentation Layer (UI/State Management)
-    ↓
-Domain Layer (Business Logic/Entities/Use Cases)
-    ↓
-Data Layer (Repositories/Data Sources/Models)
-```
-
-### Principios Clave
-
-- **Domain Layer**: Dart puro, lógica de negocio sin dependencias de Flutter
-- **Dependency Injection**: DI modular usando `get_it` con módulos basados en características
-- **State Management**: Patrón Bloc/Cubit con `flutter_bloc`
-- **Separación de Responsabilidades**: Límites claros entre características y servicios core
-
-### Estructura del Proyecto
-
-```
-/lib
-├── /core              # Infraestructura core (DI, errores, auth, network, config, i18n)
-├── /features          # Módulos de características (issues, futuras características)
-│   └── /issues
-│       ├── /data      # Fuentes de datos, modelos, implementaciones de repositorios
-│       ├── /domain    # Entidades, interfaces de repositorios, casos de uso
-│       └── /presentation  # UI, Bloc/Cubit, páginas, widgets
-└── main.dart          # Punto de entrada de la aplicación
-```
-
-## Stack Tecnológico
-
-- **Framework**: Flutter / Dart
-- **State Management**: Bloc/Cubit (`flutter_bloc`)
-- **Dependency Injection**: `get_it` con módulos de inyección modulares
-- **HTTP Client**: `dio` para comunicación API
-- **Almacenamiento Seguro**: `flutter_secure_storage` para credenciales
-- **Testing**: `flutter_test`, `mockito`/`mocktail` para mocking
-
-## Integración con API
+## 🔌 Integración con API
 
 ### OpenProject REST API v3
 
@@ -499,28 +631,66 @@ Data Layer (Repositories/Data Sources/Models)
 
 ### Endpoints Clave
 
-- `GET /api/v3/work_packages` - Listar incidencias con filtros y paginación
-- `GET /api/v3/work_packages/{id}` - Obtener una incidencia
-- `POST /api/v3/work_packages` - Crear nueva incidencia
-- `PATCH /api/v3/work_packages/{id}` - Actualizar incidencia
-- `POST /api/v3/work_packages/{id}/attachments` - Añadir adjuntos
+| Método | Endpoint | Propósito |
+|--------|----------|---------|
+| `GET` | `/api/v3/work_packages` | Listar incidencias con filtros y paginación |
+| `GET` | `/api/v3/work_packages/{id}` | Obtener una incidencia |
+| `POST` | `/api/v3/work_packages` | Crear nueva incidencia |
+| `PATCH` | `/api/v3/work_packages/{id}` | Actualizar incidencia |
+| `POST` | `/api/v3/work_packages/{id}/attachments` | Añadir adjuntos |
+| `GET` | `/api/v3/statuses` | Obtener estados disponibles |
+| `GET` | `/api/v3/priorities` | Obtener prioridades disponibles |
+| `GET` | `/api/v3/projects` | Obtener proyectos (equipos) |
+| `GET` | `/api/v3/groups` | Obtener grupos del usuario |
 
 ### Descubrimiento HATEOAS
 
 La API de OpenProject utiliza HATEOAS. La aplicación descubre acciones y recursos disponibles dinámicamente vía `_links` en las respuestas de la API.
 
-## Campos de Incidencia
+### Campos de Incidencia
 
-| Campo             | Requerido | Descripción                                    |
-|-------------------|-----------|------------------------------------------------|
-| Título (Subject)  | Sí        | Título de texto libre de la incidencia        |
-| Descripción       | No        | Descripción detallada opcional                |
-| Equipo            | Sí        | Proyecto de OpenProject (filtrado por grupo seleccionado) |
-| Grupo/Departamento| Sí        | Selección única de grupo (auto-seleccionado si el usuario pertenece a un solo grupo) |
-| Nivel de Prioridad| Sí        | Baja, Normal, Alta, Inmediata                 |
-| Estado            | No        | Nuevo, En Progreso, Cerrado (auto-establecido a "Nuevo" en creación) |
+| Campo | Requerido | Descripción |
+|-------|----------|-------------|
+| Título (Subject) | Sí | Título de texto libre de la incidencia |
+| Descripción | No | Descripción detallada opcional |
+| Equipo | Sí | Proyecto de OpenProject (filtrado por grupo seleccionado) |
+| Grupo/Departamento | Sí | Selección única de grupo (auto-seleccionado si el usuario pertenece a un solo grupo) |
+| Nivel de Prioridad | Sí | Baja, Normal, Alta, Inmediata |
+| Estado | No | Nuevo, En Progreso, Cerrado (auto-establecido a "Nuevo" en creación) |
 
-## Desarrollo
+---
+
+## 🌍 Soporte Multi-idioma
+
+SIREN está preparada para soporte multi-idioma con estructura i18n completa:
+
+### Idiomas Soportados
+
+- **Español** (es): Idioma principal
+- **Inglés** (en): Idioma secundario
+
+### Estructura de Internacionalización
+
+La aplicación utiliza archivos ARB (Application Resource Bundle) para la localización:
+
+```
+/lib/core/i18n/
+├── l10n/
+│   ├── app_es.arb    # Recursos en español
+│   └── app_en.arb    # Recursos en inglés
+├── localization_service.dart
+└── localization_repository.dart
+```
+
+### Cambio de Idioma
+
+El cambio de idioma se gestiona a través del servicio de localización, permitiendo a los usuarios seleccionar su idioma preferido. La configuración se persiste y se aplica en toda la aplicación.
+
+**Nota**: La implementación completa de multi-idioma está en desarrollo (Post-MVP). La estructura está preparada y los archivos ARB están disponibles para la traducción de todas las cadenas de la interfaz.
+
+---
+
+## 🧪 Desarrollo
 
 ### Ejecutar Tests
 
@@ -552,32 +722,95 @@ flutter format .
 3. **Presentation Layer**: Crear Bloc/Cubit → Construir widgets UI → Conectar a casos de uso
 4. **Registro DI**: Crear módulo de característica y registrar dependencias
 
-## Roadmap Futuro
+---
 
-- **Capacidad Offline**: Integración de base de datos local para creación de incidencias offline
+## 📊 Estado del Proyecto
+
+### Características Completadas (MVP)
+
+✅ **Fase 1: Setup / Foundational**
+- Estructura Clean Architecture
+- Sistema de Inyección de Dependencias
+- Infraestructura de manejo de errores
+- Autenticación OAuth2 + PKCE
+
+✅ **Fase 2: Configuration and Testing**
+- Configuración de URL del servidor
+- Flujo de autenticación OAuth2
+- Pantalla de configuración con logout
+- Infraestructura de testing
+
+✅ **Fase 3: Quick Issue Registration**
+- Formulario de creación de incidencias
+- Validación de campos
+- Filtrado dinámico de grupo/equipo
+- Selección de prioridad
+
+✅ **Fase 4: Issue Management**
+- Lista de incidencias con filtrado
+- Vista de detalles de incidencias
+- Edición de incidencias
+- Soporte de adjuntos
+- Caché offline (MVP)
+- Gestión de estados
+
+✅ **Fase 5: Search and Filtering**
+- Búsqueda de texto
+- Filtrado multi-criterio
+- Búsqueda en tiempo real
+
+### En Progreso / Planificado
+
+🔄 **Fase 6: Architectural Preparation (Post-MVP)**
+- Implementación completa de i18n
+- Diseño de arquitectura offline-first
+- Preparación para integración de AI
+- Arquitectura de comandos de voz
+
+📋 **Fase 7: Offline Issue Management (Post-MVP)**
+- Soporte offline completo
+- Integración de base de datos local
+- Resolución de conflictos
+- Sincronización automática
+
+---
+
+## 🗺️ Roadmap Futuro
+
+- **Capacidad Offline**: Integración completa de base de datos local para creación y modificación de incidencias offline
 - **Soporte Multi-idioma**: Localización completa Español/Inglés
 - **Integración AI**: Características de categorización automática y predictivas
 - **Comandos de Voz**: Registro de incidencias manos libres para técnicos de campo
+- **Analíticas Mejoradas**: Características de seguimiento y reportes de incidencias
 
-## Contribuir
+---
+
+## 🤝 Contribuir
 
 1. Seguir principios de Clean Architecture estrictamente
 2. Escribir tests para nuevos casos de uso y lógica de negocio crítica
 3. Ejecutar `flutter analyze` antes de hacer commit
 4. Usar GitHub CLI (`gh`) para operaciones de repositorio
 
-## Documentación
+---
+
+## 📚 Documentación
 
 - **API de OpenProject**: [Documentación de OpenProject REST API v3](https://www.openproject.org/docs/api/)
 - **Framework Flutter**: [Documentación de Flutter](https://flutter.dev/)
+- **Documentación del Proyecto**: Ver directorio `/docs` para documentación técnica detallada
 
-## Criterios de Éxito
+---
+
+## ✅ Criterios de Éxito
 
 - **Usabilidad**: Los usuarios pueden registrar una nueva incidencia en menos de un minuto
 - **Adopción**: 90% de nuevas incidencias técnicas reportadas vía SIREN en el primer mes
 - **Impacto en el Negocio**: Reducción del MTTR en sistemas críticos
 
-## Licencia
+---
+
+## 📄 Licencia
 
 Este proyecto está licenciado bajo la Licencia Pública General de GNU v3.0 (GPL-3.0).
 
@@ -598,11 +831,12 @@ Debería haber recibido una copia de la Licencia Pública General de GNU
 junto con este programa. Si no, consulte <https://www.gnu.org/licenses/>.
 ```
 
-## Autor
+---
+
+## 👤 Autor
 
 **Daniel Benitez** - danibeni.dev@gmail.com
 
 ---
 
 **Nota**: Este proyecto fue desarrollado con asistencia de IA como parte del curso AI-Expert en [Devexpert Academy](https://academia.devexpert.io/course/ai-expert).
-
