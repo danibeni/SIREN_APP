@@ -13,6 +13,7 @@ class IssueModel {
   final PriorityLevel priorityLevel;
   final IssueStatus status;
   final String? statusName;
+  final int? statusId; // OpenProject status ID for precise matching
   final String? statusColorHex;
   final String? priorityName;
   final String? priorityColorHex;
@@ -25,6 +26,8 @@ class IssueModel {
   final DateTime? updatedAt;
   final String? equipmentName;
   final int? attachmentCount;
+  final bool
+  hasPendingSync; // Indicates if issue has pending offline modifications
 
   const IssueModel({
     this.id,
@@ -35,6 +38,7 @@ class IssueModel {
     required this.priorityLevel,
     required this.status,
     this.statusName,
+    this.statusId,
     this.statusColorHex,
     this.priorityName,
     this.priorityColorHex,
@@ -47,6 +51,7 @@ class IssueModel {
     this.updatedAt,
     this.equipmentName,
     this.attachmentCount,
+    this.hasPendingSync = false,
   });
 
   /// Create IssueModel from OpenProject API JSON response
@@ -74,14 +79,23 @@ class IssueModel {
     // Extract status from _links and map by NAME (title), not ID
     final statusLink = links?['status'] as Map<String, dynamic>?;
     final statusTitle = statusLink?['title'] as String?;
+    final statusHref = statusLink?['href'] as String?;
+    final statusId = _extractIdFromHref(statusHref);
     final status = _mapNameToStatus(statusTitle);
 
     String? statusColorHex;
     String? priorityColorHex;
+    int? finalStatusId = statusId; // Use ID extracted from href
     final embedded = json['_embedded'] as Map<String, dynamic>?;
     final embeddedStatus = embedded?['status'] as Map<String, dynamic>?;
     if (embeddedStatus != null) {
       statusColorHex = embeddedStatus['color'] as String?;
+      // Also extract ID from embedded status if available
+      final embeddedStatusId = embeddedStatus['id'] as int?;
+      if (embeddedStatusId != null) {
+        // Prefer embedded ID if available (more reliable)
+        finalStatusId = embeddedStatusId;
+      }
     }
 
     final embeddedPriority = embedded?['priority'] as Map<String, dynamic>?;
@@ -129,6 +143,7 @@ class IssueModel {
       priorityLevel: priorityLevel,
       status: status,
       statusName: statusTitle,
+      statusId: finalStatusId,
       statusColorHex: statusColorHex,
       priorityName: priorityTitle,
       priorityColorHex: priorityColorHex,
@@ -141,6 +156,7 @@ class IssueModel {
       updatedAt: updatedAt,
       equipmentName: equipmentName,
       attachmentCount: attachmentCount,
+      hasPendingSync: json['hasPendingSync'] as bool? ?? false,
     );
   }
 
@@ -181,6 +197,7 @@ class IssueModel {
       priorityLevel: priorityLevel,
       status: status,
       statusName: statusName,
+      statusId: statusId,
       statusColorHex: statusColorHex,
       priorityName: priorityName,
       priorityColorHex: priorityColorHex,
@@ -193,6 +210,7 @@ class IssueModel {
       updatedAt: updatedAt,
       equipmentName: equipmentName,
       attachmentCount: attachmentCount,
+      hasPendingSync: hasPendingSync,
     );
   }
 
@@ -206,6 +224,7 @@ class IssueModel {
     PriorityLevel? priorityLevel,
     IssueStatus? status,
     String? statusName,
+    int? statusId,
     String? statusColorHex,
     String? priorityName,
     String? priorityColorHex,
@@ -218,6 +237,7 @@ class IssueModel {
     DateTime? updatedAt,
     String? equipmentName,
     int? attachmentCount,
+    bool? hasPendingSync,
   }) {
     return IssueModel(
       id: id ?? this.id,
@@ -228,6 +248,7 @@ class IssueModel {
       priorityLevel: priorityLevel ?? this.priorityLevel,
       status: status ?? this.status,
       statusName: statusName ?? this.statusName,
+      statusId: statusId ?? this.statusId,
       statusColorHex: statusColorHex ?? this.statusColorHex,
       priorityName: priorityName ?? this.priorityName,
       priorityColorHex: priorityColorHex ?? this.priorityColorHex,
@@ -240,6 +261,7 @@ class IssueModel {
       updatedAt: updatedAt ?? this.updatedAt,
       equipmentName: equipmentName ?? this.equipmentName,
       attachmentCount: attachmentCount ?? this.attachmentCount,
+      hasPendingSync: hasPendingSync ?? this.hasPendingSync,
     );
   }
 

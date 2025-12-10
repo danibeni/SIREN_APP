@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:siren_app/core/config/server_config_service.dart';
 import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/core/network/connectivity_service.dart';
 import 'package:siren_app/features/issues/data/datasources/issue_local_datasource.dart';
 import 'package:siren_app/features/issues/data/datasources/issue_remote_datasource.dart';
 import 'package:siren_app/features/issues/data/repositories/issue_repository_impl.dart';
@@ -16,6 +17,8 @@ class MockIssueRemoteDataSource extends Mock implements IssueRemoteDataSource {}
 class MockIssueLocalDataSource extends Mock implements IssueLocalDataSource {}
 
 class MockServerConfigService extends Mock implements ServerConfigService {}
+
+class MockConnectivityService extends Mock implements ConnectivityService {}
 
 class MockLogger extends Mock implements Logger {}
 
@@ -31,12 +34,14 @@ void main() {
 
   late MockIssueLocalDataSource mockLocalDataSource;
   late MockServerConfigService mockServerConfigService;
+  late MockConnectivityService mockConnectivityService;
   late MockLogger mockLogger;
 
   setUp(() {
     mockDataSource = MockIssueRemoteDataSource();
     mockLocalDataSource = MockIssueLocalDataSource();
     mockServerConfigService = MockServerConfigService();
+    mockConnectivityService = MockConnectivityService();
     mockLogger = MockLogger();
 
     // Setup default return for server config
@@ -57,6 +62,7 @@ void main() {
       remoteDataSource: mockDataSource,
       localDataSource: mockLocalDataSource,
       serverConfigService: mockServerConfigService,
+      connectivityService: mockConnectivityService,
       logger: mockLogger,
     );
   });

@@ -1,9 +1,12 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:logging/logging.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:siren_app/core/error/failures.dart';
+import 'package:siren_app/features/issues/domain/usecases/discard_local_changes_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_issues_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/refresh_statuses_uc.dart';
+import 'package:siren_app/features/issues/domain/usecases/sync_issue_uc.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issues_list_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issues_list_state.dart';
 
@@ -14,15 +17,34 @@ class _MockGetIssuesUseCase extends Mock implements GetIssuesUseCase {}
 class _MockRefreshStatusesUseCase extends Mock
     implements RefreshStatusesUseCase {}
 
+class _MockSyncIssueUseCase extends Mock implements SyncIssueUseCase {}
+
+class _MockDiscardLocalChangesUseCase extends Mock
+    implements DiscardLocalChangesUseCase {}
+
+class _MockLogger extends Mock implements Logger {}
+
 void main() {
   late IssuesListCubit cubit;
   late _MockGetIssuesUseCase getIssuesUseCase;
   late _MockRefreshStatusesUseCase refreshStatusesUseCase;
+  late _MockSyncIssueUseCase syncIssueUseCase;
+  late _MockDiscardLocalChangesUseCase discardLocalChangesUseCase;
+  late _MockLogger logger;
 
   setUp(() {
     getIssuesUseCase = _MockGetIssuesUseCase();
     refreshStatusesUseCase = _MockRefreshStatusesUseCase();
-    cubit = IssuesListCubit(getIssuesUseCase, refreshStatusesUseCase);
+    syncIssueUseCase = _MockSyncIssueUseCase();
+    discardLocalChangesUseCase = _MockDiscardLocalChangesUseCase();
+    logger = _MockLogger();
+    cubit = IssuesListCubit(
+      getIssuesUseCase,
+      refreshStatusesUseCase,
+      syncIssueUseCase,
+      discardLocalChangesUseCase,
+      logger,
+    );
   });
 
   tearDown(() {

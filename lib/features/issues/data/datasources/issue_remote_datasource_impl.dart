@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
 import 'package:siren_app/core/config/server_config_service.dart';
+import 'package:siren_app/core/error/exceptions.dart';
 import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/core/network/dio_client.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
@@ -111,6 +113,9 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         [sortBy, sortDirection],
       ]);
 
+      // Include status and priority to get their colors dynamically
+      queryParams['include'] = 'status,priority';
+
       final response = await dio.get(
         '/work_packages',
         queryParameters: queryParams,
@@ -120,8 +125,29 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
       final elements = embedded?['elements'] as List<dynamic>? ?? [];
 
       return elements.cast<Map<String, dynamic>>();
+    } on DioException catch (e) {
+      logger.severe('Error fetching issues: $e');
+      // Check for network/server inaccessibility errors
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.response?.statusCode == null) {
+        // Use enhanced message from interceptor if available
+        final errorMessage = e.message?.contains('server') == true ||
+                e.message?.contains('unreachable') == true ||
+                e.message?.contains('Wi-Fi') == true
+            ? e.message!
+            : 'Cannot connect to OpenProject server. Please verify the server is accessible via Wi-Fi.';
+        throw NetworkFailure(errorMessage);
+      }
+      final errorMessage = _extractErrorMessage(e);
+      throw ServerFailure('Failed to fetch issues: $errorMessage');
     } catch (e) {
       logger.severe('Error fetching issues: $e');
+      if (e is NetworkFailure || e is ServerFailure) {
+        rethrow;
+      }
       throw ServerFailure('Failed to fetch issues: ${e.toString()}');
     }
   }
@@ -130,11 +156,35 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
   Future<Map<String, dynamic>> getIssueById(int id) async {
     try {
       final dio = await _getDio();
-      final response = await dio.get('/work_packages/$id');
+      final response = await dio.get(
+        '/work_packages/$id',
+        queryParameters: const {'include': 'status,priority'},
+      );
 
       return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      logger.severe('Error fetching issue $id: $e');
+      // Check for network/server inaccessibility errors
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.response?.statusCode == null) {
+        // Use enhanced message from interceptor if available
+        final errorMessage = e.message?.contains('server') == true ||
+                e.message?.contains('unreachable') == true ||
+                e.message?.contains('Wi-Fi') == true
+            ? e.message!
+            : 'Cannot connect to OpenProject server. Please verify the server is accessible via Wi-Fi.';
+        throw NetworkFailure(errorMessage);
+      }
+      final errorMessage = _extractErrorMessage(e);
+      throw ServerFailure('Failed to fetch issue: $errorMessage');
     } catch (e) {
       logger.severe('Error fetching issue $id: $e');
+      if (e is NetworkFailure || e is ServerFailure) {
+        rethrow;
+      }
       throw ServerFailure('Failed to fetch issue: ${e.toString()}');
     }
   }
@@ -317,17 +367,62 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         };
       }
 
-      final response = await dio.patch('/work_packages/$id', data: payload);
+      final response = await dio.patch(
+        '/work_packages/$id',
+        data: payload,
+        queryParameters: const {'include': 'status,priority'},
+      );
 
       return response.data as Map<String, dynamic>;
-    } catch (e) {
+    } on DioException catch (e) {
       logger.severe('Error updating issue $id: $e');
-      throw ServerFailure('Failed to update issue: ${e.toString()}');
+
+      // Handle specific error cases
+      if (e.response?.statusCode == 409) {
+        // Conflict - lockVersion mismatch (optimistic locking)
+        throw ConflictException('Issue has been modified by another user');
+      } else if (e.response?.statusCode == 404) {
+        throw NotFoundException('Issue not found');
+      } else if (e.response?.statusCode == 422) {
+        // Unprocessable Entity - validation error
+        final errorMessage = _extractErrorMessage(e);
+        throw ValidationException('Validation failed: $errorMessage');
+      } else if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        // Network errors - use enhanced message from interceptor if available
+        // The interceptor already provides user-friendly messages about server inaccessibility
+        final errorMessage = e.message?.contains('server') == true ||
+                e.message?.contains('unreachable') == true ||
+                e.message?.contains('Wi-Fi') == true
+            ? e.message!
+            : 'Cannot connect to OpenProject server. Please verify the server is accessible via Wi-Fi.';
+        throw NetworkException(errorMessage);
+      } else if (e.response?.statusCode == null) {
+        // No response received - likely server unreachable
+        final errorMessage = e.message?.contains('server') == true ||
+                e.message?.contains('unreachable') == true ||
+                e.message?.contains('Wi-Fi') == true
+            ? e.message!
+            : 'OpenProject server unreachable. Please check your Wi-Fi connection and verify the server is accessible.';
+        throw NetworkException(errorMessage);
+      } else {
+        final errorMessage = _extractErrorMessage(e);
+        throw ServerException('Failed to update issue: $errorMessage');
+      }
+    } catch (e) {
+      // Re-throw if already an exception
+      if (e is AppException) {
+        rethrow;
+      }
+      logger.severe('Unexpected error updating issue $id: $e');
+      throw ServerException('Unexpected error: ${e.toString()}');
     }
   }
 
   @override
-  Future<void> addAttachment({
+  Future<Map<String, dynamic>> addAttachment({
     required int issueId,
     required String filePath,
     required String fileName,
@@ -335,15 +430,66 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
   }) async {
     try {
       final dio = await _getDio();
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(filePath, filename: fileName),
+
+      // Verify file exists before attempting upload
+      final file = File(filePath);
+      if (!await file.exists()) {
+        throw ServerException('File not found: $filePath');
+      }
+
+      logger.info(
+        'Uploading attachment: $fileName (${await file.length()} bytes) to issue $issueId',
+      );
+
+      // Build multipart form data according to OpenProject API v3
+      // OpenProject requires two parts:
+      // 1. 'metadata' part with JSON containing fileName (required) and description (optional)
+      // 2. 'file' part with the actual file binary data
+      final metadataJson = {
+        'fileName': fileName,
         if (description != null) 'description': description,
+      };
+
+      final formData = FormData.fromMap({
+        'metadata': MultipartFile.fromString(
+          jsonEncode(metadataJson),
+          filename: null,
+          contentType: null, // Let Dio set Content-Type automatically
+        ),
+        'file': await MultipartFile.fromFile(filePath, filename: fileName),
       });
 
-      await dio.post('/work_packages/$issueId/attachments', data: formData);
+      final response = await dio.post(
+        '/work_packages/$issueId/attachments',
+        data: formData,
+      );
+
+      logger.info('Attachment uploaded successfully: ${response.statusCode}');
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      logger.severe(
+        'DioException adding attachment to issue $issueId: '
+        '${e.response?.statusCode} - ${e.response?.statusMessage}',
+      );
+      logger.severe('Response data: ${e.response?.data}');
+      logger.severe('Request path: ${e.requestOptions.path}');
+
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        throw NetworkException('Network error: ${e.message}');
+      } else {
+        final errorMessage = _extractErrorMessage(e);
+        throw ServerException('Failed to add attachment: $errorMessage');
+      }
     } catch (e) {
-      logger.severe('Error adding attachment to issue $issueId: $e');
-      throw ServerFailure('Failed to add attachment: ${e.toString()}');
+      // Re-throw if already an exception
+      if (e is AppException) {
+        rethrow;
+      }
+      logger.severe('Unexpected error adding attachment to issue $issueId: $e');
+      throw ServerException('Unexpected error: ${e.toString()}');
     }
   }
 
@@ -570,6 +716,44 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
     } catch (e) {
       logger.severe('Unexpected error fetching attachments: $e');
       throw ServerFailure('Failed to fetch attachments: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getWorkPackageForm({
+    required int workPackageId,
+    required int lockVersion,
+  }) async {
+    try {
+      final dio = await _getDio();
+
+      // Call form endpoint to get schema with available statuses
+      // The form endpoint returns information about available transitions
+      // and valid values for the work package's current type and state
+      final response = await dio.post(
+        '/work_packages/$workPackageId/form',
+        data: {'lockVersion': lockVersion},
+      );
+
+      return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      logger.severe(
+        'Error fetching form for work package $workPackageId: $e',
+      );
+
+      if (e.response?.statusCode == 404) {
+        throw ServerFailure('Work package not found');
+      } else if (e.response?.statusCode == 409) {
+        throw ConflictException('Work package has been modified');
+      } else if (e.response?.statusCode == 401) {
+        throw NetworkFailure('Authentication required');
+      } else {
+        final errorMessage = _extractErrorMessage(e);
+        throw ServerFailure('Failed to fetch form: $errorMessage');
+      }
+    } catch (e) {
+      logger.severe('Unexpected error fetching form: $e');
+      throw ServerFailure('Failed to fetch form: ${e.toString()}');
     }
   }
 }

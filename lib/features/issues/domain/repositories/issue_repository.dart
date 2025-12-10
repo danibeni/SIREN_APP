@@ -2,6 +2,8 @@ import 'package:dartz/dartz.dart';
 import 'package:siren_app/core/error/failures.dart';
 import 'package:siren_app/features/issues/domain/entities/attachment_entity.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/priority_entity.dart';
+import 'package:siren_app/features/issues/domain/entities/status_entity.dart';
 
 /// Repository interface for Issue management
 ///
@@ -57,7 +59,8 @@ abstract class IssueRepository {
   /// Add attachment to an issue
   ///
   /// Used for uploading photos/documents for issue resolution
-  Future<Either<Failure, void>> addAttachment({
+  /// Returns AttachmentEntity on success
+  Future<Either<Failure, AttachmentEntity>> addAttachment({
     required int issueId,
     required String filePath,
     required String fileName,
@@ -70,4 +73,31 @@ abstract class IssueRepository {
   /// Checks local cache first when offline
   /// Used for displaying attachments in issue detail and edit pages
   Future<Either<Failure, List<AttachmentEntity>>> getAttachments(int issueId);
+
+  /// Synchronize an issue with pending offline modifications
+  ///
+  /// Uploads local changes and pending attachments to the server
+  /// Returns updated IssueEntity on success
+  Future<Either<Failure, IssueEntity>> syncIssue(int issueId);
+
+  /// Discard local changes for an issue and restore server version
+  ///
+  /// Removes pending modifications and restores issue from cache
+  /// Returns restored IssueEntity on success
+  Future<Either<Failure, IssueEntity>> discardLocalChanges(int issueId);
+
+  /// Get all available priorities from OpenProject
+  ///
+  /// Returns list of PriorityEntity with colors from API
+  Future<Either<Failure, List<PriorityEntity>>> getPriorities();
+
+  /// Get available statuses for a specific work package
+  ///
+  /// Uses the work package form endpoint to retrieve statuses available
+  /// for the specific type and current state of the work package.
+  /// Returns list of StatusEntity filtered by workflow rules.
+  Future<Either<Failure, List<StatusEntity>>> getAvailableStatusesForIssue({
+    required int workPackageId,
+    required int lockVersion,
+  });
 }

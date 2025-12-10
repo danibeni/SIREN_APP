@@ -31,10 +31,17 @@ class DioClient {
     final dio = Dio(
       BaseOptions(
         baseUrl: apiBaseUrl,
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
+        // HTTP timeouts configured for responsive error handling
+        // 10s connect: Quick failure detection when server is unreachable
+        // 15s receive: Allow sufficient time for data transfer
+        // 10s send: Quick failure for upload operations
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 10),
+        // Don't set Content-Type here - let interceptor handle it
+        // Content-Type will be set to application/hal+json for JSON requests
+        // and multipart/form-data for FormData (handled automatically by Dio)
         headers: {
-          'Content-Type': 'application/hal+json',
           'Accept': 'application/hal+json',
         },
       ),

@@ -29,7 +29,7 @@ class AttachmentListItem extends StatelessWidget {
         if (await file.exists()) {
           // Use open_filex package which handles FileProvider automatically on Android
           final result = await OpenFilex.open(localFilePath!);
-          
+
           if (result.type != ResultType.done) {
             // File couldn't be opened
             String message;
@@ -48,7 +48,7 @@ class AttachmentListItem extends StatelessWidget {
               default:
                 message = 'Unable to open file';
             }
-            
+
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -116,9 +116,9 @@ class AttachmentListItem extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error opening file: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error opening file: $e')));
       }
     }
   }

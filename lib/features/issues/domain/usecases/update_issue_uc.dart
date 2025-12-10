@@ -5,23 +5,31 @@ import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'package:siren_app/features/issues/domain/repositories/issue_repository.dart';
 import 'package:siren_app/features/issues/domain/usecases/update_issue_params.dart';
 
-/// Use case for updating an existing issue.
+/// Use case for updating an existing issue
+///
+/// Validates input and delegates to repository
+/// Returns updated IssueEntity on success, Failure on error
 @lazySingleton
 class UpdateIssueUseCase {
   final IssueRepository repository;
 
   UpdateIssueUseCase(this.repository);
 
+  /// Execute update issue use case
+  ///
+  /// Validates subject (if provided) and calls repository
+  /// Returns Either<Failure, IssueEntity>
   Future<Either<Failure, IssueEntity>> call(UpdateIssueParams params) async {
-    // Validate subject when provided
+    // Validate subject if provided
     if (params.subject != null) {
-      final trimmed = params.subject!.trim();
-      if (trimmed.isEmpty) {
+      final trimmedSubject = params.subject!.trim();
+      if (trimmedSubject.isEmpty) {
         return const Left(ValidationFailure('Subject cannot be empty'));
       }
     }
 
-    return repository.updateIssue(
+    // Call repository
+    return await repository.updateIssue(
       id: params.id,
       lockVersion: params.lockVersion,
       subject: params.subject?.trim(),
