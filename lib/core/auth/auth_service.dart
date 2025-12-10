@@ -37,7 +37,7 @@ class AuthService {
   Future<bool> _verifyServerReachability(String serverUrl) async {
     try {
       logger.info('Verifying server reachability: $serverUrl');
-      
+
       // Create a temporary Dio instance with short timeout for reachability check
       final dio = Dio(
         BaseOptions(
@@ -47,15 +47,19 @@ class AuthService {
       );
 
       // Try to reach the server root or a lightweight endpoint
-      final response = await dio.head(serverUrl).timeout(
-        const Duration(seconds: 5),
-        onTimeout: () {
-          throw TimeoutException('Server reachability check timed out');
-        },
-      );
+      final response = await dio
+          .head(serverUrl)
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              throw TimeoutException('Server reachability check timed out');
+            },
+          );
 
       final isReachable = response.statusCode != null;
-      logger.info('Server reachability check: ${isReachable ? "successful" : "failed"}');
+      logger.info(
+        'Server reachability check: ${isReachable ? "successful" : "failed"}',
+      );
       return isReachable;
     } on TimeoutException {
       logger.warning('Server reachability check timed out after 5 seconds');
@@ -78,9 +82,11 @@ class AuthService {
       // Step 1: Verify server reachability before opening browser
       logger.info('Verifying server reachability before OAuth2 flow');
       final isReachable = await _verifyServerReachability(serverUrl);
-      
+
       if (!isReachable) {
-        logger.severe('Server is not reachable. Cannot proceed with OAuth2 authentication.');
+        logger.severe(
+          'Server is not reachable. Cannot proceed with OAuth2 authentication.',
+        );
         throw Exception(
           'Cannot connect to OpenProject server. Please verify:\n'
           '• The server URL is correct\n'

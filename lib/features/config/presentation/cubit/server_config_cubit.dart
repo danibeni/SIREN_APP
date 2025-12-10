@@ -112,9 +112,11 @@ class ServerConfigCubit extends Cubit<ServerConfigState> {
       if (success) {
         emit(const ServerConfigAuthenticationSuccess());
       } else {
-        emit(const ServerConfigError(
-          'Authentication failed. Please check your Client ID and try again.',
-        ));
+        emit(
+          const ServerConfigError(
+            'Authentication failed. Please check your Client ID and try again.',
+          ),
+        );
       }
     } catch (e) {
       // Handle specific error messages from AuthService

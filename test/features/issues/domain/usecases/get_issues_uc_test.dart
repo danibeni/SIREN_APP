@@ -2,7 +2,6 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:siren_app/core/error/failures.dart';
-import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_issues_uc.dart';
 import 'package:siren_app/features/issues/domain/usecases/get_work_package_type_uc.dart';
 
@@ -111,29 +110,32 @@ void main() {
       // Given
       when(
         () => repository.getIssues(
-          status: any(named: 'status'),
+          statusIds: any(named: 'statusIds'),
+          priorityIds: any(named: 'priorityIds'),
           equipmentId: any(named: 'equipmentId'),
-          priorityLevel: any(named: 'priorityLevel'),
           groupId: any(named: 'groupId'),
+          searchTerms: any(named: 'searchTerms'),
           workPackageType: any(named: 'workPackageType'),
         ),
       ).thenAnswer((_) async => const Right([]));
 
       // When
       await useCase(
-        status: IssueStatus.inProgress,
+        statusIds: [1, 2],
+        priorityIds: [8, 9],
         equipmentId: 7,
-        priorityLevel: PriorityLevel.high,
         groupId: 5,
+        searchTerms: 'test',
       );
 
       // Then
       verify(
         () => repository.getIssues(
-          status: IssueStatus.inProgress,
+          statusIds: [1, 2],
+          priorityIds: [8, 9],
           equipmentId: 7,
-          priorityLevel: PriorityLevel.high,
           groupId: 5,
+          searchTerms: 'test',
           workPackageType: 'Issue',
         ),
       ).called(1);

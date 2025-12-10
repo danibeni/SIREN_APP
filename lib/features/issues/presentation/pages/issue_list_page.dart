@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
+import 'package:siren_app/features/issues/domain/entities/status_entity.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issues_list_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/issues_list_state.dart';
 import 'package:siren_app/features/issues/presentation/cubit/work_package_type_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/work_package_type_state.dart';
 import 'package:siren_app/features/issues/presentation/widgets/issue_card.dart';
+import 'package:siren_app/features/issues/presentation/widgets/issue_search_bar.dart';
+import 'package:siren_app/features/issues/presentation/widgets/issue_filter_sheet.dart';
 
 class IssueListPage extends StatelessWidget {
   const IssueListPage({super.key});
@@ -49,6 +52,36 @@ class _IssueListView extends StatelessWidget {
         appBar: AppBar(
           title: const Text('SIREN: Issue Reporting'),
           actions: [
+            BlocBuilder<IssuesListCubit, IssuesListState>(
+              builder: (context, state) {
+                final cubit = context.read<IssuesListCubit>();
+                final hasFilters = cubit.hasActiveFilters;
+                return IconButton(
+                  icon: Stack(
+                    children: [
+                      const Icon(Icons.filter_list),
+                      if (hasFilters)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: AppColors.error,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 8,
+                              minHeight: 8,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  onPressed: () => _showFilterSheet(context),
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: () => _refreshAll(context),
@@ -91,10 +124,6 @@ class _IssueListView extends StatelessWidget {
               final isFromCache =
                   state is IssuesListLoaded && state.isFromCache;
 
-              if (issues.isEmpty) {
-                return const _EmptyView();
-              }
-
               return BlocBuilder<WorkPackageTypeCubit, WorkPackageTypeState>(
                 builder: (context, typeState) {
                   final statusColorByName = _statusColorMap(typeState);
@@ -129,55 +158,78 @@ class _IssueListView extends StatelessWidget {
                             ],
                           ),
                         ),
-                      Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: () => _refreshAll(context),
-                          child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            itemCount: issues.length,
-                            itemBuilder: (context, index) {
-                              final issue = issues[index];
-                              final colorHex =
-                                  statusColorByName[_normalizeStatusName(
-                                    issue.statusName,
-                                  )];
-                              return IssueCard(
-                                issue: issue,
-                                statusColorHex: colorHex,
-                                onTap: () async {
-                                  // Navigate to detail page
-                                  await Navigator.of(context).pushNamed(
-                                    '/issue-detail',
-                                    arguments: issue.id,
-                                  );
-                                  // Reload list when returning from detail page
-                                  // This ensures pending sync changes are visible
-                                  if (context.mounted) {
-                                    context
-                                        .read<IssuesListCubit>()
-                                        .loadIssues();
-                                  }
-                                },
-                                onSync: issue.hasPendingSync
-                                    ? () {
-                                        context
-                                            .read<IssuesListCubit>()
-                                            .syncIssue(issue.id!);
-                                      }
-                                    : null,
-                                onCancelSync: issue.hasPendingSync
-                                    ? () {
-                                        // Show confirmation dialog
-                                        _showDiscardConfirmation(
-                                          context,
-                                          issue.id!,
-                                        );
-                                      }
-                                    : null,
+                      BlocBuilder<IssuesListCubit, IssuesListState>(
+                        builder: (context, state) {
+                          final cubit = context.read<IssuesListCubit>();
+                          return IssueSearchBar(
+                            initialValue: cubit.searchTerms ?? '',
+                            onSearchChanged: (searchTerms) {
+                              cubit.loadIssues(
+                                searchTerms: searchTerms.isEmpty
+                                    ? ''
+                                    : searchTerms,
                               );
                             },
-                          ),
-                        ),
+                          );
+                        },
+                      ),
+                      Expanded(
+                        child: issues.isEmpty
+                            ? const _EmptyView()
+                            : RefreshIndicator(
+                                onRefresh: () => _refreshAll(context),
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  itemCount: issues.length,
+                                  itemBuilder: (context, index) {
+                                    final issue = issues[index];
+                                    final colorHex =
+                                        statusColorByName[_normalizeStatusName(
+                                          issue.statusName,
+                                        )];
+                                    return IssueCard(
+                                      issue: issue,
+                                      statusColorHex: colorHex,
+                                      onTap: () async {
+                                        // Navigate to detail page
+                                        await Navigator.of(context).pushNamed(
+                                          '/issue-detail',
+                                          arguments: issue.id,
+                                        );
+                                        // Reload list when returning from detail page
+                                        // This ensures pending sync changes are visible
+                                        // Preserve current filters
+                                        if (context.mounted) {
+                                          final cubit = context.read<IssuesListCubit>();
+                                          cubit.loadIssues(
+                                            statusIds: cubit.statusIds,
+                                            priorityIds: cubit.priorityIds,
+                                            equipmentId: cubit.equipmentId,
+                                            groupId: cubit.groupId,
+                                            searchTerms: cubit.searchTerms,
+                                          );
+                                        }
+                                      },
+                                      onSync: issue.hasPendingSync
+                                          ? () {
+                                              context
+                                                  .read<IssuesListCubit>()
+                                                  .syncIssue(issue.id!);
+                                            }
+                                          : null,
+                                      onCancelSync: issue.hasPendingSync
+                                          ? () {
+                                              // Show confirmation dialog
+                                              _showDiscardConfirmation(
+                                                context,
+                                                issue.id!,
+                                              );
+                                            }
+                                          : null,
+                                    );
+                                  },
+                                ),
+                              ),
                       ),
                     ],
                   );
@@ -269,6 +321,52 @@ void _showDiscardConfirmation(BuildContext context, int issueId) {
           child: const Text('Discard'),
         ),
       ],
+    ),
+  );
+}
+
+void _showFilterSheet(BuildContext context) {
+  final cubit = context.read<IssuesListCubit>();
+  final typeState = context.read<WorkPackageTypeCubit>().state;
+  final statuses = typeState is WorkPackageTypeLoaded
+      ? typeState.statuses
+      : <StatusEntity>[];
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) => DraggableScrollableSheet(
+      initialChildSize: 0.9,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) => IssueFilterSheet(
+        selectedStatusIds: cubit.statusIds,
+        selectedPriorityIds: cubit.priorityIds,
+        selectedEquipmentId: cubit.equipmentId,
+        selectedGroupId: cubit.groupId,
+        statuses: statuses,
+        scrollController: scrollController,
+        onApplyFilters:
+            ({
+              List<int>? statusIds,
+              List<int>? priorityIds,
+              int? equipmentId,
+              int? groupId,
+            }) {
+              // Determine which filters should be cleared
+              // Empty lists mean clear, null means don't change
+              // For single-value filters, null + previous value means clear
+              cubit.loadIssues(
+                statusIds: statusIds, // Empty list [] means clear, null means don't change
+                priorityIds: priorityIds, // Empty list [] means clear, null means don't change
+                equipmentId: equipmentId,
+                groupId: groupId,
+                clearEquipment: equipmentId == null && cubit.equipmentId != null,
+                clearGroup: groupId == null && cubit.groupId != null,
+              );
+            },
+      ),
     ),
   );
 }

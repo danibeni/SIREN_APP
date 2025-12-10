@@ -18,22 +18,24 @@ class GetIssuesUseCase {
   GetIssuesUseCase(this._repository, this._getWorkPackageTypeUseCase);
 
   Future<Either<Failure, List<issue_entities.IssueEntity>>> call({
-    issue_entities.IssueStatus? status,
+    List<int>? statusIds,
+    List<int>? priorityIds,
     int? equipmentId,
-    issue_entities.PriorityLevel? priorityLevel,
     int? groupId,
+    String? searchTerms,
   }) async {
     // Get configured Work Package Type from Settings
     final typeResult = await _getWorkPackageTypeUseCase();
 
     // If type retrieval fails, return failure
     return typeResult.fold((failure) => Left(failure), (typeName) async {
-      // Call repository with Type filter
+      // Call repository with Type filter (always applied) and other filters
       return _repository.getIssues(
-        status: status,
+        statusIds: statusIds,
+        priorityIds: priorityIds,
         equipmentId: equipmentId,
-        priorityLevel: priorityLevel,
         groupId: groupId,
+        searchTerms: searchTerms,
         workPackageType: typeName,
       );
     });

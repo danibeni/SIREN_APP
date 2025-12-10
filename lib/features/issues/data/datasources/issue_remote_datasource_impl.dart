@@ -51,11 +51,12 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
 
   @override
   Future<List<Map<String, dynamic>>> getIssues({
-    int? status,
+    List<int>? statusIds,
+    List<int>? priorityIds,
     int? equipmentId,
-    PriorityLevel? priorityLevel,
     int? groupId,
     int? typeId,
+    String? searchTerms,
     int offset = 0,
     int pageSize = 50,
     String sortBy = 'updated_at',
@@ -63,39 +64,68 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
   }) async {
     try {
       final dio = await _getDio();
-      final filters = <String, dynamic>{};
+      final filterList = <Map<String, dynamic>>[];
 
       // CRITICAL: Always filter by Work Package Type if provided
       if (typeId != null) {
-        filters['type'] = {
-          'operator': '=',
-          'values': [typeId.toString()],
-        };
+        filterList.add({
+          'type': {
+            'operator': '=',
+            'values': [typeId.toString()],
+          },
+        });
       }
 
-      if (status != null) {
-        filters['status'] = {
-          'operator': '=',
-          'values': [status.toString()],
-        };
+      // Multi-select status filter
+      if (statusIds != null && statusIds.isNotEmpty) {
+        filterList.add({
+          'status': {
+            'operator': '=',
+            'values': statusIds.map((id) => id.toString()).toList(),
+          },
+        });
       }
 
+      // Multi-select priority filter
+      if (priorityIds != null && priorityIds.isNotEmpty) {
+        filterList.add({
+          'priority': {
+            'operator': '=',
+            'values': priorityIds.map((id) => id.toString()).toList(),
+          },
+        });
+      }
+
+      // Single-select equipment/project filter
       if (equipmentId != null) {
-        filters['project'] = {
-          'operator': '=',
-          'values': [equipmentId.toString()],
-        };
+        filterList.add({
+          'project': {
+            'operator': '=',
+            'values': [equipmentId.toString()],
+          },
+        });
       }
 
-      if (priorityLevel != null) {
-        filters['priority'] = {
-          'operator': '=',
-          'values': [_mapPriorityToId(priorityLevel).toString()],
-        };
-      }
-
+      // Single-select group filter (via project membership)
       if (groupId != null) {
-        // Filter by group - OpenProject filters by project membership
+        // Note: OpenProject filters groups via project membership
+        // This may require additional logic depending on API capabilities
+      }
+
+      // Text search using subjectOrId filter (searches in Subject and ID)
+      // OpenProject API v3 uses subjectOrId with ** operator for contains search
+      if (searchTerms != null && searchTerms.trim().isNotEmpty) {
+        final searchTerm = searchTerms.trim();
+        filterList.add({
+          'subjectOrId': {
+            'operator': '**',
+            'values': [searchTerm],
+          },
+        });
+        // Note: OpenProject subjectOrId searches in subject and ID
+        // For description search, we would need a separate filter if supported
+        // Currently, OpenProject API v3 primarily supports subject/ID search
+        // Description search may require full-text search capabilities
       }
 
       final queryParams = <String, dynamic>{
@@ -103,9 +133,9 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         'pageSize': pageSize,
       };
 
-      // Add filters as JSON string if not empty
-      if (filters.isNotEmpty) {
-        queryParams['filters'] = jsonEncode([filters]);
+      // Add filters as JSON array (OpenProject expects array of filter objects)
+      if (filterList.isNotEmpty) {
+        queryParams['filters'] = jsonEncode(filterList);
       }
 
       // Add sorting (OpenProject expects JSON array format)
@@ -134,7 +164,8 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
           e.type == DioExceptionType.connectionError ||
           e.response?.statusCode == null) {
         // Use enhanced message from interceptor if available
-        final errorMessage = e.message?.contains('server') == true ||
+        final errorMessage =
+            e.message?.contains('server') == true ||
                 e.message?.contains('unreachable') == true ||
                 e.message?.contains('Wi-Fi') == true
             ? e.message!
@@ -171,7 +202,8 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
           e.type == DioExceptionType.connectionError ||
           e.response?.statusCode == null) {
         // Use enhanced message from interceptor if available
-        final errorMessage = e.message?.contains('server') == true ||
+        final errorMessage =
+            e.message?.contains('server') == true ||
                 e.message?.contains('unreachable') == true ||
                 e.message?.contains('Wi-Fi') == true
             ? e.message!
@@ -393,7 +425,8 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
           e.type == DioExceptionType.connectionError) {
         // Network errors - use enhanced message from interceptor if available
         // The interceptor already provides user-friendly messages about server inaccessibility
-        final errorMessage = e.message?.contains('server') == true ||
+        final errorMessage =
+            e.message?.contains('server') == true ||
                 e.message?.contains('unreachable') == true ||
                 e.message?.contains('Wi-Fi') == true
             ? e.message!
@@ -401,7 +434,8 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
         throw NetworkException(errorMessage);
       } else if (e.response?.statusCode == null) {
         // No response received - likely server unreachable
-        final errorMessage = e.message?.contains('server') == true ||
+        final errorMessage =
+            e.message?.contains('server') == true ||
                 e.message?.contains('unreachable') == true ||
                 e.message?.contains('Wi-Fi') == true
             ? e.message!
@@ -737,9 +771,7 @@ class IssueRemoteDataSourceImpl implements IssueRemoteDataSource {
 
       return response.data as Map<String, dynamic>;
     } on DioException catch (e) {
-      logger.severe(
-        'Error fetching form for work package $workPackageId: $e',
-      );
+      logger.severe('Error fetching form for work package $workPackageId: $e');
 
       if (e.response?.statusCode == 404) {
         throw ServerFailure('Work package not found');
