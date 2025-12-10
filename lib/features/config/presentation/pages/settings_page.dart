@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
+import 'package:siren_app/core/i18n/generated/app_localizations.dart';
+import 'package:siren_app/core/i18n/localization_service.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
 import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import 'package:siren_app/features/issues/presentation/cubit/work_package_type_cubit.dart';
 import 'package:siren_app/features/issues/presentation/cubit/work_package_type_state.dart';
+import '../cubit/localization_cubit.dart';
+import '../cubit/localization_state.dart';
 import '../cubit/server_config_cubit.dart';
 import '../cubit/server_config_state.dart';
 
@@ -20,9 +24,8 @@ class SettingsPage extends StatelessWidget {
           create: (_) =>
               getIt<ServerConfigCubit>()..loadExistingConfiguration(),
         ),
-        // Use BlocProvider.value to use the singleton instance
-        // This prevents the cubit from being closed when the page is disposed
         BlocProvider.value(value: getIt<WorkPackageTypeCubit>()..load()),
+        BlocProvider.value(value: getIt<LocalizationCubit>()),
       ],
       child: const _SettingsView(),
     );
@@ -62,13 +65,15 @@ class _SettingsViewState extends State<_SettingsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const GradientAppBar(title: 'Settings'),
+      appBar: GradientAppBar(
+        title: AppLocalizations.of(context).settingsTitle,
+      ),
       body: BlocConsumer<ServerConfigCubit, ServerConfigState>(
         listener: (context, state) {
           if (state is ServerConfigSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Configuration saved successfully'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context).settingsConfigSaved),
                 backgroundColor: AppColors.success,
               ),
             );
@@ -90,8 +95,8 @@ class _SettingsViewState extends State<_SettingsView> {
             ).pushNamedAndRemoveUntil('/config', (route) => false);
           } else if (state is ServerConfigLoggedOut) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Logged out successfully'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context).settingsLoggedOut),
                 backgroundColor: AppColors.success,
               ),
             );
@@ -125,6 +130,10 @@ class _SettingsViewState extends State<_SettingsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          _buildTypeSelectionCard(context),
+          const SizedBox(height: 16),
+          _buildLanguageSelectionCard(context),
+          const SizedBox(height: 16),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -136,7 +145,7 @@ class _SettingsViewState extends State<_SettingsView> {
                       const Icon(Icons.cloud, color: AppColors.iconPrimary),
                       const SizedBox(width: 8),
                       Text(
-                        'Server Configuration',
+                        AppLocalizations.of(context).settingsServerConfiguration,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],
@@ -144,21 +153,20 @@ class _SettingsViewState extends State<_SettingsView> {
                   const SizedBox(height: 16),
                   _buildConfigItem(
                     context,
-                    label: 'Server URL',
-                    value: state.serverUrl ?? 'Not configured',
+                    label: AppLocalizations.of(context).settingsServerUrl,
+                    value: state.serverUrl ??
+                        AppLocalizations.of(context).settingsNotConfigured,
                     icon: Icons.link,
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          _buildTypeSelectionCard(context),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () => _enterEditMode(state.serverUrl),
             icon: const Icon(Icons.edit),
-            label: const Text('Edit Configuration'),
+            label: Text(AppLocalizations.of(context).settingsEditConfiguration),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               backgroundColor: AppColors.primaryButton,
@@ -169,9 +177,9 @@ class _SettingsViewState extends State<_SettingsView> {
           OutlinedButton.icon(
             onPressed: () => _showLogoutConfirmation(context),
             icon: const Icon(Icons.logout, color: AppColors.textSecondary),
-            label: const Text(
-              'Logout',
-              style: TextStyle(color: AppColors.textSecondary),
+            label: Text(
+              AppLocalizations.of(context).settingsLogout,
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -185,9 +193,9 @@ class _SettingsViewState extends State<_SettingsView> {
               Icons.delete_outline,
               color: AppColors.textSecondary,
             ),
-            label: const Text(
-              'Clear Configuration',
-              style: TextStyle(color: AppColors.textSecondary),
+            label: Text(
+              AppLocalizations.of(context).settingsClearConfigurationMessage,
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -205,8 +213,7 @@ class _SettingsViewState extends State<_SettingsView> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Changes to server configuration will require restarting '
-                      'the app to take effect.',
+                      AppLocalizations.of(context).settingsInfo,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
@@ -217,6 +224,104 @@ class _SettingsViewState extends State<_SettingsView> {
         ],
       ),
     );
+  }
+
+  Widget _buildLanguageSelectionCard(BuildContext context) {
+    return BlocBuilder<LocalizationCubit, LocalizationState>(
+      builder: (context, state) {
+        if (state.status == LocalizationStatus.loading) {
+          return const LinearProgressIndicator(minHeight: 3);
+        }
+
+        if (state.status == LocalizationStatus.error) {
+          return Card(
+            color: AppColors.error.withValues(alpha: 0.08),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  const Icon(Icons.error_outline, color: AppColors.error),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      state.errorMessage ?? 'Error loading language',
+                      style: const TextStyle(color: AppColors.error),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        context.read<LocalizationCubit>().load(),
+                    child: Text(AppLocalizations.of(context).settingsRetry),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final localizationService = getIt<LocalizationService>();
+        final currentLocale = state.locale;
+        final supportedLocales = localizationService.supportedLocales;
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.language,
+                      color: AppColors.iconPrimary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      AppLocalizations.of(context).settingsLanguageSection,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: currentLocale.languageCode,
+                  items: supportedLocales
+                      .map(
+                        (locale) => DropdownMenuItem(
+                          value: locale.languageCode,
+                          child: Text(
+                            _getLanguageName(context, locale.languageCode),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      context.read<LocalizationCubit>().changeLanguage(value);
+                    }
+                  },
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context).settingsLanguageLabel,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _getLanguageName(BuildContext context, String code) {
+    switch (code) {
+      case 'en':
+        return AppLocalizations.of(context).settingsLanguageEnglish;
+      case 'es':
+        return AppLocalizations.of(context).settingsLanguageSpanish;
+      default:
+        return code.toUpperCase();
+    }
   }
 
   Widget _buildTypeSelectionCard(BuildContext context) {
@@ -246,7 +351,7 @@ class _SettingsViewState extends State<_SettingsView> {
                   TextButton(
                     onPressed: () =>
                         context.read<WorkPackageTypeCubit>().load(),
-                    child: const Text('Retry'),
+                    child: Text(AppLocalizations.of(context).settingsRetry),
                   ),
                 ],
               ),
@@ -270,7 +375,7 @@ class _SettingsViewState extends State<_SettingsView> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Work Package Type',
+                        AppLocalizations.of(context).settingsSelectType,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ],
@@ -291,9 +396,9 @@ class _SettingsViewState extends State<_SettingsView> {
                         context.read<WorkPackageTypeCubit>().selectType(value);
                       }
                     },
-                    decoration: const InputDecoration(
-                      labelText: 'Select type',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context).settingsSelectTypeLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ],
@@ -374,7 +479,7 @@ class _SettingsViewState extends State<_SettingsView> {
               },
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Server URL is required';
+                  return AppLocalizations.of(context).settingsValidationUrlRequired;
                 }
                 return null;
               },
@@ -388,7 +493,7 @@ class _SettingsViewState extends State<_SettingsView> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(AppLocalizations.of(context).settingsCancel),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -411,7 +516,7 @@ class _SettingsViewState extends State<_SettingsView> {
                               ),
                             ),
                           )
-                        : const Text('Save'),
+                        : Text(AppLocalizations.of(context).settingsSave),
                   ),
                 ),
               ],
@@ -434,16 +539,14 @@ class _SettingsViewState extends State<_SettingsView> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text(
-          'This will log you out and clear stored authentication tokens from this device.\n\n'
-          'Note: If your browser has saved credentials, you may be automatically '
-          're-authenticated when you log in again. This is expected OAuth2 behavior.',
+        title: Text(AppLocalizations.of(context).settingsLogoutTitle),
+        content: Text(
+          AppLocalizations.of(context).settingsLogoutDescription,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).settingsCancelAction),
           ),
           TextButton(
             onPressed: () {
@@ -451,7 +554,7 @@ class _SettingsViewState extends State<_SettingsView> {
               context.read<ServerConfigCubit>().logout();
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.warning),
-            child: const Text('Logout'),
+            child: Text(AppLocalizations.of(context).settingsLogoutAction),
           ),
         ],
       ),
@@ -462,15 +565,14 @@ class _SettingsViewState extends State<_SettingsView> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Clear Configuration?'),
-        content: const Text(
-          'This will remove all server configuration. '
-          'You will need to reconfigure the app to use it again.',
+        title: Text(AppLocalizations.of(context).settingsClearConfigurationTitle),
+        content: Text(
+          AppLocalizations.of(context).settingsClearConfigurationMessage,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).settingsCancelAction),
           ),
           TextButton(
             onPressed: () {
@@ -478,7 +580,7 @@ class _SettingsViewState extends State<_SettingsView> {
               context.read<ServerConfigCubit>().clearConfiguration();
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Clear'),
+            child: Text(AppLocalizations.of(context).settingsClearAction),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
+import 'package:siren_app/core/i18n/generated/app_localizations.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
 import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import '../cubit/server_config_cubit.dart';
@@ -64,14 +65,19 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
           } else if (state is ServerConfigSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Configuration saved: ${state.serverUrl}'),
+                content: Text(
+                  AppLocalizations.of(context)!
+                      .configConfigurationSaved(state.serverUrl),
+                ),
                 backgroundColor: AppColors.primaryBlue,
               ),
             );
           } else if (state is ServerConfigAuthenticationSuccess) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Authentication successful!'),
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context)!.configAuthenticationSuccessful,
+                ),
                 backgroundColor: AppColors.primaryPurple,
               ),
             );
@@ -257,7 +263,9 @@ class _ServerConfigViewState extends State<_ServerConfigView> {
                                     );
                               }
                             },
-                      child: const Text('Update Configuration'),
+                      child: Text(
+                        AppLocalizations.of(context)!.configUpdateConfiguration,
+                      ),
                     ),
                   ],
                 ],

@@ -19,10 +19,20 @@ import 'package:siren_app/core/auth/oauth2_service.dart' as _i527;
 import 'package:siren_app/core/config/server_config_service.dart' as _i1000;
 import 'package:siren_app/core/di/modules/config_module.dart' as _i956;
 import 'package:siren_app/core/di/modules/core_module.dart' as _i1008;
+import 'package:siren_app/core/i18n/localization_repository.dart' as _i999;
+import 'package:siren_app/core/i18n/localization_repository_impl.dart' as _i651;
+import 'package:siren_app/core/i18n/localization_service.dart' as _i697;
+import 'package:siren_app/core/i18n/localization_service_impl.dart' as _i524;
+import 'package:siren_app/core/i18n/usecases/get_language_usecase.dart'
+    as _i542;
+import 'package:siren_app/core/i18n/usecases/set_language_usecase.dart'
+    as _i593;
 import 'package:siren_app/core/network/connectivity_service.dart' as _i811;
 import 'package:siren_app/core/network/dio_client.dart' as _i657;
 import 'package:siren_app/features/config/presentation/cubit/app_initialization_cubit.dart'
     as _i462;
+import 'package:siren_app/features/config/presentation/cubit/localization_cubit.dart'
+    as _i844;
 import 'package:siren_app/features/config/presentation/cubit/server_config_cubit.dart'
     as _i1033;
 import 'package:siren_app/features/issues/data/datasources/issue_local_datasource.dart'
@@ -97,6 +107,12 @@ _i174.GetIt init(
   gh.lazySingleton<_i811.ConnectivityService>(
     () => _i811.ConnectivityService(),
   );
+  gh.lazySingleton<_i999.LocalizationRepository>(
+    () => _i651.LocalizationRepositoryImpl(
+      secureStorage: gh<_i558.FlutterSecureStorage>(),
+      logger: gh<_i831.Logger>(),
+    ),
+  );
   gh.lazySingleton<_i1000.ServerConfigService>(
     () => _i1000.ServerConfigService(
       secureStorage: gh<_i558.FlutterSecureStorage>(),
@@ -114,6 +130,22 @@ _i174.GetIt init(
       gh<_i558.FlutterSecureStorage>(),
       gh<_i361.Dio>(),
       gh<_i831.Logger>(),
+    ),
+  );
+  gh.lazySingleton<_i697.LocalizationService>(
+    () => _i524.LocalizationServiceImpl(gh<_i999.LocalizationRepository>()),
+  );
+  gh.lazySingleton<_i542.GetLanguageUseCase>(
+    () => _i542.GetLanguageUseCase(gh<_i697.LocalizationService>()),
+  );
+  gh.lazySingleton<_i593.SetLanguageUseCase>(
+    () => _i593.SetLanguageUseCase(gh<_i697.LocalizationService>()),
+  );
+  gh.lazySingleton<_i844.LocalizationCubit>(
+    () => _i844.LocalizationCubit(
+      gh<_i542.GetLanguageUseCase>(),
+      gh<_i593.SetLanguageUseCase>(),
+      gh<_i697.LocalizationService>(),
     ),
   );
   gh.lazySingleton<_i711.AuthService>(

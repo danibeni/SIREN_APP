@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:siren_app/core/di/injection.dart';
+import 'package:siren_app/core/i18n/generated/app_localizations.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
 import 'package:siren_app/core/theme/priority_colors.dart';
 import 'package:siren_app/features/issues/data/datasources/issue_remote_datasource.dart';
@@ -79,7 +80,9 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load filter options: $e'),
+            content: Text(
+              AppLocalizations.of(context)!.issueFilterFailedToLoad(e.toString()),
+            ),
             backgroundColor: AppColors.error,
           ),
         );
@@ -147,9 +150,9 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Filter Issues',
-                style: TextStyle(
+              Text(
+                AppLocalizations.of(context)!.issueFilterTitle,
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
@@ -157,9 +160,9 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
               ),
               TextButton(
                 onPressed: _clearFilters,
-                child: const Text(
-                  'Clear All',
-                  style: TextStyle(color: AppColors.error),
+                child: Text(
+                  AppLocalizations.of(context)!.issueFilterClearAll,
+                  style: const TextStyle(color: AppColors.error),
                 ),
               ),
             ],
@@ -200,7 +203,7 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Cancel'),
+                  child: Text(AppLocalizations.of(context)!.commonCancel),
                 ),
               ),
               const SizedBox(width: 12),
@@ -213,7 +216,7 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
                     foregroundColor: AppColors.buttonText,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('Apply Filters'),
+                  child: Text(AppLocalizations.of(context)!.issueFilterApplyFilters),
                 ),
               ),
             ],
@@ -227,9 +230,9 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Status',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.issueFilterStatus,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -264,9 +267,9 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Priority',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.issueFilterPriority,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -303,9 +306,9 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Group',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.issueFilterGroup,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -352,9 +355,9 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Equipment',
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.issueFilterEquipment,
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -362,9 +365,9 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
         ),
         const SizedBox(height: 8),
         if (_selectedGroupId == null)
-          const Text(
-            'Select a group first',
-            style: TextStyle(color: AppColors.textSecondary),
+          Text(
+            AppLocalizations.of(context)!.issueFilterSelectGroupFirst,
+            style: const TextStyle(color: AppColors.textSecondary),
           )
         else if (_projects.isEmpty)
           const Text(
@@ -408,7 +411,10 @@ class _IssueFilterSheetState extends State<IssueFilterSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to load equipment: $e'),
+            content: Text(
+              AppLocalizations.of(context)!
+                  .issueFilterFailedToLoadEquipment(e.toString()),
+            ),
             backgroundColor: AppColors.error,
           ),
         );

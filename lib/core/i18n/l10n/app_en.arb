@@ -1,0 +1,174 @@
+{
+  "@@locale": "en",
+  "appTitle": "SIREN",
+  "appSubtitle": "System for Issue Reporting and Engineering Notification",
+  "appInitTitle": "SIREN",
+  "appInitTagline":
+      "System for Issue Reporting\\nand Engineering Notification",
+  "initializing": "Initializing...",
+  "settingsTitle": "Settings",
+  "settingsServerConfiguration": "Server Configuration",
+  "settingsServerUrl": "Server URL",
+  "settingsServerUrlPlaceholder": "https://openproject.example.com",
+  "settingsNotConfigured": "Not configured",
+  "settingsEditConfiguration": "Edit Configuration",
+  "settingsSave": "Save",
+  "settingsCancel": "Cancel",
+  "settingsLogout": "Logout",
+  "settingsLogoutDescription":
+      "This will log you out and clear stored authentication tokens from this device.\\n\\nNote: If your browser has saved credentials, you may be automatically re-authenticated when you log in again. This is expected OAuth2 behavior.",
+  "settingsClearConfigurationTitle": "Clear Configuration?",
+  "settingsClearConfigurationMessage":
+      "This will remove all server configuration. You will need to reconfigure the app to use it again.",
+  "settingsConfirm": "Confirm",
+  "settingsClear": "Clear",
+  "settingsConfigSaved": "Configuration saved successfully",
+  "settingsLoggedOut": "Logged out successfully",
+  "settingsInfo":
+      "Changes to server configuration will require restarting the app to take effect.",
+  "settingsRetry": "Retry",
+  "settingsSelectType": "Work Package Type",
+  "settingsSelectTypeLabel": "Select type",
+  "settingsLanguageSection": "Language",
+  "settingsLanguageLabel": "App language",
+  "settingsLanguageUpdated": "Language updated",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageSpanish": "Spanish",
+  "settingsSyncing": "Loading...",
+  "settingsValidationUrlRequired": "Server URL is required",
+  "settingsValidationUrlProtocol": "URL must start with http:// or https://",
+  "settingsLogoutTitle": "Logout",
+  "settingsCancelAction": "Cancel",
+  "settingsConfirmAction": "Confirm",
+  "settingsClearAction": "Clear",
+  "settingsLogoutAction": "Logout",
+  "settingsServerSectionLabel": "Server Configuration",
+  "commonRetry": "Retry",
+  "commonCancel": "Cancel",
+  "commonSave": "Save",
+  "commonSaving": "Saving...",
+  "commonEdit": "Edit",
+  "commonError": "Error",
+  "commonLoading": "Loading...",
+  "commonTryAgain": "Try Again",
+  "commonReload": "Reload",
+  "issueListTitle": "Issue Reporting",
+  "issueSearchHint": "Search issues...",
+  "issueFilterTitle": "Filter Issues",
+  "issueFilterClearAll": "Clear All",
+  "issueFilterStatus": "Status",
+  "issueFilterPriority": "Priority",
+  "issueFilterGroup": "Group",
+  "issueFilterEquipment": "Equipment",
+  "issueFilterSelectEquipment": "Select equipment",
+  "issueFormEquipmentLabel": "Equipment *",
+  "issueFilterSelectGroupFirst": "Select a group first",
+  "issueDetailTitle": "Issue Details",
+  "issueDetailSubject": "SUBJECT",
+  "issueDetailSubjectRequired": "SUBJECT *",
+  "issueDetailDescription": "DESCRIPTION",
+  "issueDetailStatusPriority": "STATUS & PRIORITY",
+  "issueDetailStatusPriorityRequired": "STATUS & PRIORITY *",
+  "issueDetailStatus": "Status",
+  "issueDetailStatusRequired": "Status *",
+  "issueDetailPriority": "Priority",
+  "issueDetailPriorityRequired": "Priority *",
+  "issueDetailAttachments": "ATTACHMENTS",
+  "issueDetailEditMode": "Edit Mode - Modify Issues enabled",
+  "issueNewIssue": "New Issue",
+  "issueCreateIssue": "Create Issue",
+  "issueFormSubjectLabel": "Subject *",
+  "issueFormSubjectHint": "Enter issue subject",
+  "issueFormDescriptionLabel": "Description",
+  "issueFormDescriptionHint": "Enter issue description (optional)",
+  "issueFormGroupLabel": "Group *",
+  "issueFormGroupHint": "Select a group",
+  "issueFormPriorityLabel": "Priority *",
+  "issueFormCreateButton": "Create Issue",
+  "issueFormNoWorkPackageTypes": "No work package types available for this project",
+  "issueCreatedSuccessfully": "Issue created successfully",
+  "issueUpdatedSuccessfully": "Issue updated successfully",
+  "issueDiscardChangesTitle": "Discard Changes?",
+  "issueDiscardChangesMessage": "Are you sure you want to discard your changes?",
+  "issueDiscard": "Discard",
+  "issueAddAttachment": "Add Attachment",
+  "issueSelectFile": "Select File",
+  "issueSelectFileSubtitle": "Choose a file from device",
+  "issueSelectImage": "Select Image",
+  "issueSelectImageSubtitle": "Choose an image from gallery",
+  "issueUploadingAttachment": "Uploading attachment...",
+  "issueAttachmentAddedSuccessfully": "Attachment added successfully",
+  "issueAttachmentFailed": "Failed to add attachment. Please try again.",
+  "issueErrorSelectingFile": "Error selecting file: {error}",
+  "@issueErrorSelectingFile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueErrorSelectingImage": "Error selecting image: {error}",
+  "@issueErrorSelectingImage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueFilePathNotAvailable": "File path is not available",
+  "issueFileNotFound": "File not found",
+  "issueErrorProcessingFile": "Error processing file: {error}",
+  "@issueErrorProcessingFile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueFilterFailedToLoad": "Failed to load filter options: {error}",
+  "@issueFilterFailedToLoad": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueFilterApplyFilters": "Apply Filters",
+  "issueFilterFailedToLoadEquipment": "Failed to load equipment: {error}",
+  "@issueFilterFailedToLoadEquipment": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueAttachmentCachedFileNotFound": "Cached file not found. Trying to download...",
+  "issueAttachmentErrorOpeningCached": "Error opening cached file: {error}",
+  "@issueAttachmentErrorOpeningCached": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueAttachmentCannotOpenFileType": "Cannot open this file type",
+  "issueAttachmentErrorOpeningFile": "Error opening file: {error}",
+  "@issueAttachmentErrorOpeningFile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "configConfigurationSaved": "Configuration saved: {url}",
+  "@configConfigurationSaved": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "configAuthenticationSuccessful": "Authentication successful!",
+  "configUpdateConfiguration": "Update Configuration"
+}
+

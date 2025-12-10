@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart' as injection;
+import 'package:siren_app/core/i18n/generated/app_localizations.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
 import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import 'package:siren_app/features/issues/domain/entities/issue_entity.dart';
@@ -35,8 +36,8 @@ class _IssueFormView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const GradientAppBar(
-        title: 'Create Issue',
+      appBar: GradientAppBar(
+        title: AppLocalizations.of(context)!.issueNewIssue,
       ),
       body: BlocConsumer<CreateIssueCubit, CreateIssueState>(
         listener: _handleStateChanges,
@@ -77,8 +78,8 @@ class _IssueFormView extends StatelessWidget {
   void _handleStateChanges(BuildContext context, CreateIssueState state) {
     if (state is CreateIssueSuccess) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Issue created successfully'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.issueCreatedSuccessfully),
           backgroundColor: AppColors.success,
         ),
       );
@@ -91,7 +92,7 @@ class _IssueFormView extends StatelessWidget {
           backgroundColor: AppColors.error,
           action: state.previousFormState != null
               ? SnackBarAction(
-                  label: 'Retry',
+                  label: AppLocalizations.of(context)!.commonRetry,
                   textColor: Colors.white,
                   onPressed: () {
                     context.read<CreateIssueCubit>().resetToForm();
@@ -192,7 +193,9 @@ class _ErrorView extends StatelessWidget {
             const Icon(Icons.error_outline, size: 64, color: AppColors.error),
             const SizedBox(height: 16),
             Text(
-              message,
+              message == 'No work package types available for this project'
+                  ? AppLocalizations.of(context)!.issueFormNoWorkPackageTypes
+                  : message,
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppColors.textPrimary),
             ),
@@ -203,7 +206,7 @@ class _ErrorView extends StatelessWidget {
                   context.read<CreateIssueCubit>().resetToForm();
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
+                label: Text(AppLocalizations.of(context)!.commonRetry),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
                   foregroundColor: Colors.white,
@@ -215,7 +218,7 @@ class _ErrorView extends StatelessWidget {
                   context.read<CreateIssueCubit>().initializeForm();
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Reload'),
+                label: Text(AppLocalizations.of(context)!.commonReload),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryBlue,
                   foregroundColor: Colors.white,
@@ -298,8 +301,8 @@ class _SubjectField extends StatelessWidget {
     return TextFormField(
       initialValue: initialValue,
       decoration: InputDecoration(
-        labelText: 'Subject *',
-        hintText: 'Enter issue subject',
+        labelText: AppLocalizations.of(context)!.issueFormSubjectLabel,
+        hintText: AppLocalizations.of(context)!.issueFormSubjectHint,
         errorText: errorText,
         prefixIcon: const Icon(Icons.title, color: AppColors.iconSecondary),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -330,8 +333,8 @@ class _DescriptionField extends StatelessWidget {
       initialValue: initialValue,
       maxLines: 4,
       decoration: InputDecoration(
-        labelText: 'Description',
-        hintText: 'Enter issue description (optional)',
+        labelText: AppLocalizations.of(context)!.issueFormDescriptionLabel,
+        hintText: AppLocalizations.of(context)!.issueFormDescriptionHint,
         prefixIcon: const Icon(
           Icons.description,
           color: AppColors.iconSecondary,
@@ -370,8 +373,8 @@ class _GroupSelector extends StatelessWidget {
     return DropdownButtonFormField<int>(
       initialValue: selectedGroupId,
       decoration: InputDecoration(
-        labelText: 'Group *',
-        hintText: 'Select a group',
+        labelText: AppLocalizations.of(context)!.issueFormGroupLabel,
+        hintText: AppLocalizations.of(context)!.issueFormGroupHint,
         errorText: errorText,
         prefixIcon: const Icon(Icons.group, color: AppColors.iconSecondary),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -418,8 +421,10 @@ class _EquipmentSelector extends StatelessWidget {
         DropdownButtonFormField<int>(
           initialValue: selectedProjectId,
           decoration: InputDecoration(
-            labelText: 'Equipment *',
-            hintText: isEnabled ? 'Select equipment' : 'Select a group first',
+            labelText: AppLocalizations.of(context)!.issueFormEquipmentLabel,
+            hintText: isEnabled 
+                ? AppLocalizations.of(context)!.issueFilterSelectEquipment
+                : AppLocalizations.of(context)!.issueFilterSelectGroupFirst,
             errorText: errorText,
             prefixIcon: const Icon(
               Icons.precision_manufacturing,
@@ -479,10 +484,10 @@ class _PrioritySelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 4, bottom: 8),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
           child: Text(
-            'Priority *',
+            AppLocalizations.of(context)!.issueFormPriorityLabel,
             style: TextStyle(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
@@ -591,14 +596,14 @@ class _SubmitButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 2,
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.add_circle_outline),
-          SizedBox(width: 8),
+          const Icon(Icons.add_circle_outline),
+          const SizedBox(width: 8),
           Text(
-            'Create Issue',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            AppLocalizations.of(context)!.issueFormCreateButton,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ],
       ),

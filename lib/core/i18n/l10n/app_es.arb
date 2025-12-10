@@ -1,0 +1,176 @@
+{
+  "@@locale": "es",
+  "appTitle": "SIREN",
+  "appSubtitle":
+      "Sistema para Gestión de Incidencias y Notificación de Ingeniería",
+  "appInitTitle": "SIREN",
+  "appInitTagline":
+      "Sistema para Gestión de Incidencias\\ny Notificación de Ingeniería",
+  "initializing": "Inicializando...",
+  "settingsTitle": "Configuración",
+  "settingsServerConfiguration": "Configuración del servidor",
+  "settingsServerUrl": "URL del servidor",
+  "settingsServerUrlPlaceholder": "https://openproject.ejemplo.com",
+  "settingsNotConfigured": "No configurado",
+  "settingsEditConfiguration": "Editar configuración",
+  "settingsSave": "Guardar",
+  "settingsCancel": "Cancelar",
+  "settingsLogout": "Cerrar sesión",
+  "settingsLogoutDescription":
+      "Esto cerrará tu sesión y borrará los tokens de autenticación almacenados en este dispositivo.\\n\\nNota: si tu navegador guardó credenciales, podrías autenticarte automáticamente al iniciar sesión otra vez. Esto es el comportamiento esperado de OAuth2.",
+  "settingsClearConfigurationTitle": "¿Borrar configuración?",
+  "settingsClearConfigurationMessage":
+      "Esto eliminará toda la configuración del servidor. Tendrás que configurarla nuevamente para usar la aplicación.",
+  "settingsConfirm": "Confirmar",
+  "settingsClear": "Borrar",
+  "settingsConfigSaved": "Configuración guardada correctamente",
+  "settingsLoggedOut": "Sesión cerrada correctamente",
+  "settingsInfo":
+      "Los cambios en la configuración del servidor requieren reiniciar la app para aplicarse.",
+  "settingsRetry": "Reintentar",
+  "settingsSelectType": "Tipo de paquete de trabajo",
+  "settingsSelectTypeLabel": "Selecciona el tipo",
+  "settingsLanguageSection": "Idioma",
+  "settingsLanguageLabel": "Idioma de la app",
+  "settingsLanguageUpdated": "Idioma actualizado",
+  "settingsLanguageEnglish": "Inglés",
+  "settingsLanguageSpanish": "Español",
+  "settingsSyncing": "Cargando...",
+  "settingsValidationUrlRequired": "La URL del servidor es obligatoria",
+  "settingsValidationUrlProtocol":
+      "La URL debe empezar con http:// o https://",
+  "settingsLogoutTitle": "Cerrar sesión",
+  "settingsCancelAction": "Cancelar",
+  "settingsConfirmAction": "Confirmar",
+  "settingsClearAction": "Borrar",
+  "settingsLogoutAction": "Cerrar sesión",
+  "settingsServerSectionLabel": "Configuración del servidor",
+  "commonRetry": "Reintentar",
+  "commonCancel": "Cancelar",
+  "commonSave": "Guardar",
+  "commonSaving": "Guardando...",
+  "commonEdit": "Editar",
+  "commonError": "Error",
+  "commonLoading": "Cargando...",
+  "commonTryAgain": "Intentar de nuevo",
+  "commonReload": "Recargar",
+  "issueListTitle": "Reporte de Incidencias",
+  "issueSearchHint": "Buscar Incidencias...",
+  "issueFilterTitle": "Filtrar Incidencias",
+  "issueFilterClearAll": "Limpiar Todo",
+  "issueFilterStatus": "Estado",
+  "issueFilterPriority": "Prioridad",
+  "issueFilterGroup": "Grupo/Departamento",
+  "issueFilterEquipment": "Equipo",
+  "issueFilterSelectEquipment": "Selecciona un equipo",
+  "issueFormEquipmentLabel": "Equipo *",
+  "issueFilterSelectGroupFirst": "Selecciona un grupo/departamento primero",
+  "issueDetailTitle": "Detalle Incidencia",
+  "issueDetailSubject": "ASUNTO",
+  "issueDetailSubjectRequired": "ASUNTO *",
+  "issueDetailDescription": "DESCRIPCIÓN",
+  "issueDetailStatusPriority": "ESTADO Y PRIORIDAD",
+  "issueDetailStatusPriorityRequired": "ESTADO Y PRIORIDAD *",
+  "issueDetailStatus": "Estado",
+  "issueDetailStatusRequired": "Estado *",
+  "issueDetailPriority": "Prioridad",
+  "issueDetailPriorityRequired": "Prioridad *",
+  "issueDetailAttachments": "ADJUNTOS",
+  "issueDetailEditMode": "Modo Edición - Modificación de incidencia habilitada",
+  "issueNewIssue": "Nueva Incidencia",
+  "issueCreateIssue": "Crear incidente",
+  "issueFormSubjectLabel": "Asunto *",
+  "issueFormSubjectHint": "Ingresa el asunto de la incidencia",
+  "issueFormDescriptionLabel": "Descripción",
+  "issueFormDescriptionHint": "Ingresa la descripción de la incidencia (opcional)",
+  "issueFormGroupLabel": "Grupo/Departamento *",
+  "issueFormGroupHint": "Selecciona un grupo",
+  "issueFormPriorityLabel": "Prioridad *",
+  "issueFormCreateButton": "Crear Incidencia",
+  "issueFormNoWorkPackageTypes": "No hay tipos de paquete de trabajo disponibles para este proyecto",
+  "issueCreatedSuccessfully": "Incidente creado correctamente",
+  "issueUpdatedSuccessfully": "Incidente actualizado correctamente",
+  "issueDiscardChangesTitle": "¿Descartar cambios?",
+  "issueDiscardChangesMessage": "¿Estás seguro de que quieres descartar tus cambios?",
+  "issueDiscard": "Descartar",
+  "issueAddAttachment": "Agregar adjunto",
+  "issueSelectFile": "Seleccionar archivo",
+  "issueSelectFileSubtitle": "Elige un archivo del dispositivo",
+  "issueSelectImage": "Seleccionar imagen",
+  "issueSelectImageSubtitle": "Elige una imagen de la galería",
+  "issueUploadingAttachment": "Subiendo adjunto...",
+  "issueAttachmentAddedSuccessfully": "Adjunto agregado correctamente",
+  "issueAttachmentFailed": "Error al agregar adjunto. Por favor, inténtalo de nuevo.",
+  "issueErrorSelectingFile": "Error al seleccionar archivo: {error}",
+  "@issueErrorSelectingFile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueErrorSelectingImage": "Error al seleccionar imagen: {error}",
+  "@issueErrorSelectingImage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueFilePathNotAvailable": "La ruta del archivo no está disponible",
+  "issueFileNotFound": "Archivo no encontrado",
+  "issueErrorProcessingFile": "Error al procesar archivo: {error}",
+  "@issueErrorProcessingFile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueFilterFailedToLoad": "Error al cargar opciones de filtro: {error}",
+  "@issueFilterFailedToLoad": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueFilterApplyFilters": "Aplicar filtros",
+  "issueFilterFailedToLoadEquipment": "Error al cargar equipos: {error}",
+  "@issueFilterFailedToLoadEquipment": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueAttachmentCachedFileNotFound": "Archivo en caché no encontrado. Intentando descargar...",
+  "issueAttachmentErrorOpeningCached": "Error al abrir archivo en caché: {error}",
+  "@issueAttachmentErrorOpeningCached": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "issueAttachmentCannotOpenFileType": "No se puede abrir este tipo de archivo",
+  "issueAttachmentErrorOpeningFile": "Error al abrir archivo: {error}",
+  "@issueAttachmentErrorOpeningFile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "configConfigurationSaved": "Configuración guardada: {url}",
+  "@configConfigurationSaved": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "configAuthenticationSuccessful": "¡Autenticación exitosa!",
+  "configUpdateConfiguration": "Actualizar configuración"
+}
+

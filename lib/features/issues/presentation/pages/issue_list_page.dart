@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:siren_app/core/di/injection.dart';
+import 'package:siren_app/core/i18n/generated/app_localizations.dart';
 import 'package:siren_app/core/theme/app_colors.dart';
 import 'package:siren_app/core/widgets/gradient_app_bar.dart';
 import 'package:siren_app/features/issues/domain/entities/status_entity.dart';
@@ -51,7 +52,7 @@ class _IssueListView extends StatelessWidget {
       },
       child: Scaffold(
         appBar: GradientAppBar(
-          title: 'SIREN: Issue Reporting',
+          title: AppLocalizations.of(context)!.issueListTitle,
           actions: [
             BlocBuilder<IssuesListCubit, IssuesListState>(
               builder: (context, state) {
@@ -105,7 +106,7 @@ class _IssueListView extends StatelessWidget {
           backgroundColor: AppColors.primaryPurple,
           foregroundColor: AppColors.buttonText,
           icon: const Icon(Icons.add),
-          label: const Text('New Issue'),
+          label: Text(AppLocalizations.of(context)!.issueNewIssue),
         ),
         body: BlocBuilder<IssuesListCubit, IssuesListState>(
           builder: (context, state) {
@@ -164,6 +165,7 @@ class _IssueListView extends StatelessWidget {
                           final cubit = context.read<IssuesListCubit>();
                           return IssueSearchBar(
                             initialValue: cubit.searchTerms ?? '',
+                            hintText: AppLocalizations.of(context)!.issueSearchHint,
                             onSearchChanged: (searchTerms) {
                               cubit.loadIssues(
                                 searchTerms: searchTerms.isEmpty
@@ -304,14 +306,14 @@ void _showDiscardConfirmation(BuildContext context, int issueId) {
   showDialog(
     context: context,
     builder: (dialogContext) => AlertDialog(
-      title: const Text('Discard Changes?'),
-      content: const Text(
-        'This will discard all local modifications and restore the issue from the server. This action cannot be undone.',
+      title: Text(AppLocalizations.of(context)!.issueDiscardChangesTitle),
+      content: Text(
+        AppLocalizations.of(context)!.issueDiscardChangesMessage,
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context)!.commonCancel),
         ),
         TextButton(
           onPressed: () {
@@ -319,7 +321,7 @@ void _showDiscardConfirmation(BuildContext context, int issueId) {
             context.read<IssuesListCubit>().discardLocalChanges(issueId);
           },
           style: TextButton.styleFrom(foregroundColor: AppColors.error),
-          child: const Text('Discard'),
+          child: Text(AppLocalizations.of(context)!.issueDiscard),
         ),
       ],
     ),
@@ -397,7 +399,10 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+            ElevatedButton(
+              onPressed: onRetry,
+              child: Text(AppLocalizations.of(context)!.commonRetry),
+            ),
           ],
         ),
       ),
